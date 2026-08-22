@@ -1515,6 +1515,10 @@
         function saveData() {
             saveLocalData();
             renderAll();
+            // Firebase real-time sync is attached by the authentication module.
+            // Local storage remains as an offline cache/fallback.
+            try { if (typeof window.dbgSyncToFirebase === 'function') window.dbgSyncToFirebase(); }
+            catch (e) { console.warn('Firebase sync trigger failed:', e); }
         }
 
         // Keep a clear status in the console for troubleshooting without changing UI/data.
@@ -3152,7 +3156,10 @@ import {
 import {
     getDatabase,
     ref,
-    get
+    get,
+    set,
+    update,
+    onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -3224,6 +3231,7 @@ function setLoggedInUI(user, role = '') {
     window.dbgFirebaseUser = user;
     window.dbgFirebaseRole = role || '';
     window.dbgFirebaseLogout = () => signOut(firebaseAuth);
+    initializeFirebaseERPData(role).then(ok => { if (ok) { dbgFirebaseSyncReady = true; } });
     if (isAccountant) {
         // Do not leave the accountant on Dashboard after login.
         setTimeout(() => { try { switchTab('deposits'); } catch (_) {} }, 0);
@@ -3248,6 +3256,8 @@ function setLoggedInUI(user, role = '') {
 }
 
 function setLoggedOutUI() {
+    dbgFirebaseSyncReady = false;
+    if (dbgFirebaseUnsubscribe) { try { dbgFirebaseUnsubscribe(); } catch (_) {} dbgFirebaseUnsubscribe = null; }
     document.body.classList.add('dbg-logged-out');
     overlay?.classList.remove('hidden');
     const btn = document.getElementById('dbgFirebaseLogoutButton');
@@ -3268,6 +3278,125 @@ async function loadFirebaseUserRole(user) {
         console.warn('DBG user role could not be loaded:', e);
     }
     return '';
+}
+
+
+/* ==========================================================
+   DBG FIREBASE REAL-TIME ERP DATA SYNC
+   Operational data is stored in Realtime Database and mirrored
+   to this browser's LocalStorage/IndexedDB for offline fallback.
+   ========================================================== */
+let dbgFirebaseSyncReady = false;
+let dbgFirebaseApplyingRemote = false;
+let dbgFirebaseSyncTimer = null;
+let dbgFirebaseUnsubscribe = null;
+
+function buildFirebasePayload() {
+    return {
+        logo: db.logo || '',
+        members: Array.isArray(db.members) ? db.members : [],
+        deposits: Array.isArray(db.deposits) ? db.deposits : [],
+        investments: Array.isArray(db.investments) ? db.investments : [],
+        investorProfiles: Array.isArray(db.investorProfiles) ? db.investorProfiles : [],
+        accounts: Array.isArray(db.accounts) ? db.accounts : [],
+        updatedAt: Date.now()
+    };
+}
+
+async function writeFirebaseDataNow() {
+    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
+    if (!role) return;
+    try {
+        const dataRef = ref(firebaseDB, 'dbg_erp');
+        const isAccountant = ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(role);
+        if (isAccountant) {
+            // Accountant is allowed to write ONLY Deposit Collection and Income/Expense.
+            await update(dataRef, {
+                deposits: Array.isArray(db.deposits) ? db.deposits : [],
+                accounts: Array.isArray(db.accounts) ? db.accounts : [],
+                updatedAt: Date.now()
+            });
+        } else {
+            // Admin can synchronize all ERP collections.
+            await update(dataRef, buildFirebasePayload());
+        }
+        console.info('DBG Firebase: data synced successfully.');
+    } catch (e) {
+        console.error('DBG Firebase write failed:', e);
+        // Do not interrupt local operation when Firebase is temporarily offline.
+    }
+}
+
+window.dbgSyncToFirebase = function () {
+    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    clearTimeout(dbgFirebaseSyncTimer);
+    dbgFirebaseSyncTimer = setTimeout(writeFirebaseDataNow, 250);
+};
+
+async function applyFirebasePayload(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    dbgFirebaseApplyingRemote = true;
+    try {
+        if (typeof payload.logo === 'string') db.logo = payload.logo;
+        if (Array.isArray(payload.members)) {
+            db.members = payload.members;
+            if (memberStorageReady) await replaceAllMembersInIDB(db.members);
+        }
+        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits;
+        if (Array.isArray(payload.investments)) db.investments = payload.investments;
+        if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
+        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts;
+
+        // Update the local offline cache without triggering another Firebase write.
+        if (db.logo) localStorage.setItem(LOCAL_KEYS.logo, db.logo);
+        else localStorage.removeItem(LOCAL_KEYS.logo);
+        localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
+        localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
+        localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
+        localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
+        if (db.logo) {
+            const logoEl = document.getElementById('groupLogoImg');
+            if (logoEl) logoEl.src = db.logo;
+        }
+        renderAll();
+    } finally {
+        dbgFirebaseApplyingRemote = false;
+    }
+}
+
+async function initializeFirebaseERPData(role) {
+    const normalizedRole = String(role || '').trim().toLowerCase();
+    const isAdmin = ['admin','superadmin','super admin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(normalizedRole);
+    const dataRef = ref(firebaseDB, 'dbg_erp');
+
+    try {
+        const snap = await get(dataRef);
+        if (!snap.exists()) {
+            // Only an administrator may perform the first migration from this browser's
+            // existing LocalStorage/IndexedDB data into Firebase.
+            if (isAdmin) {
+                await set(dataRef, buildFirebasePayload());
+            } else {
+                setAuthStatus('Firebase ডেটা এখনও সেটআপ হয়নি। Admin প্রথমবার সফটওয়্যার খুলে ডেটা Sync করুন।');
+                return false;
+            }
+        }
+
+        if (dbgFirebaseUnsubscribe) dbgFirebaseUnsubscribe();
+        dbgFirebaseUnsubscribe = onValue(dataRef, async (snapshot) => {
+            if (snapshot.exists()) await applyFirebasePayload(snapshot.val());
+        }, (error) => {
+            console.error('DBG Firebase realtime listener failed:', error);
+            setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে। Local data ব্যবহার করা হচ্ছে।');
+        });
+        dbgFirebaseSyncReady = true;
+        return true;
+    } catch (e) {
+        console.error('DBG Firebase ERP initialization failed:', e);
+        setAuthStatus('Firebase Database সংযোগ করা যায়নি।');
+        return false;
+    }
 }
 
 if (togglePassword) {
