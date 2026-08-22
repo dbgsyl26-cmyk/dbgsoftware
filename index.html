@@ -1,6 +1,105 @@
 <!DOCTYPE html>
 <html lang="bn">
-<head>
+<!-- ========================================================================= -->
+<!-- ১. সিকিউর লগইন ওভারলে ইন্টারফেস (যা সমস্ত কন্টেন্ট জোরপূর্বক ঢেকে রাখবে) -->
+<!-- ========================================================================= -->
+<div id="dbg-login-overlay" style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f4f6f9 !important; z-index: 999999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; font-family: sans-serif !important;">
+  <div style="background: #fff !important; padding: 40px !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; width: 100% !important; max-width: 400px !important; box-sizing: border-box !important;">
+    <h2 style="text-align: center !important; color: #333 !important; margin-bottom: 5px !important; font-weight: bold !important;">Dreams Business Group</h2>
+    <p style="text-align: center !important; color: #777 !important; font-size: 14px !important; margin-top: 0 !important; margin-bottom: 25px !important;">ERP & Fund Management System</p>
+    
+    <div style="margin-bottom: 15px !important;">
+      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">ইমেইল অ্যাড্রেস:</label>
+      <input type="email" id="login-email" placeholder="example@dbg.com" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important;">
+    </div>
+    
+    <div style="margin-bottom: 10px !important; position: relative !important;">
+      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">পাসওয়ার্ড:</label>
+      <input type="password" id="login-password" placeholder="••••••••" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important; padding-right: 40px !important;">
+      <span id="toggle-password" style="position: absolute !important; right: 12px !important; top: 35px !important; cursor: pointer !important; color: #777 !important; font-size: 18px !important; user-select: none !important;">👁️</span>
+    </div>
+
+    <div style="text-align: right !important; margin-bottom: 20px !important;">
+      <a href="#" id="link-forgot-password" style="color: #007bff !important; text-decoration: none !important; font-size: 13px !important; font-weight: bold !important;">পাসওয়ার্ড ভুলে গেছেন?</a>
+    </div>
+    
+    <button id="btn-login" style="width: 100% !important; padding: 12px !important; background: #007bff !important; color: #fff !important; border: none !important; border-radius: 6px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; transition: 0.2s !important;">লগইন করুন</button>
+    <p id="login-error" style="color: #dc3545 !important; text-align: center !important; margin-top: 15px !important; font-size: 14px !important; display: none !important; font-weight: bold !important;"></p>
+  </div>
+</div>
+
+<!-- ২. ফায়ারবেস অথেনটিকেশন ও রোল লজিক স্ক্রিপ্ট -->
+<script type="module">
+  import { initializeApp } from "https://gstatic.com";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://gstatic.com";
+  import { getDatabase, ref, get } from "https://gstatic.com";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://firebaseio.com",
+    projectId: "dbgsoftware-6c9b9",
+    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+    messagingSenderId: "726215672769",
+    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const database = getDatabase(app);
+
+  document.getElementById("toggle-password").addEventListener("click", function() {
+    const passwordInput = document.getElementById("login-password");
+    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+    this.textContent = passwordInput.type === "password" ? "👁️" : "🙈";
+  });
+
+  document.getElementById("btn-login").addEventListener("click", () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errorEl = document.getElementById("login-error");
+    errorEl.style.setProperty('display', 'none', 'important');
+
+    if(!email || !password) {
+      errorEl.innerText = "দয়া করে ইমেইল এবং পাসওয়ার্ড দুটিই লিখুন।";
+      errorEl.style.setProperty('display', 'block', 'important');
+      return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+      .catch((error) => {
+        errorEl.innerText = "ভুল ইমেইল বা পাসওয়ার্ড! আবার চেষ্টা করুন।";
+        errorEl.style.setProperty('display', 'block', 'important');
+      });
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    const loginOverlay = document.getElementById("dbg-login-overlay");
+    if (user) {
+      get(ref(database, 'dbg_users/' + user.uid)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          loginOverlay.style.setProperty('display', 'none', 'important');
+          if (userData.role === "accountant") {
+            document.querySelectorAll('button, a, span, div').forEach(el => {
+              const text = el.innerText || el.textContent;
+              if (text.includes('ডিলিট') || text.includes('মুছুন') || text.includes('Delete')) {
+                el.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+        } else {
+          alert("রোল সেট করা নেই!");
+          signOut(auth);
+        }
+      });
+    } else {
+      loginOverlay.style.setProperty('display', 'flex', 'important');
+    }
+  });
+</script>
+
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dreams Business Group (DBG) - ERP & Fund Management</title>
