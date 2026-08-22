@@ -100,6 +100,11 @@
             body.dbg-printing #dbg-print-root th,
             body.dbg-printing #dbg-print-root td { border: 1px solid #888 !important; padding: 5px 7px !important; }
         }
+
+        /* Firebase role-based access control */
+        body.dbg-accountant-mode .dbg-admin-only { display: none !important; }
+        body.dbg-accountant-mode #tab-deposits,
+        body.dbg-accountant-mode #tab-accounts { display: flex !important; }
 </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
@@ -1567,6 +1572,12 @@
         });
 
         function switchTab(tabId) {
+            // Role restriction: Accountant may open only Deposit Collection and Accounts.
+            const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
+            const isAccountant = ['accountant', 'accounts', 'account', 'হিসাবরক্ষক', 'একাউন্টেন্ট', 'অ্যাকাউন্টেন্ট'].includes(role);
+            if (isAccountant && tabId !== 'deposits' && tabId !== 'accounts') {
+                tabId = 'deposits';
+            }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-tab').forEach(el => {
                 el.classList.remove('bg-indigo-800', 'text-white', 'font-semibold');
@@ -3198,12 +3209,25 @@ function firebaseErrorMessage(error) {
 
 function setLoggedInUI(user, role = '') {
     document.body.classList.remove('dbg-logged-out');
+    document.body.classList.remove('dbg-accountant-mode');
+    const normalizedRole = String(role || '').trim().toLowerCase();
+    const isAccountant = ['accountant', 'accounts', 'account', 'হিসাবরক্ষক', 'একাউন্টেন্ট', 'অ্যাকাউন্টেন্ট'].includes(normalizedRole);
+    document.body.classList.toggle('dbg-accountant-mode', isAccountant);
+    // Accountant can access ONLY Deposit Collection and Income/Expense.
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+        const allowed = btn.id === 'tab-deposits' || btn.id === 'tab-accounts';
+        btn.classList.toggle('dbg-admin-only', isAccountant && !allowed);
+    });
     overlay?.classList.add('hidden');
     setAuthError('');
     setAuthStatus('');
     window.dbgFirebaseUser = user;
     window.dbgFirebaseRole = role || '';
     window.dbgFirebaseLogout = () => signOut(firebaseAuth);
+    if (isAccountant) {
+        // Do not leave the accountant on Dashboard after login.
+        setTimeout(() => { try { switchTab('deposits'); } catch (_) {} }, 0);
+    }
 
     // Add a logout button if the existing header does not have one.
     let btn = document.getElementById('dbgFirebaseLogoutButton');
