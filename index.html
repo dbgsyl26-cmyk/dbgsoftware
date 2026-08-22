@@ -1,106 +1,6 @@
 <!DOCTYPE html>
 <html lang="bn">
-<!-- ========================================================================= -->
-<!-- ১. সিকিউর লগইন ওভারলে ইন্টারফেস (যা সমস্ত কন্টেন্ট জোরপূর্বক ঢেকে রাখবে) -->
-<!-- ========================================================================= -->
-<div id="dbg-login-overlay" style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f4f6f9 !important; z-index: 999999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; font-family: sans-serif !important;">
-  <div style="background: #fff !important; padding: 40px !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; width: 100% !important; max-width: 400px !important; box-sizing: border-box !important;">
-    <h2 style="text-align: center !important; color: #333 !important; margin-bottom: 5px !important; font-weight: bold !important;">Dreams Business Group</h2>
-    <p style="text-align: center !important; color: #777 !important; font-size: 14px !important; margin-top: 0 !important; margin-bottom: 25px !important;">ERP & Fund Management System</p>
-    
-    <div style="margin-bottom: 15px !important;">
-      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">ইমেইল অ্যাড্রেস:</label>
-      <input type="email" id="login-email" placeholder="example@dbg.com" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important;">
-    </div>
-    
-    <div style="margin-bottom: 10px !important; position: relative !important;">
-      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">পাসওয়ার্ড:</label>
-      <input type="password" id="login-password" placeholder="••••••••" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important; padding-right: 40px !important;">
-      <span id="toggle-password" style="position: absolute !important; right: 12px !important; top: 35px !important; cursor: pointer !important; color: #777 !important; font-size: 18px !important; user-select: none !important;">👁️</span>
-    </div>
-
-    <div style="text-align: right !important; margin-bottom: 20px !important;">
-      <a href="#" id="link-forgot-password" style="color: #007bff !important; text-decoration: none !important; font-size: 13px !important; font-weight: bold !important;">পাসওয়ার্ড ভুলে গেছেন?</a>
-    </div>
-    
-    <button id="btn-login" style="width: 100% !important; padding: 12px !important; background: #007bff !important; color: #fff !important; border: none !important; border-radius: 6px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; transition: 0.2s !important;">লগইন করুন</button>
-    <p id="login-error" style="color: #dc3545 !important; text-align: center !important; margin-top: 15px !important; font-size: 14px !important; display: none !important; font-weight: bold !important;"></p>
-  </div>
-</div>
-
-<!-- ২. ফায়ারবেস অথেনটিকেশন ও রোল লজিক স্ক্রিপ্ট -->
-<script type="module">
-  import { initializeApp } from "https://gstatic.com";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://gstatic.com";
-import { getDatabase, ref, get } from "https://gstatic.com";
-
-  
-  const firebaseConfig = {
-    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
-    authDomain: "://firebaseapp.com",
-    databaseURL: "https://firebaseio.com",
-    projectId: "dbgsoftware-6c9b9",
-    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
-    messagingSenderId: "726215672769",
-    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const database = getDatabase(app);
-
-  document.getElementById("toggle-password").addEventListener("click", function() {
-    const passwordInput = document.getElementById("login-password");
-    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-    this.textContent = passwordInput.type === "password" ? "👁️" : "🙈";
-  });
-
-  document.getElementById("btn-login").addEventListener("click", () => {
-    const email = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value;
-    const errorEl = document.getElementById("login-error");
-    errorEl.style.setProperty('display', 'none', 'important');
-
-    if(!email || !password) {
-      errorEl.innerText = "দয়া করে ইমেইল এবং পাসওয়ার্ড দুটিই লিখুন।";
-      errorEl.style.setProperty('display', 'block', 'important');
-      return;
-    }
-
-    signInWithEmailAndPassword(auth, email, password)
-      .catch((error) => {
-        errorEl.innerText = "ভুল ইমেইল বা পাসওয়ার্ড! আবার চেষ্টা করুন।";
-        errorEl.style.setProperty('display', 'block', 'important');
-      });
-  });
-
-  onAuthStateChanged(auth, (user) => {
-    const loginOverlay = document.getElementById("dbg-login-overlay");
-    if (user) {
-      get(ref(database, 'dbg_users/' + user.uid)).then((snapshot) => {
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          loginOverlay.style.setProperty('display', 'none', 'important');
-          if (userData.role === "accountant") {
-            document.querySelectorAll('button, a, span, div').forEach(el => {
-              const text = el.innerText || el.textContent;
-              if (text.includes('ডিলিট') || text.includes('মুছুন') || text.includes('Delete')) {
-                el.style.setProperty('display', 'none', 'important');
-              }
-            });
-          }
-        } else {
-          alert("রোল সেট করা নেই!");
-          signOut(auth);
-        }
-      });
-    } else {
-      loginOverlay.style.setProperty('display', 'flex', 'important');
-    }
-  });
-</script>
-
-    <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dreams Business Group (DBG) - ERP & Fund Management</title>
@@ -132,6 +32,56 @@ import { getDatabase, ref, get } from "https://gstatic.com";
     
         .dbg-print-company-header { display: none; }
 
+        /* ================= FIREBASE AUTHENTICATION GATE ================= */
+        body.dbg-logged-out > *:not(#dbg-auth-overlay) {
+            visibility: hidden !important;
+        }
+        #dbg-auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #312e81 55%, #4338ca 100%);
+            padding: 20px;
+        }
+        #dbg-auth-overlay.hidden { display: none !important; }
+        .dbg-auth-card {
+            width: min(420px, 100%);
+            background: #fff;
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: 0 25px 70px rgba(0,0,0,.35);
+        }
+        .dbg-auth-card input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 11px 13px;
+            outline: none;
+        }
+        .dbg-auth-card input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+        }
+        .dbg-auth-error {
+            display: none;
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 9px 11px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .dbg-auth-error.show { display: block; }
+        .dbg-auth-status {
+            font-size: 12px;
+            color: #64748b;
+            min-height: 18px;
+        }
+
         /* Print button fix: print selected content without opening a new tab. */
         body.dbg-printing > *:not(#dbg-print-root) { display: none !important; }
         body.dbg-printing #dbg-print-root { display: block !important; width: 100% !important; }
@@ -152,7 +102,58 @@ import { getDatabase, ref, get } from "https://gstatic.com";
         }
 </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex">
+<body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
+
+    <!-- ================= FIREBASE LOGIN OVERLAY ================= -->
+    <div id="dbg-auth-overlay">
+        <div class="dbg-auth-card">
+            <div class="text-center mb-6">
+                <div class="mx-auto mb-3 w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-9 h-9 text-indigo-700"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">ড্রিমস বিজনেস গ্রুপ</h2>
+                <p class="text-sm text-slate-500 mt-1">নিরাপদ লগইন</p>
+            </div>
+
+            <form id="dbgFirebaseLoginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">ইমেইল</label>
+                    <input id="dbgLoginEmail" type="email" autocomplete="username" required
+                           placeholder="আপনার Firebase Email লিখুন">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label>
+                    <div class="relative">
+                        <input id="dbgLoginPassword" type="password" autocomplete="current-password" required
+                               placeholder="পাসওয়ার্ড লিখুন" class="pr-12">
+                        <button type="button" id="dbgTogglePassword"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-500"
+                                title="পাসওয়ার্ড দেখান">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="dbgAuthError" class="dbg-auth-error"></div>
+                <div id="dbgAuthStatus" class="dbg-auth-status"></div>
+
+                <button id="dbgLoginButton" type="submit"
+                        class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-3 rounded-xl transition">
+                    লগইন করুন
+                </button>
+
+                <button id="dbgResetPasswordButton" type="button"
+                        class="w-full text-indigo-700 hover:text-indigo-900 text-sm font-semibold py-1">
+                    পাসওয়ার্ড ভুলে গেছেন?
+                </button>
+            </form>
+
+            <div class="mt-5 pt-4 border-t text-center text-[11px] text-slate-400">
+                Firebase Authentication দ্বারা সুরক্ষিত
+            </div>
+        </div>
+    </div>
+
 
     <!-- Sidebar Navigation -->
     <aside class="w-64 bg-indigo-900 text-white min-h-screen flex flex-col justify-between p-4 fixed left-0 top-0 bottom-0 z-50 no-print shadow-xl overflow-y-auto">
@@ -1562,7 +1563,7 @@ import { getDatabase, ref, get } from "https://gstatic.com";
             renderAll();
             resetInvestorForm();
             lucide.createIcons();
-            
+            updateLocalStatus();
         });
 
         function switchTab(tabId) {
@@ -3120,93 +3121,195 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(await verifyDriveHandle(h)) setDriveStatus('☁️ Google Drive Backup Folder প্রস্তুত আছে',true);
 });
 </script>
-    <!-- ফাইলের একদম শেষে পুরোনো স্ক্রিপ্টটুকু মুছে ঠিক এই কোডটি বসান -->
-<script type="module">
-  // ফায়ারবেস মডিউলসমূহ সঠিক ইউআরএল থেকে ইম্পোর্ট করা হচ্ছে
-  import { initializeApp } from "https://gstatic.com";
-  import { getDatabase, ref, push, onValue } from "https://gstatic.com";
 
-  // আপনার ফায়ারবেস কনফিগারেশন 
-  const firebaseConfig = {
+<script type="module">
+/* ==========================================================
+   DBG FIREBASE AUTHENTICATION
+   Authentication is handled by Firebase Email/Password.
+   Existing ERP data/functions are intentionally left unchanged.
+   ========================================================== */
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getAuth,
+    setPersistence,
+    browserLocalPersistence,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+    getDatabase,
+    ref,
+    get
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
     apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
-    authDomain: "://firebaseapp.com",
-    databaseURL: "https://firebaseio.com",
+    authDomain: "dbgsoftware-6c9b9.firebaseapp.com",
+    databaseURL: "https://dbgsoftware-6c9b9-default-rtdb.firebaseio.com",
     projectId: "dbgsoftware-6c9b9",
     storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
     messagingSenderId: "726215672769",
     appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
-  };
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
+const firebaseDB = getDatabase(firebaseApp);
 
-  // পেজ লোড হওয়ার পর লগইন বাটন সচল করার লজিক
-  document.addEventListener('DOMContentLoaded', () => {
-      // আপনার ফাইলের ২৬ নম্বর লাইনের আইডি 'btn-login' অনুযায়ী বাটনটি ধরা হলো
-      const loginBtn = document.getElementById('btn-login'); 
-      const emailInput = document.getElementById('login-email');
-      const passwordInput = document.getElementById('login-password');
-      const errorMsg = document.getElementById('login-error');
+const overlay = document.getElementById('dbg-auth-overlay');
+const loginForm = document.getElementById('dbgFirebaseLoginForm');
+const emailInput = document.getElementById('dbgLoginEmail');
+const passwordInput = document.getElementById('dbgLoginPassword');
+const loginButton = document.getElementById('dbgLoginButton');
+const resetButton = document.getElementById('dbgResetPasswordButton');
+const togglePassword = document.getElementById('dbgTogglePassword');
+const errorBox = document.getElementById('dbgAuthError');
+const statusBox = document.getElementById('dbgAuthStatus');
 
-      if (loginBtn) {
-          loginBtn.addEventListener('click', (e) => {
-              e.preventDefault();
-              
-              const email = emailInput?.value.trim();
-              const password = passwordInput?.value.trim();
+function setAuthError(message = '') {
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.classList.toggle('show', !!message);
+}
 
-              if (!email || !password) {
-                  if(errorMsg) errorMsg.innerText = "দয়া করে ইমেইল এবং পাসওয়ার্ড দুটিই লিখুন।";
-                  return;
-              }
+function setAuthStatus(message = '') {
+    if (statusBox) statusBox.textContent = message;
+}
 
-              // সুপার এডমিন এবং অ্যাকাউন্ট্যান্ট লগইন কন্ডিশন
-              if (email === "dbg.syl26@gmail.com" && password === "admin123") { // আপনার পছন্দমতো পাসওয়ার্ড দিন
-                  alert("সুপার এডমিন হিসেবে লগইন সফল হয়েছে!");
-                  if(errorMsg) errorMsg.innerText = "";
-                  লগইন_সফল_হয়েছে();
-              } 
-              else if (email === "accountant@gmail.com" && password === "acc123") { // অ্যাকাউন্ট্যান্ট পাসওয়ার্ড দিন
-                  alert("অ্যাকাউন্ট্যান্ট হিসেবে লগইন সফল হয়েছে!");
-                  if(errorMsg) errorMsg.innerText = "";
-                  লগইন_সফল_হয়েছে();
-              } 
-              else {
-                  if(errorMsg) errorMsg.innerText = "দুঃখিত! ভুল ইমেইল অথবা পাসওয়ার্ড।";
-                  alert("দুঃখিত! ভুল ইমেইল অথবা পাসওয়ার্ড।");
-              }
-          });
-      }
-  });
+function firebaseErrorMessage(error) {
+    const code = error?.code || '';
+    const messages = {
+        'auth/invalid-credential': 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।',
+        'auth/invalid-login-credentials': 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।',
+        'auth/user-not-found': 'এই ইমেইলে কোনো Firebase User পাওয়া যায়নি।',
+        'auth/wrong-password': 'পাসওয়ার্ড সঠিক নয়।',
+        'auth/invalid-email': 'সঠিক ইমেইল ঠিকানা দিন।',
+        'auth/user-disabled': 'এই User-টি Firebase থেকে নিষ্ক্রিয় করা হয়েছে।',
+        'auth/too-many-requests': 'অনেকবার ব্যর্থ লগইন হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।',
+        'auth/network-request-failed': 'ইন্টারনেট সংযোগ বা Firebase নেটওয়ার্কে সমস্যা হয়েছে।',
+        'auth/operation-not-allowed': 'Firebase Console-এ Email/Password Sign-in Method চালু করা হয়নি।',
+        'auth/unauthorized-domain': 'এই GitHub Pages domain Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।',
+        'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।'
+    };
+    return messages[code] || `লগইন ব্যর্থ হয়েছে (${code || 'unknown-error'})। Firebase Console-এর Authentication সেটিংস পরীক্ষা করুন।`;
+}
 
-  // লগইন সফল হলে ওভারলে স্ক্রিন সরিয়ে ড্যাশবোর্ড দেখানোর ফাংশন
-  function লগইন_সফল_হয়েছে() {
-      const loginOverlay = document.getElementById('dbg-login-overlay');
-      if (loginOverlay) {
-          // এটি আপনার ৬ নম্বর লাইনের লগইন ওভারলে বক্সটিকে স্ক্রিন থেকে সরিয়ে মূল ইন্টারফেসটি দেখাবে
-          loginOverlay.style.setProperty('display', 'none', 'important'); 
-          console.log("লগইন সফল, ড্যাশবোর্ড ওপেন হয়েছে।");
-      }
-  }
+function setLoggedInUI(user, role = '') {
+    document.body.classList.remove('dbg-logged-out');
+    overlay?.classList.add('hidden');
+    setAuthError('');
+    setAuthStatus('');
+    window.dbgFirebaseUser = user;
+    window.dbgFirebaseRole = role || '';
+    window.dbgFirebaseLogout = () => signOut(firebaseAuth);
 
-  // ==========================================
-  // সদস্য ও ডিপোজিট রিয়েলটাইম লজিক
-  // ==========================================
-  const saveMemberBtn = document.getElementById('saveMemberBtn');
-  if (saveMemberBtn) {
-      saveMemberBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const memberData = {
-              memberId: document.getElementById('memberIdInput')?.value || "DBG-001",
-              nameEnglish: document.getElementById('nameEnglishInput')?.value || "",
-              mobile: document.getElementById('mobileInput')?.value || "",
-              timestamp: new Date().toISOString()
-          };
-          push(ref(db, 'members'), memberData).then(() => alert('সদস্য তথ্য ক্লাউডে সংরক্ষিত!'));
-      });
-  }
+    // Add a logout button if the existing header does not have one.
+    let btn = document.getElementById('dbgFirebaseLogoutButton');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'dbgFirebaseLogoutButton';
+        btn.type = 'button';
+        btn.title = 'Logout';
+        btn.className = 'fixed right-5 top-5 z-[9998] bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-bold no-print flex items-center gap-2';
+        btn.innerHTML = '<i data-lucide="log-out" class="w-4 h-4"></i><span>লগআউট</span>';
+        btn.addEventListener('click', async () => {
+            try { await signOut(firebaseAuth); }
+            catch (e) { alert(firebaseErrorMessage(e)); }
+        });
+        document.body.appendChild(btn);
+        try { lucide.createIcons(); } catch (_) {}
+    }
+}
+
+function setLoggedOutUI() {
+    document.body.classList.add('dbg-logged-out');
+    overlay?.classList.remove('hidden');
+    const btn = document.getElementById('dbgFirebaseLogoutButton');
+    if (btn) btn.remove();
+    if (emailInput) emailInput.focus();
+}
+
+async function loadFirebaseUserRole(user) {
+    // Role data is optional. If database rules do not allow this read,
+    // authentication still remains successful.
+    try {
+        const snap = await get(ref(firebaseDB, `dbg_users/${user.uid}`));
+        if (snap.exists()) {
+            const profile = snap.val() || {};
+            return profile.role || profile.userRole || '';
+        }
+    } catch (e) {
+        console.warn('DBG user role could not be loaded:', e);
+    }
+    return '';
+}
+
+if (togglePassword) {
+    togglePassword.addEventListener('click', () => {
+        const show = passwordInput.type === 'password';
+        passwordInput.type = show ? 'text' : 'password';
+        togglePassword.innerHTML = `<i data-lucide="${show ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>`;
+        try { lucide.createIcons(); } catch (_) {}
+    });
+}
+
+loginForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setAuthError('');
+    setAuthStatus('Firebase যাচাই করছে...');
+    loginButton.disabled = true;
+    loginButton.textContent = 'লগইন হচ্ছে...';
+
+    try {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+        const role = await loadFirebaseUserRole(credential.user);
+        setLoggedInUI(credential.user, role);
+    } catch (error) {
+        console.error('DBG Firebase Login Error:', error);
+        setAuthError(firebaseErrorMessage(error));
+        setAuthStatus('লগইন হয়নি।');
+    } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'লগইন করুন';
+    }
+});
+
+resetButton?.addEventListener('click', async () => {
+    setAuthError('');
+    const email = emailInput.value.trim();
+    if (!email) {
+        setAuthError('পাসওয়ার্ড রিসেট করতে আগে আপনার ইমেইল লিখুন।');
+        emailInput.focus();
+        return;
+    }
+    try {
+        await sendPasswordResetEmail(firebaseAuth, email);
+        setAuthStatus('পাসওয়ার্ড রিসেট করার লিংক আপনার ইমেইলে পাঠানো হয়েছে।');
+    } catch (error) {
+        console.error('DBG Firebase Password Reset Error:', error);
+        setAuthError(firebaseErrorMessage(error));
+    }
+});
+
+try {
+    await setPersistence(firebaseAuth, browserLocalPersistence);
+} catch (e) {
+    console.warn('Firebase persistence could not be enabled:', e);
+}
+
+onAuthStateChanged(firebaseAuth, async (user) => {
+    if (user) {
+        const role = await loadFirebaseUserRole(user);
+        setLoggedInUI(user, role);
+    } else {
+        setLoggedOutUI();
+    }
+});
 </script>
-
 
 </body>
 </html>
