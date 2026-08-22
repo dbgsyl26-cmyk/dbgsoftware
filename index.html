@@ -3312,11 +3312,12 @@ async function writeFirebaseDataNow() {
         const isAccountant = ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(role);
         if (isAccountant) {
             // Accountant is allowed to write ONLY Deposit Collection and Income/Expense.
-            await update(dataRef, {
-                deposits: Array.isArray(db.deposits) ? db.deposits : [],
-                accounts: Array.isArray(db.accounts) ? db.accounts : [],
-                updatedAt: Date.now()
-            });
+            // IMPORTANT: write directly to the two child paths. The Firebase Rules
+            // intentionally deny Accountant writes to /dbg_erp itself.
+            await Promise.all([
+                set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []),
+                set(ref(firebaseDB, 'dbg_erp/accounts'), Array.isArray(db.accounts) ? db.accounts : [])
+            ]);
         } else {
             // Admin can synchronize all ERP collections.
             await update(dataRef, buildFirebasePayload());
@@ -3366,32 +3367,63 @@ async function applyFirebasePayload(payload) {
 }
 
 async function initializeFirebaseERPData(role) {
-    const normalizedRole = String(role || '').trim().toLowerCase();
-    const isAdmin = ['admin','superadmin','super admin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(normalizedRole);
-    const dataRef = ref(firebaseDB, 'dbg_erp');
+    const normalizedRole = normalizeRole(role);
+    clearRealtimeListeners();
+    dbgFirebaseSyncReady = false;
 
     try {
-        const snap = await get(dataRef);
-        if (!snap.exists()) {
-            // Only an administrator may perform the first migration from this browser's
-            // existing LocalStorage/IndexedDB data into Firebase.
-            if (isAdmin) {
-                await set(dataRef, buildFirebasePayload());
-            } else {
-                setAuthStatus('Firebase ডেটা এখনও সেটআপ হয়নি। Admin প্রথমবার সফটওয়্যার খুলে ডেটা Sync করুন।');
-                return false;
-            }
+        if (isAccountantRole(normalizedRole)) {
+            // Accountant cannot read /dbg_erp parent because the Rules deny it.
+            // Listen separately to the two permitted child branches.
+            const depositsRef = ref(firebaseDB, 'dbg_erp/deposits');
+            const accountsRef = ref(firebaseDB, 'dbg_erp/accounts');
+
+            const depositsUnsub = onValue(depositsRef, async snapshot => {
+                if (!snapshot.exists()) return;
+                await applyFirebasePayload({ deposits: snapshot.val() }, { accountantOnly: true });
+            }, error => {
+                console.error('DBG deposits realtime listener failed:', error);
+                setAuthStatus('ডিপোজিট Firebase থেকে পড়া যাচ্ছে না।');
+            });
+
+            const accountsUnsub = onValue(accountsRef, async snapshot => {
+                if (!snapshot.exists()) return;
+                await applyFirebasePayload({ accounts: snapshot.val() }, { accountantOnly: true });
+            }, error => {
+                console.error('DBG accounts realtime listener failed:', error);
+                setAuthStatus('আয়-ব্যয় Firebase থেকে পড়া যাচ্ছে না।');
+            });
+
+            dbgFirebaseAccountantUnsubs = [depositsUnsub, accountsUnsub];
+            dbgFirebaseSyncReady = true;
+            setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয়');
+            return true;
         }
 
-        if (dbgFirebaseUnsubscribe) dbgFirebaseUnsubscribe();
-        dbgFirebaseUnsubscribe = onValue(dataRef, async (snapshot) => {
-            if (snapshot.exists()) await applyFirebasePayload(snapshot.val());
-        }, (error) => {
-            console.error('DBG Firebase realtime listener failed:', error);
-            setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে। Local data ব্যবহার করা হচ্ছে।');
-        });
-        dbgFirebaseSyncReady = true;
-        return true;
+        if (isAdminRole(normalizedRole)) {
+            const dataRef = ref(firebaseDB, 'dbg_erp');
+            const snap = await get(dataRef);
+
+            if (!snap.exists()) {
+                // First migration: only Admin/Super Admin may create the ERP root.
+                await set(dataRef, buildFirebasePayload());
+            }
+
+            dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
+                if (snapshot.exists()) await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
+            }, error => {
+                console.error('DBG Firebase realtime listener failed:', error);
+                setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
+            });
+
+            dbgFirebaseSyncReady = true;
+            setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয়');
+            return true;
+        }
+
+        // Unknown/empty role: authenticated but no ERP data access.
+        setAuthStatus('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
+        return false;
     } catch (e) {
         console.error('DBG Firebase ERP initialization failed:', e);
         setAuthStatus('Firebase Database সংযোগ করা যায়নি।');
