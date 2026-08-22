@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dreams Business Group (DBG) - ERP & Fund Management</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts -->
-    <link href="https://googleapis.com" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Hind Siliguri', sans-serif;
@@ -29,7 +29,10 @@
             tr { page-break-inside: avoid !important; }
             button, input, select, textarea { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
+    
         .dbg-print-company-header { display: none; }
+
+        /* Print button fix: print selected content without opening a new tab. */
         body.dbg-printing > *:not(#dbg-print-root) { display: none !important; }
         body.dbg-printing #dbg-print-root { display: block !important; width: 100% !important; }
         @media print {
@@ -38,42 +41,32 @@
             body.dbg-printing #dbg-print-root .no-print { display: none !important; }
             body.dbg-printing #dbg-print-root table { width: 100% !important; border-collapse: collapse !important; }
             body.dbg-printing #dbg-print-root .dbg-print-company-header { display: block !important; text-align: center !important; margin: 0 0 18px 0 !important; padding: 0 0 10px 0 !important; border-bottom: 1px solid #000 !important; }
+            body.dbg-printing #dbg-print-root .dbg-print-company-header h1 { margin: 0 !important; font-size: 24px !important; font-weight: 700 !important; color: #000 !important; }
+            body.dbg-printing #dbg-print-root .dbg-print-company-header p { margin: 2px 0 0 0 !important; font-size: 14px !important; font-weight: 600 !important; color: #333 !important; }
+            /* Print layout: summary/dashboard cards appear two per row without changing any data. */
+            body.dbg-printing #dbg-print-root .grid, body.dbg-printing #dbg-print-root .dbg-print-two-col-cards { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            /* Member profile: personal information on the left, address + nominee on the right. */
+            body.dbg-printing #dbg-print-root #profileContainer .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            body.dbg-printing #dbg-print-root th,
+            body.dbg-printing #dbg-print-root td { border: 1px solid #888 !important; padding: 5px 7px !important; }
         }
-    </style>
+</style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex">
-
-    <!-- ১. সিকিউর লগইন ওভারলে ইন্টারফেস (যা ডাটাবেস ভেরিফিকেশন ছাড়া মূল পেজ সম্পূর্ণ ঢেকে রাখবে) -->
-    <div id="dbg-login-overlay" style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f4f6f9 !important; z-index: 999999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; font-family: sans-serif !important;">
-      <div style="background: #fff !important; padding: 40px !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; width: 100% !important; max-width: 400px !important; box-sizing: border-box !important;">
-        <h2 style="text-align: center !important; color: #333 !important; margin-bottom: 5px !important; font-weight: bold !important;">Dreams Business Group</h2>
-        <p style="text-align: center !important; color: #777 !important; font-size: 14px !important; margin-top: 0 !important; margin-bottom: 25px !important;">ERP & Fund Management System</p>
-        <div style="margin-bottom: 15px !important;">
-          <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">ইমেইল অ্যাড্রেস:</label>
-          <input type="email" id="login-email" placeholder="example@dbg.com" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important;">
-        </div>
-        <div style="margin-bottom: 10px !important; position: relative !important;">
-          <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">পাসওয়ার্ড:</label>
-          <input type="password" id="login-password" placeholder="••••••••" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important; padding-right: 40px !important;">
-          <span id="toggle-password" style="position: absolute !important; right: 12px !important; top: 35px !important; cursor: pointer !important; color: #777 !important; font-size: 18px !important; user-select: none !important;">👁️</span>
-        </div>
-        <div style="text-align: right !important; margin-bottom: 20px !important;">
-          <a href="#" id="link-forgot-password" style="color: #007bff !important; text-decoration: none !important; font-size: 13px !important; font-weight: bold !important;">পাসওয়ার্ড ভুলে গেছেন?</a>
-        </div>
-        <button id="btn-login" style="width: 100% !important; padding: 12px !important; background: #007bff !important; color: #fff !important; border: none !important; border-radius: 6px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; transition: 0.2s !important;">লগইন করুন</button>
-        <p id="login-error" style="color: #dc3545 !important; text-align: center !important; margin-top: 15px !important; font-size: 14px !important; display: none !important; font-weight: bold !important;"></p>
-      </div>
-    </div>
 
     <!-- Sidebar Navigation -->
     <aside class="w-64 bg-indigo-900 text-white min-h-screen flex flex-col justify-between p-4 fixed left-0 top-0 bottom-0 z-50 no-print shadow-xl overflow-y-auto">
         <div>
             <!-- Group Logo & Header -->
-            <div class="flex items-center space-x-3 border-b border-indigo-800 pb-4 mb-6">
+            <div class="flex items-center space-x-3 space-x-reverse border-b border-indigo-800 pb-4 mb-6">
                 <div class="relative group cursor-pointer flex-shrink-0">
                     <label for="logoUpload" class="cursor-pointer block">
-                        <img id="groupLogoImg" src="https://placeholder.com" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
+                        <img id="groupLogoImg" src="https://via.placeholder.com/50?text=DBG" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
+                        <div class="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i data-lucide="camera" class="w-4 h-4 text-white"></i>
+                        </div>
                     </label>
+                    <input type="file" id="logoUpload" accept="image/*" onchange="uploadGroupLogo(this)" class="hidden">
                 </div>
                 <div>
                     <h1 class="text-lg font-bold tracking-wide leading-tight">ড্রিমস বিজনেস গ্রুপ</h1>
@@ -83,38 +76,3042 @@
 
             <!-- Navigation Links -->
             <nav class="space-y-1.5">
-                <button class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-white bg-indigo-800 transition"><i data-lucide="layout-dashboard" class="w-5 h-5"></i> ড্যাশবোর্ড</button>
-                <button class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition"><i data-lucide="users" class="w-5 h-5"></i> সদস্য তালিকা</button>
-                <button class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition"><i data-lucide="wallet" class="w-5 h-5"></i> ডিপোজিট কালেকশন</button>
-                <button class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition"><i data-lucide="receipt-text" class="w-5 h-5"></i> আয়-ব্যয় হিসাব</button>
-                <!-- লগআউট বাটন -->
-                <button onclick="logoutUser()" class="w-full flex items-center gap-3 px-4 py-3 mt-8 rounded-xl font-medium bg-red-600/80 hover:bg-red-700 text-white transition"><i data-lucide="log-out" class="w-5 h-5"></i> লগআউট</button>
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-white bg-indigo-800 transition">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> ড্যাশবোর্ড
+                </button>
+                <button onclick="switchTab('members')" id="tab-members" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="users" class="w-5 h-5"></i> সদস্য তালিকা
+                </button>
+                <button onclick="switchTab('profile')" id="tab-profile" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="user-check" class="w-5 h-5"></i> সদস্য প্রোফাইল
+                </button>
+                <button onclick="switchTab('investor-profile')" id="tab-investor-profile" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i> ইনভেস্টর প্রোফাইল
+                </button>
+                <button onclick="switchTab('deposits')" id="tab-deposits" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="wallet" class="w-5 h-5"></i> ডিপোজিট কালেকশন
+                </button>
+                <button onclick="switchTab('summary')" id="tab-summary" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i> মাস ভিত্তিক সামারি
+                </button>
+                <button onclick="switchTab('investments')" id="tab-investments" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i> ইনভেস্টমেন্ট ও লভ্যাংশ
+                </button>
+                <button onclick="switchTab('accounts')" id="tab-accounts" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="receipt-text" class="w-5 h-5"></i> আয়-ব্যয় হিসাব
+                </button>
             </nav>
         </div>
 
-        <!-- Google Drive Desktop Backup (Accountant লগইন করলে অটো হাইড হবে) -->
-        <div id="drive-backup-section" class="border-t border-indigo-800 pt-4 space-y-2">
+        <!-- Google Drive Desktop Backup -->
+        <div class="border-t border-indigo-800 pt-4 space-y-2">
             <div class="text-[10px] font-semibold text-sky-200 text-center">☁️ Google Drive Backup</div>
-            <button class="w-full bg-blue-600 text-xs py-2 px-3 rounded-lg text-white font-medium hover:bg-blue-700 transition">Drive Backup</button>
+            <button onclick="selectDBGDriveFolder()" class="w-full bg-blue-700 hover:bg-blue-600 text-xs text-white py-2 rounded-lg flex items-center justify-center gap-2 border border-blue-600 transition">
+                <i data-lucide="folder-cog" class="w-4 h-4"></i> Drive Backup Folder নির্বাচন
+            </button>
+            <button onclick="createAndSaveDriveBackup()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-xs text-white py-2 rounded-lg flex items-center justify-center gap-2 border border-emerald-600 transition">
+                <i data-lucide="cloud-upload" class="w-4 h-4"></i> Google Drive Backup
+            </button>
+            <button onclick="restoreFromDriveBackup()" class="w-full bg-amber-700 hover:bg-amber-600 text-xs text-white py-2 rounded-lg flex items-center justify-center gap-2 border border-amber-600 transition">
+                <i data-lucide="cloud-download" class="w-4 h-4"></i> Google Drive Restore
+            </button>
+            <button onclick="openGoogleDrive()" class="w-full bg-slate-700 hover:bg-slate-600 text-xs text-white py-2 rounded-lg flex items-center justify-center gap-2 border border-slate-600 transition">
+                <i data-lucide="external-link" class="w-4 h-4"></i> Google Drive খুলুন
+            </button>
+            <div id="driveStatus" class="text-[9px] text-sky-200 text-center leading-relaxed px-1">☁️ প্রথমবার Google Drive-এর Sync Folder নির্বাচন করুন</div>
+            <div class="text-[9px] text-indigo-300 text-center leading-relaxed px-1">Google Drive for desktop-এর My Drive-এর ভিতরে একটি DBG Secure Backups folder নির্বাচন করুন। এরপর Backup চাপলে ফাইলটি সরাসরি সেই folder-এ সেভ হবে এবং Drive নিজে থেকে Cloud-এ Sync করবে।</div>
         </div>
+
     </aside>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 main-content ml-64 p-8 overflow-x-hidden min-h-screen">
-        <!-- ড্যাশবোর্ড কাউন্টার কার্ডসমূহ -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm font-semibold text-slate-500">মোট সদস্য সংখ্যা</p>
-                <h3 id="total-members-count" class="text-3xl font-bold text-slate-800 mt-2">0 জন</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <p class="text-sm font-semibold text-slate-500">সর্বমোট মূল ডিপোজিট ফান্ড</p>
-                <h3 id="total-fund-display" class="text-3xl font-bold text-indigo-600 mt-2">৳ 0</h3>
-            </div>
+    <!-- Main Content Area -->
+    <main class="main-content flex-grow ml-64 p-6 overflow-y-auto">
+
+        <!-- PRINT HEADER -->
+        <div class="hidden print-only mb-6 text-center border-b pb-4">
+            <h1 class="text-2xl font-bold text-indigo-900">ড্রিমস বিজনেস গ্রুপ (DBG)</h1>
+            <p class="text-sm text-gray-600">অফিসিয়াল ফান্ড স্টেটমেন্ট ও ইনভেন্টরি রিপোর্ট</p>
+            <p class="text-xs text-gray-500 mt-1">তারিখ: <span id="printDate"></span></p>
         </div>
 
-        <!-- নতুন সদস্য ফরম -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">새 নতুন সদস্য যোগ করুন</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" id="member-id" placeholder="সদস্য নম্বর (যেমন: DBG-001)" class="border p-2.5 rounded-xl w-full">
+        <!-- ================= 1. DASHBOARD VIEW ================= -->
+        <section id="view-dashboard" class="tab-content block space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap justify-between items-center gap-4 no-print">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="calendar" class="text-indigo-600 w-5 h-5"></i>
+                    <span class="font-semibold text-gray-700">মাসিক ফিল্টার:</span>
+                    <input type="month" id="dashboardMonth" onchange="renderDashboard()" class="border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button onclick="printReport()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> ড্যাশবোর্ড প্রিন্ট করুন
+                </button>
+            </div>
+
+            <!-- Basic Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 dbg-print-two-col-cards">
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">মোট সদস্য সংখ্যা</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-1"><span id="dashTotalMembers">0</span> জন</h3>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-full text-indigo-600">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-cyan-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">মোট ডিপোজিট সংখ্যা</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-1"><span id="dashTotalUnits">0</span> টি</h3>
+                        <p class="text-xs text-cyan-600 mt-1">টাকায়: ৳<span id="dashMonthlyDemand">0</span>/মাস</p>
+                    </div>
+                    <div class="bg-cyan-50 p-3 rounded-full text-cyan-600">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">পরিশোধিত সদস্য (চলতি মাস)</p>
+                        <h3 class="text-2xl font-bold text-emerald-600 mt-1"><span id="dashPaidMembers">0</span> জন</h3>
+                        <p class="text-xs text-emerald-600 mt-1">আদায়: ৳<span id="dashCurrentMonthCollected">0</span></p>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-full text-emerald-600">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-rose-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">বকেয়া সদস্য (চলতি মাস)</p>
+                        <h3 class="text-2xl font-bold text-rose-600 mt-1"><span id="dashDueMembers">0</span> জন</h3>
+                        <p class="text-xs text-rose-600 mt-1">বকেয়া: ৳<span id="dashCurrentMonthDue">0</span></p>
+                    </div>
+                    <div class="bg-rose-50 p-3 rounded-full text-rose-600">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- NEW EXPENSE FUND CARDS (৩টি নতুন কার্ড) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 dbg-print-two-col-cards">
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-purple-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">১. খরচ তহবিলে জমা</p>
+                        <h3 class="text-2xl font-bold text-purple-700 mt-1">৳<span id="dashExpenseFundCollected">0</span></h3>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-full text-purple-600">
+                        <i data-lucide="piggy-bank" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-rose-600 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">২. মোট খরচ</p>
+                        <h3 class="text-2xl font-bold text-rose-700 mt-1">৳<span id="dashTotalExpenseSpent">0</span></h3>
+                    </div>
+                    <div class="bg-rose-50 p-3 rounded-full text-rose-600">
+                        <i data-lucide="credit-card" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase">৩. খরচ তহবিলে অবশিষ্ট</p>
+                        <h3 class="text-2xl font-bold text-amber-600 mt-1">৳<span id="dashExpenseFundRemaining">0</span></h3>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-full text-amber-600">
+                        <i data-lucide="coins" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Balance Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 dbg-print-two-col-cards">
+                <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-indigo-200 uppercase">সর্বমোট মূল ডিপোজিট ফান্ড</p>
+                    <h2 class="text-3xl font-extrabold mt-2">৳<span id="dashTotalFund">0</span></h2>
+                </div>
+                <div class="bg-gradient-to-br from-orange-700 to-orange-600 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-orange-100 uppercase">মোট বকেয়া</p>
+                    <h2 class="text-3xl font-extrabold mt-2">৳<span id="dashTotalDue">0</span></h2>
+                    <p class="text-xs text-orange-100 mt-2">নির্বাচিত মাস</p>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-800 to-emerald-700 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-emerald-200 uppercase">বিনিয়োগকৃত মূলধন</p>
+                    <h2 class="text-3xl font-extrabold mt-2">৳<span id="dashTotalInvested">0</span></h2>
+                    <p class="text-xs text-emerald-200 mt-2">মোট অর্জিত লভ্যাংশ: ৳<span id="dashTotalProfit">0</span></p>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-700 to-emerald-600 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-emerald-100 uppercase">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</p>
+                    <h2 class="text-3xl font-extrabold mt-2">৳<span id="dashDreamProsperity">0</span></h2>
+                </div>
+                <div class="bg-gradient-to-br from-amber-700 to-amber-600 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-amber-100 uppercase">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</p>
+                    <h2 class="text-3xl font-extrabold mt-2">৳<span id="dashDreamDevelopment">0</span></h2>
+                </div>
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 rounded-xl shadow-md">
+                    <p class="text-xs font-medium text-slate-300 uppercase">বর্তমান ক্যাশ ব্যালেন্স</p>
+                    <h2 class="text-3xl font-extrabold mt-2 text-amber-400">৳<span id="dashNetBalance">0</span></h2>
+                </div>
+            </div>
+
+            <!-- Quick Lists -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-5 h-5 text-rose-500"></i> চলতি মাসের বকেয়া সদস্য তালিকা
+                        </h3>
+                        <span class="text-xs bg-rose-100 text-rose-700 font-bold px-2.5 py-1 rounded-full"><span id="dueBadge">0</span> জন</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 text-xs uppercase sticky top-0">
+                                <tr>
+                                    <th class="p-2">আইডি</th>
+                                    <th class="p-2">নাম</th>
+                                    <th class="p-2">ডিপোজিট</th>
+                                    <th class="p-2 text-right">বকেয়া টাকা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashDueTableBody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="history" class="w-5 h-5 text-emerald-500"></i> সাম্প্রতিক জমা সমুহ
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 text-xs uppercase sticky top-0">
+                                <tr>
+                                    <th class="p-2">তারিখ</th>
+                                    <th class="p-2">সদস্য</th>
+                                    <th class="p-2">মূল জমা</th>
+                                    <th class="p-2 text-right">খরচ জমা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashRecentDepositsBody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. MEMBERS VIEW ================= -->
+        <section id="view-members" class="tab-content hidden space-y-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 no-print">
+                <div class="relative flex-grow max-w-md">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400 absolute left-3 top-2.5"></i>
+                    <input type="text" id="memberSearch" onkeyup="renderMembers()" placeholder="সদস্য নম্বর বা নাম দিয়ে খুঁজুন..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openMemberModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2 text-sm">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> নতুন সদস্য যোগ করুন
+                    </button>
+                    <button onclick="printReport()" class="bg-slate-700 text-white px-3 py-2 rounded-lg font-medium hover:bg-slate-600 transition flex items-center gap-1 text-sm">
+                        <i data-lucide="printer" class="w-4 h-4"></i> তালিকা প্রিন্ট
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-indigo-50 text-indigo-900 font-bold border-b">
+                            <tr>
+                                <th class="p-3">ছবি</th>
+                                <th class="p-3">আইডি</th>
+                                <th class="p-3">সদস্যের নাম (বাংলা ও English)</th>
+                                <th class="p-3">মোবাইল (WhatsApp)</th>
+                                <th class="p-3">ডিপোজিট সংখ্যা</th>
+                                <th class="p-3">মাসিক দেয় টাকা</th>
+                                <th class="p-3 text-center no-print">অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 3. MEMBER PROFILE VIEW ================= -->
+        <section id="view-profile" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-wrap justify-between items-center gap-4 no-print">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <i data-lucide="user-search" class="w-5 h-5 text-indigo-600"></i>
+                    <span class="font-bold text-gray-700 text-sm">সদস্য সিলেক্ট করুন:</span>
+                    <select id="profileSelect" onchange="renderIndividualProfile()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-medium">
+                    </select>
+                </div>
+                <button onclick="printReport()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2 text-sm">
+                    <i data-lucide="printer" class="w-4 h-4"></i> প্রোফাইল প্রিন্ট করুন
+                </button>
+            </div>
+
+            <div id="profileContainer" class="space-y-6"></div>
+        </section>
+
+        <!-- ================= 4. DEPOSITS VIEW ================= -->
+        <section id="view-deposits" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
+                    <h3 class="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-600"></i> নতুন ডিপোজিট জমা এন্ট্রি
+                    </h3>
+                    <form id="depositForm" onsubmit="saveDeposit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">সদস্য নির্বাচন করুন *</label>
+                            <select id="depMemberSelect" onchange="calculateDepAmount()" required class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                <option value="">সদস্য সিলেক্ট করুন</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ডিপোজিটের ধরণ/স্কিম *</label>
+                            <select id="depScheme" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                <option value="মাসিক">মাসিক সাধারণ ডিপোজিট</option>
+                                <option value="অর্ধ-বার্ষিক">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</option>
+                                <option value="বার্ষিক">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">জমার মাস *</label>
+                                <select id="depMonthSelect" required class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                    <option value="01">জানুয়ারি</option>
+                                    <option value="02">ফেব্রুয়ারি</option>
+                                    <option value="03">মার্চ</option>
+                                    <option value="04">এপ্রিল</option>
+                                    <option value="05">মে</option>
+                                    <option value="06">জুন</option>
+                                    <option value="07">জুলাই</option>
+                                    <option value="08">আগস্ট</option>
+                                    <option value="09">সেপ্টেম্বর</option>
+                                    <option value="10">অক্টোবর</option>
+                                    <option value="11">নভেম্বর</option>
+                                    <option value="12">ডিসেম্বর</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">জমার বছর *</label>
+                                <select id="depYearSelect" required class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">জমার তারিখ (দিন-মাস-বছর) *</label>
+                            <input type="text" id="depDate" required inputmode="numeric" autocomplete="off" placeholder="DD-MM-YYYY" maxlength="10" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">মূল ডিপোজিট (৳)</label>
+                                <input type="number" id="depAmount" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2 text-sm font-bold text-indigo-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-purple-700 mb-1"> খরচ বাবদ জমা (৳)</label>
+                                <input type="number" id="depExpenseAmount" value="0" min="0" class="w-full border border-purple-300 rounded-lg p-2 text-sm font-bold text-purple-700 focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-emerald-700 mb-1">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক) (৳)</label>
+                                <input type="number" id="depDreamProsperityAmount" value="0" min="0" class="w-full border border-emerald-300 rounded-lg p-2 text-sm font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-amber-700 mb-1">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক) (৳)</label>
+                                <input type="number" id="depDreamDevelopmentAmount" value="0" min="0" class="w-full border border-amber-300 rounded-lg p-2 text-sm font-bold text-amber-700 focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">পেমেন্ট মেথড</label>
+                            <select id="depMethod" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                                <option value="ক্যাশ">ক্যাশ (নগদ)</option>
+                                <option value="বিকাশ">বিকাশ</option>
+                                <option value="নগদ">নগদ</option>
+                                <option value="ব্যাংক">ব্যাংক ট্রান্সফার</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700 transition flex justify-center items-center gap-2">
+                            <i data-lucide="check" class="w-4 h-4"></i> জমার রসিদ সেভ ও SMS পাঠান
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-3">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="list-ordered" class="w-5 h-5 text-indigo-600"></i> ডিপোজিট কালেকশন শীট ও ইতিহাস
+                        </h3>
+                        <div class="flex items-center gap-2 no-print">
+                            <select id="filterDepMember" onchange="renderDeposits()" class="border border-gray-300 rounded-lg px-2 py-1 text-xs">
+                                <option value="ALL">সকল সদস্য</option>
+                            </select>
+                            <button onclick="printReport()" class="bg-slate-700 text-white px-2.5 py-1 rounded text-xs hover:bg-slate-600">প্রিন্ট</button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 text-xs uppercase sticky top-0">
+                                <tr>
+                                    <th class="p-2.5">তারিখ (DD-MM-YY)</th>
+                                    <th class="p-2.5">আইডি ও নাম</th>
+                                    <th class="p-2.5">মাস/স্কিম</th>
+                                    <th class="p-2.5 text-right">মূল ডিপোজিট</th>
+                                    <th class="p-2.5 text-right text-purple-700">খরচ জমা</th>
+                                    <th class="p-2.5 text-right text-emerald-700">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
+                                    <th class="p-2.5 text-right text-amber-700">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
+                                    <th class="p-2.5 text-center no-print">রসিদ / SMS / ডিলিট</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositsTableBody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 5. MONTHLY SUMMARY VIEW ================= -->
+        <section id="view-summary" class="tab-content hidden space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 no-print">
+                <div class="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-indigo-950 text-lg">মাস ভিত্তিক সদস্য ডিপোজিট সামারি</h3>
+                        <p class="text-xs text-gray-500 mt-1">একটি নির্দিষ্ট মাস ও বছর নির্বাচন করলে ঐ সময়ের সকল সদস্যের জমার তথ্য দেখাবে।</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">বছর</label>
+                            <select id="summaryYear" onchange="renderMonthlySummary()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-bold">
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">মাস</label>
+                            <select id="summaryMonthFilter" onchange="renderMonthlySummary()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-bold">
+                                <option value="01">জানুয়ারি</option>
+                                <option value="02">ফেব্রুয়ারি</option>
+                                <option value="03">মার্চ</option>
+                                <option value="04">এপ্রিল</option>
+                                <option value="05">মে</option>
+                                <option value="06">জুন</option>
+                                <option value="07">জুলাই</option>
+                                <option value="08">আগস্ট</option>
+                                <option value="09">সেপ্টেম্বর</option>
+                                <option value="10">অক্টোবর</option>
+                                <option value="11">নভেম্বর</option>
+                                <option value="12">ডিসেম্বর</option>
+                            </select>
+                        </div>
+                        <button onclick="printMonthlySummary()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2 text-sm">
+                            <i data-lucide="printer" class="w-4 h-4"></i> মাসিক সামারি প্রিন্ট
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 dbg-print-two-col-cards">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-600">
+                    <p class="text-xs font-semibold text-gray-500">নির্বাচিত মাস</p>
+                    <p id="summarySelectedMonth" class="text-lg font-bold text-indigo-900 mt-1">-</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-600">
+                    <p class="text-xs font-semibold text-gray-500">জমা দিয়েছেন</p>
+                    <p class="text-lg font-bold text-emerald-700 mt-1"><span id="summaryPaidMembers">0</span> জন</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-rose-500">
+                    <p class="text-xs font-semibold text-gray-500">জমা দেননি</p>
+                    <p class="text-lg font-bold text-rose-600 mt-1"><span id="summaryUnpaidMembers">0</span> জন</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500">
+                    <p class="text-xs font-semibold text-gray-500">মোট বকেয়া</p>
+                    <p class="text-lg font-bold text-orange-600 mt-1">৳<span id="summaryTotalDue">0</span></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-5 border-b pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-indigo-950">সকল সদস্যের মাসিক ডিপোজিট রিপোর্ট</h2>
+                        <p class="text-xs text-gray-500">ফিল্টার: <span id="summaryYearLabel" class="font-bold">-</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">মূল ডিপোজিট মোট</p>
+                        <p class="text-xl font-extrabold text-emerald-700">৳<span id="summaryTotalDeposit">0</span></p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-center border-collapse">
+                        <thead class="bg-indigo-900 text-white font-bold" id="summaryTableHeader"></thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-gray-200"></tbody>
+                        <tfoot id="summaryTableFooter" class="bg-indigo-50 font-bold"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+        <!-- ================= 5B. YEARLY SUMMARY VIEW ================= -->
+        <section id="yearly-summary-section" class="space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <div>
+                        <h3 class="font-bold text-indigo-950 text-lg">বার্ষিক ডিপোজিট সামারি</h3>
+                        <p class="text-xs text-gray-500 mt-1">নির্বাচিত বছরের ১২ মাসের জমা ও বকেয়ার সারসংক্ষেপ।</p>
+                    </div>
+                    <div class="flex items-center gap-3 no-print">
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">বছর</p>
+                            <p id="yearlySummaryYearLabel" class="text-lg font-bold text-indigo-900">-</p>
+                        </div>
+                        <button onclick="printYearlySummary()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition flex items-center gap-2 text-sm">
+                            <i data-lucide="printer" class="w-4 h-4"></i> বার্ষিক সামারি প্রিন্ট
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5 dbg-print-two-col-cards">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-600">
+                        <p class="text-xs font-semibold text-gray-500">বার্ষিক মোট জমা</p>
+                        <p class="text-xl font-extrabold text-emerald-700 mt-1">৳<span id="yearlyTotalDeposit">0</span></p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500">
+                        <p class="text-xs font-semibold text-gray-500">বার্ষিক মোট বকেয়া</p>
+                        <p class="text-xl font-extrabold text-orange-600 mt-1">৳<span id="yearlyTotalDue">0</span></p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-indigo-600">
+                        <p class="text-xs font-semibold text-gray-500">বার্ষিক মোট নির্ধারিত জমা</p>
+                        <p class="text-xl font-extrabold text-indigo-700 mt-1">৳<span id="yearlyTotalDemand">0</span></p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-center border-collapse">
+                        <thead class="bg-indigo-900 text-white font-bold">
+                            <tr>
+                                <th class="border border-gray-300 p-2">ক্রমিক</th>
+                                <th class="border border-gray-300 p-2 text-left">মাস</th>
+                                <th class="border border-gray-300 p-2">মোট নির্ধারিত জমা (৳)</th>
+                                <th class="border border-gray-300 p-2">মোট জমা (৳)</th>
+                                <th class="border border-gray-300 p-2">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
+                                <th class="border border-gray-300 p-2">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
+                                <th class="border border-gray-300 p-2">মোট বকেয়া (৳)</th>
+                                <th class="border border-gray-300 p-2">জমা দিয়েছেন</th>
+                                <th class="border border-gray-300 p-2">জমা দেননি</th>
+                            </tr>
+                        </thead>
+                        <tbody id="yearlySummaryTableBody" class="divide-y divide-gray-200"></tbody>
+                        <tfoot id="yearlySummaryTableFooter" class="bg-indigo-50 font-bold"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+        </section>
+
+        <!-- ================= 6. INVESTOR PROFILE VIEW ================= -->
+        <section id="view-investor-profile" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
+                    <h3 class="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
+                        <i data-lucide="badge-dollar-sign" class="w-5 h-5 text-emerald-600"></i> নতুন ইনভেস্টর প্রোফাইল
+                    </h3>
+                    <form id="investorForm" onsubmit="saveInvestorProfile(event)" class="space-y-3">
+                        <input type="hidden" id="investorEditId">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ইনভেস্টর আইডি</label>
+                            <input type="text" id="investorCode" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2 text-sm font-bold text-indigo-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ইনভেস্টরের নাম *</label>
+                            <input type="text" id="investorName" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">English Name</label>
+                            <input type="text" id="investorNameEn" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">পিতা/স্বামীর নাম</label>
+                            <input type="text" id="investorFather" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">মোবাইল</label>
+                                <input type="tel" id="investorMobile" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">NID</label>
+                                <input type="text" id="investorNid" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">পেশা</label>
+                            <input type="text" id="investorOccupation" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ঠিকানা</label>
+                            <textarea id="investorAddress" rows="2" class="w-full border border-gray-300 rounded-lg p-2 text-sm"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">প্রাথমিক বিনিয়োগ (৳)</label>
+                                <input type="number" min="0" id="investorAmount" value="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">বিনিয়োগের তারিখ</label>
+                                <input type="date" id="investorDate" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">সংশ্লিষ্ট প্রজেক্ট</label>
+                            <input type="text" id="investorProject" class="w-full border border-gray-300 rounded-lg p-2 text-sm" placeholder="যেমন: Halal Business Project">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">লভ্যাংশ %</label>
+                                <input type="number" min="0" step="0.01" id="investorProfitShare" value="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">স্ট্যাটাস</label>
+                                <select id="investorStatus" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                                    <option value="চলমান">চলমান</option>
+                                    <option value="স্থগিত">স্থগিত</option>
+                                    <option value="সম্পন্ন">সম্পন্ন</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ছবি</label>
+                            <input type="file" id="investorPhoto" accept="image/*" class="w-full border border-gray-300 rounded-lg p-2 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">নোট</label>
+                            <textarea id="investorNotes" rows="2" class="w-full border border-gray-300 rounded-lg p-2 text-sm"></textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" id="investorSaveBtn" class="flex-1 bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700 transition">ইনভেস্টর সেভ করুন</button>
+                            <button type="button" onclick="resetInvestorForm()" class="bg-slate-200 text-slate-700 px-4 rounded-lg font-semibold">নতুন</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-3">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i>
+                                <h3 class="font-bold text-gray-800">ইনভেস্টর তালিকা</h3>
+                            </div>
+                            <div class="flex gap-2 no-print">
+                                <input type="text" id="investorSearch" onkeyup="renderInvestorProfiles()" placeholder="নাম/আইডি/মোবাইল" class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs">
+                                <button onclick="printReport()" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs">প্রিন্ট</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-xs">
+                                    <tr>
+                                        <th class="p-2.5">আইডি</th>
+                                        <th class="p-2.5">নাম</th>
+                                        <th class="p-2.5">মোবাইল</th>
+                                        <th class="p-2.5 text-right">বিনিয়োগ</th>
+                                        <th class="p-2.5">প্রজেক্ট</th>
+                                        <th class="p-2.5">স্ট্যাটাস</th>
+                                        <th class="p-2.5 text-center no-print">অ্যাকশন</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investorTableBody" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-3">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i data-lucide="id-card" class="w-5 h-5 text-indigo-600"></i> ইনভেস্টর প্রোফাইল
+                            </h3>
+                            <div class="flex items-center gap-2 no-print">
+                                <select id="investorProfileSelect" onchange="renderSelectedInvestorProfile()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+                                <button onclick="printReport()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs">প্রোফাইল প্রিন্ট</button>
+                            </div>
+                        </div>
+                        <div id="investorProfileContainer" class="space-y-5"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 6. INVESTMENTS VIEW ================= -->
+        <section id="view-investments" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
+                    <h3 class="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i> নতুন হালাল বিনিয়োগ প্রজেক্ট
+                    </h3>
+                    <form id="investForm" onsubmit="saveInvestment(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">প্রকল্পের নাম *</label>
+                            <input type="text" id="invTitle" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">ক্যাটাগরি</label>
+                            <input type="text" id="invCategory" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">মূলধন (টাকা) *</label>
+                            <input type="number" id="invAmount" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">অর্জিত লভ্যাংশ</label>
+                            <input type="number" id="invProfit" value="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-emerald-600 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">তারিখ</label>
+                            <input type="date" id="invDate" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">স্ট্যাটাস</label>
+                            <select id="invStatus" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                                <option value="চলমান">চলমান (Active)</option>
+                                <option value="সম্পন্ন">সম্পন্ন (Closed)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700 transition">
+                            ইনভেস্টমেন্ট সেভ করুন
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i data-lucide="briefcase" class="w-5 h-5 text-indigo-600"></i> ইনভেস্টমেন্ট প্রজেক্ট পোর্টফোলিও
+                            </h3>
+                            <button onclick="printReport()" class="bg-slate-700 text-white px-3 py-1 rounded text-xs hover:bg-slate-600 no-print">প্রিন্ট</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-2.5">প্রকল্পের নাম</th>
+                                        <th class="p-2.5">তারিখ (DD-MM-YY)</th>
+                                        <th class="p-2.5 text-right">মূলধন (৳)</th>
+                                        <th class="p-2.5 text-right">লভ্যাংশ (৳)</th>
+                                        <th class="p-2.5">স্ট্যাটাস</th>
+                                        <th class="p-2.5 text-center no-print">ডিলিট</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investmentsTableBody" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-xl shadow-md border border-indigo-800">
+                        <h4 class="font-bold text-amber-400 flex items-center gap-2 mb-2">
+                            <i data-lucide="calculator" class="w-5 h-5"></i> আনুপাতিক লভ্যাংশ বণ্টন ক্যালকুলেটর (Profit Share)
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm mt-4">
+                            <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                <span class="text-[11px] text-gray-300 block">মোট লভ্যাংশ:</span>
+                                <span class="font-bold text-base text-emerald-400">৳<span id="calcTotalProfit">0</span></span>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                <span class="text-[11px] text-gray-300 block">প্রতি ডিপোজিটে:</span>
+                                <span class="font-bold text-base text-amber-300">৳<span id="calcProfitPerUnit">0.00</span></span>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                <span class="text-[11px] text-gray-300 block">২ ডিপোজিটধারী:</span>
+                                <span class="font-bold text-base text-cyan-300">৳<span id="calc2UnitProfit">0.00</span></span>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                <span class="text-[11px] text-gray-300 block">৩ ডিপোজিটধারী:</span>
+                                <span class="font-bold text-base text-purple-300">৳<span id="calc3UnitProfit">0.00</span></span>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-lg border border-white/10">
+                                <span class="text-[11px] text-gray-300 block">৪ ডিপোজিটধারী:</span>
+                                <span class="font-bold text-base text-pink-300">৳<span id="calc4UnitProfit">0.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 7. ACCOUNTS VIEW ================= -->
+        <section id="view-accounts" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
+                    <h3 class="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
+                        <i data-lucide="plus-square" class="w-5 h-5 text-indigo-600"></i> আয় / ব্যয় এন্ট্রি ফরম
+                    </h3>
+                    <form id="accForm" onsubmit="saveAccount(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">লেনদেনের ধরন *</label>
+                            <select id="accType" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                                <option value="EXPENSE">ব্যয় / খরচ (Expense)</option>
+                                <option value="INCOME">অন্যান্য আয় (Income)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">বিবরণ / খাত *</label>
+                            <input type="text" id="accTitle" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">পরিমাণ</label>
+                                <input type="number" id="accQty" min="0" step="0.01" value="1" oninput="calculateAccountAmount()" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">দর</label>
+                                <input type="number" id="accRate" min="0" step="0.01" value="0" oninput="calculateAccountAmount()" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">টাকার পরিমাণ *</label>
+                            <input type="number" id="accAmount" required min="0" step="0.01" oninput="syncAccountAmountFromTotal()" class="w-full border border-gray-300 rounded-lg p-2 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">তারিখ *</label>
+                            <input type="date" id="accDate" required class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                        </div>
+                        <button type="submit" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-lg hover:bg-slate-700 transition">
+                            লেনদেন সেভ করুন
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i> আয় ও ব্যয় ক্যাশ বই (Cash Book)
+                        </h3>
+                        <button onclick="printReport()" class="bg-slate-700 text-white px-3 py-1 rounded text-xs hover:bg-slate-600 no-print">প্রিন্ট</button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600 text-xs uppercase sticky top-0">
+                                <tr>
+                                    <th class="p-2.5">তারিখ (DD-MM-YY)</th>
+                                    <th class="p-2.5">ধরন</th>
+                                    <th class="p-2.5">বিবরণ</th>
+                                    <th class="p-2.5 text-right">পরিমাণ (৳)</th>
+                                    <th class="p-2.5 text-center no-print">মুছুন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTableBody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MEMBER FORM MODAL -->
+    <div id="memberModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50 no-print overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6 space-y-4 relative my-8 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeMemberModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-xl font-bold text-indigo-900 border-b pb-3" id="memberModalTitle">নতুন সদস্যের বিস্তারিত তথ্য ফরম</h3>
+            
+            <form id="memberForm" onsubmit="saveMember(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="editMemberId">
+                
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">সদস্য নম্বর</label>
+                        <input type="text" id="mCode" required readonly class="w-full bg-gray-100 border border-gray-300 rounded p-2 font-bold text-indigo-700">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">কয়টি ডিপোজিট নিতে চান? (প্রতিটি ৫০০৳)</label>
+                        <input type="number" id="mUnits" min="1" value="1" required class="w-full border border-gray-300 rounded p-2 font-bold text-emerald-700">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">বর্তমানে অবস্থানরত দেশ *</label>
+                        <input type="text" id="mCurrentCountry" placeholder="যেমন: বাংলাদেশ / কাতার" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <h4 class="font-bold text-gray-800 border-b pb-1 text-sm text-indigo-800">ব্যক্তিগত তথ্য</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">নাম (বাংলা) *</label>
+                        <input type="text" id="mName" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">নাম (ইংরেজি বড় হাতের অক্ষরে) *</label>
+                        <input type="text" id="mNameEn" required placeholder="MD. RAHIM KHAN" class="w-full border border-gray-300 rounded p-2 uppercase">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">পিতার নাম *</label>
+                        <input type="text" id="mFatherName" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">জন্ম তারিখ *</label>
+                        <input type="date" id="mDob" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">NID / জন্ম নিবন্ধন নাম্বার *</label>
+                        <input type="text" id="mNid" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">পাসপোর্ট নম্বর (যদি থাকে)</label>
+                        <input type="text" id="mPassport" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">মোবাইল নাম্বার (WhatsApp) *</label>
+                        <input type="text" id="mPhone" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">রক্তের গ্রুপ</label>
+                        <select id="mBloodGroup" class="w-full border border-gray-300 rounded p-2">
+                            <option value="">নির্বাচন করুন</option>
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Education & Status -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">শিক্ষাগত যোগ্যতা</label>
+                        <input type="text" id="mEducation" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">ধর্ম</label>
+                        <input type="text" id="mReligion" value="ইসলাম" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">জাতীয়তা</label>
+                        <input type="text" id="mNationality" value="বাংলাদেশী" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">পেশা</label>
+                        <input type="text" id="mOccupation" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">বর্তমান ঠিকানা *</label>
+                        <textarea id="mPresentAddress" rows="2" required class="w-full border border-gray-300 rounded p-2"></textarea>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">স্থায়ী ঠিকানা *</label>
+                        <textarea id="mPermanentAddress" rows="2" required class="w-full border border-gray-300 rounded p-2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Nominee Info -->
+                <h4 class="font-bold border-b pb-1 text-sm text-indigo-800 pt-2">নমিনী সংক্রান্ত তথ্য</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1">নমিনীর নাম *</label>
+                        <input type="text" id="mNomineeName" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">নমিনীর সম্পর্ক *</label>
+                        <input type="text" id="mNomineeRelation" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">নমিনীর মোবাইল নাম্বার *</label>
+                        <input type="text" id="mNomineePhone" required class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <!-- Uploads -->
+                <h4 class="font-bold border-b pb-1 text-sm text-indigo-800 pt-2">ছবি ও জাতীয় পরিচয়পত্র আপলোড</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border p-3 rounded-lg bg-gray-50">
+                        <label class="block font-semibold mb-1">ছবি আপলোড করুন (Passport Size)</label>
+                        <input type="file" id="mPhotoFile" accept="image/*" onchange="previewImage(this, 'photoPreview')" class="w-full text-xs">
+                        <img id="photoPreview" class="h-20 w-20 object-cover mt-2 rounded border hidden" />
+                    </div>
+                    <div class="border p-3 rounded-lg bg-gray-50">
+                        <label class="block font-semibold mb-1">জাতীয় পরিচয়পত্র/জন্ম নিবন্ধন আপলোড</label>
+                        <input type="file" id="mNidFile" accept="image/*" onchange="previewImage(this, 'nidPreview')" class="w-full text-xs">
+                        <img id="nidPreview" class="h-20 w-32 object-cover mt-2 rounded border hidden" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t">
+                    <button type="button" onclick="closeMemberModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">বাতিল</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg text-sm hover:bg-indigo-700">সদস্য তথ্য সেভ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receipt Print Modal -->
+    <div id="receiptModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4 relative">
+            <button onclick="closeReceiptModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 no-print">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div id="receiptContent" class="text-center space-y-3">
+                <div class="border-b pb-2">
+                    <h2 class="font-bold text-lg text-indigo-900">Dreams Business Group</h2>
+                    <p class="text-xs text-gray-500">ডিপোজিট জমা রসিদ</p>
+                </div>
+                <div class="text-left text-xs space-y-2 py-2 border-b">
+                    <p class="flex justify-between"><span>রসিদ আইডি:</span> <strong id="recId">#101</strong></p>
+                    <p class="flex justify-between"><span>তারিখ:</span> <span id="recDate"></span></p>
+                    <p class="flex justify-between"><span>সদস্য নম্বর:</span> <strong id="recMCode">DBG-001</strong></p>
+                    <p class="flex justify-between"><span>সদস্যের নাম:</span> <span id="recMName"></span></p>
+                    <p class="flex justify-between"><span>জমার মাস/স্কিম:</span> <span id="recMonth"></span></p>
+                    <p class="flex justify-between"><span>মেথড:</span> <span id="recMethod">ক্যাশ</span></p>
+                    <div class="bg-indigo-50 p-2 rounded-lg space-y-1">
+                        <p class="flex justify-between text-indigo-900"><span>মূল ডিপোজিট:</span> <strong>৳<span id="recAmount">0</span></strong></p>
+                        <p class="flex justify-between text-purple-800"><span>খরচ বাবদ জমা:</span> <strong>৳<span id="recExpenseAmount">0</span></strong></p>
+                        <p class="flex justify-between text-emerald-800"><span>স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক):</span> <strong>৳<span id="recDreamProsperityAmount">0</span></strong></p>
+                        <p class="flex justify-between text-amber-800"><span>স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক):</span> <strong>৳<span id="recDreamDevelopmentAmount">0</span></strong></p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400">ধন্যবাদ আপনার জমার জন্য। এটি একটি কম্পিউটার জেনারেটেড রসিদ।</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income / Expense Voucher Modal -->
+    <div id="accountVoucherModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50 no-print">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
+            <button onclick="closeAccountVoucher()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 no-print">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div id="accountVoucherContent" class="space-y-4">
+                <div class="text-center border-b pb-3">
+                    <h2 class="font-bold text-xl text-indigo-900">ড্রিমস বিজনেস গ্রুপ (DBG)</h2>
+                    <p class="text-sm font-semibold" id="voucherTypeLabel">আয় / ব্যয় রশিদ / ভাউচার</p>
+                    <p class="text-xs text-gray-500">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm border-b pb-3">
+                    <p>ভাউচার নং: <strong id="voucherId"></strong></p>
+                    <p class="text-right">তারিখ: <strong id="voucherDate"></strong></p>
+                </div>
+                <div class="border rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
+                        <tr><td class="p-2 border-b font-semibold">বিবরণ / খাত</td><td class="p-2 border-b text-right" id="voucherTitle"></td></tr>
+                        <tr><td class="p-2 border-b font-semibold">পরিমাণ</td><td class="p-2 border-b text-right" id="voucherQty"></td></tr>
+                        <tr><td class="p-2 border-b font-semibold">দর</td><td class="p-2 border-b text-right">৳<span id="voucherRate"></span></td></tr>
+                        <tr><td class="p-2 font-bold">মোট</td><td class="p-2 text-right font-bold text-lg">৳<span id="voucherAmount"></span></td></tr>
+                    </table>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 pt-6">
+                    <span>প্রদানকারী/গ্রহণকারী</span><span>অনুমোদনকারী</span>
+                </div>
+                <p class="text-[10px] text-gray-400 text-center">এটি একটি কম্পিউটার জেনারেটেড রশিদ/ভাউচার।</p>
+            </div>
+            <div class="flex gap-2 mt-5 no-print">
+                <button onclick="printAccountVoucher()" class="flex-1 bg-slate-800 text-white py-2 rounded-lg font-bold">প্রিন্ট / PDF</button>
+                <button onclick="downloadAccountVoucher()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-bold">ডাউনলোড</button>
+                <button onclick="closeAccountVoucher()" class="px-4 bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold">বন্ধ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        // Direct print handler: window.print() must run immediately from the button click.
+        // Using setTimeout can cause browsers to block the print dialog because the user gesture is lost.
+        function printReport() {
+            // Print the currently visible report/modal directly from the browser.
+            const modal = document.getElementById('receiptModal');
+            let source = null;
+            let title = 'Dreams Business Group (DBG)';
+
+            if (modal && !modal.classList.contains('hidden')) {
+                source = document.getElementById('receiptContent');
+                title = 'DBG Payment Receipt';
+            } else {
+                source = document.querySelector('.tab-content:not(.hidden)');
+                if (source) {
+                    const h = source.querySelector('h1,h2,h3');
+                    title = h ? (h.textContent.trim() || title) : title;
+                }
+            }
+
+            if (!source) {
+                alert('প্রিন্ট করার মতো কোনো রিপোর্ট পাওয়া যায়নি।');
+                return;
+            }
+
+            const profileContainer = document.getElementById('profileContainer');
+            if (source.id === 'view-profile' && profileContainer && profileContainer.innerHTML.trim()) {
+                source = profileContainer;
+                title = 'DBG Member Profile';
+            }
+
+            const investorProfileContainer = document.getElementById('investorProfileContainer');
+            if (source.id === 'view-investor-profile' && investorProfileContainer && investorProfileContainer.innerHTML.trim()) {
+                source = investorProfileContainer;
+                title = 'DBG Investor Profile';
+            }
+
+            const printRoot = document.createElement('div');
+            printRoot.id = 'dbg-print-root';
+            printRoot.setAttribute('data-print-title', title);
+
+            const clone = source.cloneNode(true);
+            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+
+            clone.querySelectorAll('select, textarea').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            clone.querySelectorAll('input').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            // Print-only company headline for every report.
+            // Existing report/member data is cloned unchanged; only the print header is added.
+            const companyHeader = document.createElement('div');
+            companyHeader.className = 'dbg-print-company-header';
+            companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+            printRoot.appendChild(companyHeader);
+
+            printRoot.appendChild(clone);
+            document.body.appendChild(printRoot);
+            document.body.classList.add('dbg-printing');
+
+            // Direct browser print dialog; no new tab/window.
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('dbg-printing');
+                    printRoot.remove();
+                }, 300);
+            }, 50);
+        }
+
+        function formatDateDDMMYY(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yy = String(date.getFullYear()).slice(-2);
+            return `${dd}-${mm}-${yy}`;
+        }
+
+        function formatDateDDMMYYYY(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = String(date.getFullYear());
+            return `${dd}-${mm}-${yyyy}`;
+        }
+
+        function parseDepositDate(value) {
+            const v = String(value || '').trim();
+            const m = v.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            if (!m) return null;
+            const dd = Number(m[1]), mm = Number(m[2]), yyyy = Number(m[3]);
+            const d = new Date(yyyy, mm - 1, dd);
+            if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return null;
+            return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+        }
+
+        function populateYearDropdowns() {
+            const depYearSelect = document.getElementById('depYearSelect');
+            const summaryYearSelect = document.getElementById('summaryYear');
+            
+            const currentYear = new Date().getFullYear();
+            const startYear = 2020;
+            const endYear = currentYear + 25;
+
+            let optionsHtml = '';
+            for (let y = startYear; y <= endYear; y++) {
+                optionsHtml += `<option value="${y}">${y}</option>`;
+            }
+
+            depYearSelect.innerHTML = optionsHtml;
+            summaryYearSelect.innerHTML = optionsHtml;
+
+            depYearSelect.value = currentYear;
+            summaryYearSelect.value = currentYear;
+        }
+
+        function generateDefaultMembers() {
+            const list = [];
+            for (let i = 1; i <= 5; i++) {
+                const code = `DBG-${String(i).padStart(3, '0')}`;
+                list.push({
+                    code: code,
+                    name: `সদস্য ${i}`,
+                    nameEn: `MEMBER ${i}`,
+                    fatherName: `পিতা ${i}`,
+                    dob: '1990-01-01',
+                    nid: '1234567890',
+                    passport: '',
+                    phone: `0170000000${i}`,
+                    bloodGroup: 'O+',
+                    education: 'স্নাতক',
+                    religion: 'ইসলাম',
+                    nationality: 'বাংলাদেশী',
+                    occupation: 'ব্যবসায়ী',
+                    presentAddress: 'ঢাকা, বাংলাদেশ',
+                    permanentAddress: 'গ্রাম+ডাক: উদাহরণ, জেলা: ঢাকা',
+                    currentCountry: 'বাংলাদেশ',
+                    nomineeName: `নমিনী ${i}`,
+                    nomineeRelation: 'ভাই',
+                    nomineePhone: `0180000000${i}`,
+                    units: (i <= 2) ? 2 : 1,
+                    photo: '',
+                    nidDoc: ''
+                });
+            }
+            return list;
+        }
+
+        // ================= SECURE OFFLINE DATA LAYER =================
+        // Members are stored in IndexedDB so photos/NID documents do not fill the
+        // browser's small LocalStorage quota. Other operational data remains in
+        // LocalStorage exactly as before. Existing members are migrated automatically.
+        const LOCAL_KEYS = {
+            logo: 'dbg_logo',
+            members: 'dbg_members',
+            deposits: 'dbg_deposits',
+            investments: 'dbg_investments',
+            investorProfiles: 'dbg_investor_profiles',
+            accounts: 'dbg_accounts'
+        };
+
+        const MEMBER_DB_NAME = 'DBG_Member_Storage';
+        const MEMBER_DB_VERSION = 1;
+        const MEMBER_STORE = 'members';
+        let memberStorageReady = false;
+        let memberStoragePromise = null;
+
+        function readJSON(key, fallback) {
+            try {
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : fallback;
+            } catch (_) { return fallback; }
+        }
+
+        let db = {
+            logo: localStorage.getItem(LOCAL_KEYS.logo) || '',
+            // Temporary synchronous fallback. initMemberStorage() replaces this
+            // with the IndexedDB copy before the application becomes usable.
+            members: readJSON(LOCAL_KEYS.members, generateDefaultMembers()),
+            deposits: readJSON(LOCAL_KEYS.deposits, []),
+            investments: readJSON(LOCAL_KEYS.investments, []),
+            investorProfiles: readJSON(LOCAL_KEYS.investorProfiles, []),
+            accounts: readJSON(LOCAL_KEYS.accounts, [])
+        };
+
+        function openMemberDB() {
+            if (memberStoragePromise) return memberStoragePromise;
+            memberStoragePromise = new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    reject(new Error('এই ব্রাউজারে IndexedDB সমর্থিত নয়।'));
+                    return;
+                }
+                const request = indexedDB.open(MEMBER_DB_NAME, MEMBER_DB_VERSION);
+                request.onupgradeneeded = () => {
+                    const idb = request.result;
+                    if (!idb.objectStoreNames.contains(MEMBER_STORE)) {
+                        idb.createObjectStore(MEMBER_STORE, { keyPath: 'code' });
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error || new Error('Member database খুলতে পারেনি।'));
+            });
+            return memberStoragePromise;
+        }
+
+        function getAllMembersFromIDB() {
+            return openMemberDB().then(idb => new Promise((resolve, reject) => {
+                const tx = idb.transaction(MEMBER_STORE, 'readonly');
+                const req = tx.objectStore(MEMBER_STORE).getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error || new Error('Member data পড়তে পারেনি।'));
+            }));
+        }
+
+        function replaceAllMembersInIDB(members) {
+            return openMemberDB().then(idb => new Promise((resolve, reject) => {
+                const tx = idb.transaction(MEMBER_STORE, 'readwrite');
+                const store = tx.objectStore(MEMBER_STORE);
+                store.clear();
+                (members || []).forEach(member => store.put(member));
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => reject(tx.error || new Error('Member data সংরক্ষণ করা যায়নি।'));
+                tx.onabort = () => reject(tx.error || new Error('Member data সংরক্ষণ বাতিল হয়েছে।'));
+            }));
+        }
+
+        function saveMembersToIDB() {
+            if (!memberStorageReady) return Promise.resolve(false);
+            return replaceAllMembersInIDB(db.members).catch(err => {
+                console.error('Member IndexedDB save failed:', err);
+                alert('সদস্য তথ্য সংরক্ষণে সমস্যা হয়েছে।\n\n' + err.message);
+                return false;
+            });
+        }
+
+        async function initMemberStorage() {
+            try {
+                const existingLocalMembers = readJSON(LOCAL_KEYS.members, null);
+                const indexedMembers = await getAllMembersFromIDB();
+
+                if (indexedMembers.length > 0) {
+                    db.members = indexedMembers;
+                } else {
+                    const membersToMigrate = Array.isArray(existingLocalMembers) && existingLocalMembers.length
+                        ? existingLocalMembers
+                        : generateDefaultMembers();
+                    await replaceAllMembersInIDB(membersToMigrate);
+                    db.members = membersToMigrate;
+                    // Remove the large member payload from LocalStorage only after
+                    // IndexedDB has confirmed the migration succeeded.
+                    try { localStorage.removeItem(LOCAL_KEYS.members); } catch (_) {}
+                }
+                memberStorageReady = true;
+            } catch (err) {
+                console.error('IndexedDB member storage unavailable:', err);
+                memberStorageReady = false;
+                // Keep the old LocalStorage data as a safe fallback.
+            }
+        }
+
+        function saveLocalData() {
+            if (db.logo) localStorage.setItem(LOCAL_KEYS.logo, db.logo);
+            else localStorage.removeItem(LOCAL_KEYS.logo);
+            // IMPORTANT: members are now stored in IndexedDB, not LocalStorage.
+            // This removes the previous ~5MB LocalStorage bottleneck caused by
+            // Base64 photos and NID documents.
+            if (memberStorageReady) saveMembersToIDB();
+            localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
+            localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
+            localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
+            localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
+        }
+
+        function saveData() {
+            saveLocalData();
+            renderAll();
+        }
+
+        // Keep a clear status in the console for troubleshooting without changing UI/data.
+        function getMemberStorageStatus() {
+            return memberStorageReady ? 'IndexedDB' : 'LocalStorage fallback';
+        }
+
+        // Upload & Update Group Logo
+        function uploadGroupLogo(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    db.logo = e.target.result;
+                    document.getElementById('groupLogoImg').src = db.logo;
+                    saveData();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load/migrate the member database before rendering the application.
+            // This prevents a new member from being lost when LocalStorage is full.
+            await initMemberStorage();
+
+            const depDateInput = document.getElementById('depDate');
+            depDateInput.addEventListener('input', function() {
+                let v = this.value.replace(/[^0-9]/g, '').slice(0, 8);
+                if (v.length > 4) v = v.slice(0, 2) + '-' + v.slice(2, 4) + '-' + v.slice(4);
+                else if (v.length > 2) v = v.slice(0, 2) + '-' + v.slice(2);
+                this.value = v;
+            });
+            populateYearDropdowns();
+            if(db.logo) {
+                document.getElementById('groupLogoImg').src = db.logo;
+            }
+
+            const today = new Date();
+            const currentMonthStr = today.toISOString().slice(0, 7);
+            const todayStr = today.toISOString().slice(0, 10);
+            
+            document.getElementById('dashboardMonth').value = currentMonthStr;
+            document.getElementById('depMonthSelect').value = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('depDate').value = formatDateDDMMYYYY(todayStr);
+            document.getElementById('invDate').value = todayStr;
+            document.getElementById('accDate').value = todayStr;
+            document.getElementById('investorDate').value = todayStr;
+            document.getElementById('printDate').innerText = formatDateDDMMYY(todayStr);
+
+            renderAll();
+            resetInvestorForm();
+            lucide.createIcons();
+            updateLocalStatus();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => {
+                el.classList.remove('bg-indigo-800', 'text-white', 'font-semibold');
+                el.classList.add('text-indigo-200', 'font-medium');
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`tab-${tabId}`);
+            activeNav.classList.add('bg-indigo-800', 'text-white', 'font-semibold');
+            activeNav.classList.remove('text-indigo-200');
+
+            renderAll();
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderMembers();
+            renderDeposits();
+            renderMonthlySummary();
+            renderYearlySummary();
+            renderInvestments();
+            renderInvestorProfiles();
+            renderSelectedInvestorProfile();
+            renderAccounts();
+            populateMemberDropdowns();
+            renderIndividualProfile();
+            lucide.createIcons();
+        }
+
+        function previewImage(input, previewId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(previewId);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // DASHBOARD WITH TOTAL DUE CARD
+        function renderDashboard() {
+            const selectedMonth = document.getElementById('dashboardMonth').value;
+            const totalMembers = db.members.length;
+            const totalUnits = db.members.reduce((sum, m) => sum + parseInt(m.units || 1), 0);
+            const monthlyDemand = totalUnits * 500;
+
+            const currentMonthDeposits = db.deposits.filter(d => d.month === selectedMonth);
+            const collectedThisMonth = currentMonthDeposits.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            
+            const paidMemberCodes = new Set(currentMonthDeposits.map(d => d.memberCode));
+            const paidCount = paidMemberCodes.size;
+            const dueCount = Math.max(0, totalMembers - paidCount);
+            const dueAmount = Math.max(0, monthlyDemand - collectedThisMonth);
+
+            // Expense Fund Calculation
+            const totalExpenseFundCollected = db.deposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
+            const totalExpenseSpent = db.accounts.filter(a => a.type === 'EXPENSE').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+            const expenseFundRemaining = totalExpenseFundCollected - totalExpenseSpent;
+
+            const totalFund = db.deposits.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            const totalDreamProsperityFund = db.deposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
+            const totalDreamDevelopmentFund = db.deposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
+            const totalFundWithSpecialDeposits = totalFund + totalDreamProsperityFund + totalDreamDevelopmentFund;
+            const totalInvested = db.investments.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+            const totalProfit = db.investments.reduce((sum, i) => sum + parseFloat(i.profit || 0), 0);
+            const totalOtherIncome = db.accounts.filter(a => a.type === 'INCOME').reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+            const netBalance = (totalFundWithSpecialDeposits + expenseFundRemaining + totalOtherIncome + totalProfit) - totalInvested;
+
+            document.getElementById('dashTotalMembers').innerText = totalMembers;
+            document.getElementById('dashTotalUnits').innerText = totalUnits;
+            document.getElementById('dashMonthlyDemand').innerText = monthlyDemand.toLocaleString();
+            document.getElementById('dashPaidMembers').innerText = paidCount;
+            document.getElementById('dashCurrentMonthCollected').innerText = collectedThisMonth.toLocaleString();
+            document.getElementById('dashDueMembers').innerText = dueCount;
+            document.getElementById('dueBadge').innerText = dueCount;
+            document.getElementById('dashCurrentMonthDue').innerText = dueAmount.toLocaleString();
+            document.getElementById('dashTotalDue').innerText = dueAmount.toLocaleString();
+            
+            // Render 3 New Expense Cards
+            document.getElementById('dashExpenseFundCollected').innerText = totalExpenseFundCollected.toLocaleString();
+            document.getElementById('dashTotalExpenseSpent').innerText = totalExpenseSpent.toLocaleString();
+            document.getElementById('dashExpenseFundRemaining').innerText = expenseFundRemaining.toLocaleString();
+
+            document.getElementById('dashTotalFund').innerText = totalFundWithSpecialDeposits.toLocaleString();
+            document.getElementById('dashDreamProsperity').innerText = totalDreamProsperityFund.toLocaleString();
+            document.getElementById('dashDreamDevelopment').innerText = totalDreamDevelopmentFund.toLocaleString();
+            document.getElementById('dashTotalInvested').innerText = totalInvested.toLocaleString();
+            document.getElementById('dashTotalProfit').innerText = totalProfit.toLocaleString();
+            document.getElementById('dashNetBalance').innerText = netBalance.toLocaleString();
+
+            const dueTableBody = document.getElementById('dashDueTableBody');
+            dueTableBody.innerHTML = '';
+            
+            db.members.forEach(m => {
+                if (!paidMemberCodes.has(m.code)) {
+                    const dueMoney = m.units * 500;
+                    dueTableBody.innerHTML += `
+                        <tr>
+                            <td class="p-2 font-bold text-indigo-700">${m.code}</td>
+                            <td class="p-2">${m.name}</td>
+                            <td class="p-2">${m.units}টি (${dueMoney}/-)</td>
+                            <td class="p-2 text-right font-bold text-rose-600">৳${dueMoney}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            const recentBody = document.getElementById('dashRecentDepositsBody');
+            recentBody.innerHTML = '';
+            const recent = [...db.deposits].reverse().slice(0, 5);
+            recent.forEach(d => {
+                const member = db.members.find(m => m.code === d.memberCode);
+                recentBody.innerHTML += `
+                    <tr>
+                        <td class="p-2 text-xs text-gray-500">${formatDateDDMMYY(d.date)}</td>
+                        <td class="p-2 font-medium">${d.memberCode} (${member ? member.name : ''})</td>
+                        <td class="p-2 font-bold text-emerald-600">৳${d.amount}</td>
+                        <td class="p-2 text-right font-bold text-purple-600">৳${d.expenseAmount || 0}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // MEMBERS LIST
+        function renderMembers() {
+            const query = document.getElementById('memberSearch').value.toLowerCase();
+            const tbody = document.getElementById('membersTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = db.members.filter(m => 
+                m.code.toLowerCase().includes(query) || 
+                m.name.toLowerCase().includes(query) ||
+                (m.nameEn && m.nameEn.toLowerCase().includes(query)) ||
+                m.phone.includes(query)
+            );
+
+            filtered.forEach(m => {
+                const monthlyAmount = m.units * 500;
+                const photoSrc = m.photo || 'https://via.placeholder.com/150';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3">
+                            <img src="${photoSrc}" class="w-10 h-10 rounded-full object-cover border border-indigo-200">
+                        </td>
+                        <td class="p-3 font-bold text-indigo-700">${m.code}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-gray-800">${m.name}</div>
+                            <div class="text-xs text-gray-500 font-mono">${m.nameEn || ''}</div>
+                        </td>
+                        <td class="p-3 text-gray-600 font-semibold">${m.phone}</td>
+                        <td class="p-3"><span class="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-bold">${m.units} টি</span></td>
+                        <td class="p-3 font-bold text-emerald-600">৳${monthlyAmount}</td>
+                        <td class="p-3 text-center space-x-1 no-print">
+                            <button onclick="editMember('${m.code}')" class="bg-amber-500 text-white p-1.5 rounded hover:bg-amber-600" title="এডিট">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteMember('${m.code}')" class="bg-rose-600 text-white p-1.5 rounded hover:bg-rose-700" title="ডিলিট">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function populateMemberDropdowns() {
+            const depSelect = document.getElementById('depMemberSelect');
+            const filterSelect = document.getElementById('filterDepMember');
+            const profSelect = document.getElementById('profileSelect');
+            const currentProf = profSelect.value;
+
+            depSelect.innerHTML = '<option value="">সদস্য সিলেক্ট করুন</option>';
+            filterSelect.innerHTML = '<option value="ALL">সকল সদস্য</option>';
+            profSelect.innerHTML = '';
+
+            db.members.forEach(m => {
+                depSelect.innerHTML += `<option value="${m.code}">${m.code} - ${m.name} (${m.units} ডিপোজিট)</option>`;
+                filterSelect.innerHTML += `<option value="${m.code}">${m.code} - ${m.name}</option>`;
+                profSelect.innerHTML += `<option value="${m.code}">${m.code} - ${m.name}</option>`;
+            });
+
+            if (currentProf) profSelect.value = currentProf;
+        }
+
+        // FULL MEMBER PROFILE WITH DEPOSIT SUMMARY
+        function renderIndividualProfile() {
+            const code = document.getElementById('profileSelect').value;
+            const container = document.getElementById('profileContainer');
+            
+            if (!code && db.members.length > 0) {
+                document.getElementById('profileSelect').value = db.members[0].code;
+            }
+            
+            const selectedCode = document.getElementById('profileSelect').value;
+            const member = db.members.find(m => m.code === selectedCode);
+            
+            if (!member) {
+                container.innerHTML = `<div class="p-6 bg-white rounded-xl text-center text-gray-500">কোন সদস্য নির্বাচন করা হয়নি।</div>`;
+                return;
+            }
+
+            const memberDeposits = db.deposits.filter(d => d.memberCode === member.code);
+            const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+            const totalDreamProsperityPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
+            const totalDreamDevelopmentPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
+            const totalDepPaidWithSpecialDeposits = totalDepPaid + totalDreamProsperityPaid + totalDreamDevelopmentPaid;
+            const totalExpensePaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
+            const photoSrc = member.photo || 'https://via.placeholder.com/150';
+
+            // Individual Deposit Summary Rows
+            const banglaMonthNames = {
+                '01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল',
+                '05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট',
+                '09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'
+            };
+            const toBanglaDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+            const formatDepositMonthYear = monthKey => {
+                const m = String(monthKey || '').match(/^(\d{4})-(\d{2})$/);
+                if (!m) return monthKey || '-';
+                return `${banglaMonthNames[m[2]] || m[2]} ${toBanglaDigits(m[1])}`;
+            };
+
+            let depositSummaryRows = '';
+            memberDeposits.forEach(d => {
+                depositSummaryRows += `
+                    <tr>
+                        <td class="p-2 border text-center">${formatDateDDMMYY(d.date)}</td>
+                        <td class="p-2 border font-bold text-indigo-700 text-center">${formatDepositMonthYear(d.month)} ${d.scheme ? '('+d.scheme+')' : ''}</td>
+                        <td class="p-2 border text-right font-bold text-emerald-600">৳${d.amount}</td>
+                        <td class="p-2 border text-right font-bold text-purple-700">৳${d.expenseAmount || 0}</td>
+                        <td class="p-2 border text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
+                        <td class="p-2 border text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
+                        <td class="p-2 border text-center">${d.method || 'ক্যাশ'}</td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                    <!-- Top Profile Header -->
+                    <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
+                        <div class="flex items-center gap-4">
+                            <img src="${photoSrc}" class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-600 shadow-md">
+                            <div>
+                                <h2 class="text-2xl font-bold text-indigo-950">${member.name}</h2>
+                                <p class="text-sm font-semibold text-indigo-600 font-mono">${member.nameEn || ''}</p>
+                                <p class="text-xs text-gray-500 mt-1">সদস্য আইডি: <span class="font-bold text-gray-800">${member.code}</span> | অবস্থান: <span class="font-bold text-emerald-700">${member.currentCountry || 'বাংলাদেশ'}</span></p>
+                                <span class="inline-block mt-2 bg-indigo-100 text-indigo-900 font-bold text-xs px-3 py-1 rounded-full">
+                                    ডিপোজিট সংখ্যা: ${member.units}টি (মাসিক ৳${member.units * 500})
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="bg-indigo-50 p-3 rounded-lg text-center border border-indigo-100 min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট জমা ডিপোজিট</span>
+                                <span class="text-xl font-bold text-indigo-700">৳${totalDepPaidWithSpecialDeposits.toLocaleString()}</span>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট জমা খরচ</span>
+                                <span class="text-xl font-bold text-purple-700">৳${totalExpensePaid.toLocaleString()}</span>
+                            </div>
+                            <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
+                                <span class="text-xl font-bold text-rose-700">৳${member.units * 500 - memberDeposits.filter(d => d.month === new Date().toISOString().slice(0, 7)).reduce((sum, d) => sum + parseFloat(d.amount || 0), 0)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Member Details Table Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm border-b pb-6">
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-indigo-900 border-b pb-1">ব্যক্তিগত তথ্য</h4>
+                            <p><strong>পিতার নাম:</strong> ${member.fatherName || '-'}</p>
+                            <p><strong>জন্ম তারিখ:</strong> ${formatDateDDMMYY(member.dob)}</p>
+                            <p><strong>NID / জন্ম নিবন্ধন:</strong> ${member.nid || '-'}</p>
+                            <p><strong>পাসপোর্ট নম্বর:</strong> ${member.passport || 'নাই'}</p>
+                            <p><strong>মোবাইল (WhatsApp):</strong> ${member.phone}</p>
+                            <p><strong>রক্তের গ্রুপ:</strong> <span class="text-rose-600 font-bold">${member.bloodGroup || '-'}</span></p>
+                            <p><strong>শিক্ষাগত যোগ্যতা:</strong> ${member.education || '-'}</p>
+                            <p><strong>ধর্ম / জাতীয়তা:</strong> ${member.religion || 'ইসলাম'} / ${member.nationality || 'বাংলাদেশী'}</p>
+                            <p><strong>পেশা:</strong> ${member.occupation || '-'}</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-indigo-900 border-b pb-1">ঠিকানা ও নমিনী তথ্য</h4>
+                            <p><strong>বর্তমান ঠিকানা:</strong> ${member.presentAddress || '-'}</p>
+                            <p><strong>স্থায়ী ঠিকানা:</strong> ${member.permanentAddress || '-'}</p>
+                            <hr class="my-2">
+                            <p><strong>নমিনীর নাম:</strong> ${member.nomineeName || '-'}</p>
+                            <p><strong>সম্পর্ক:</strong> ${member.nomineeRelation || '-'}</p>
+                            <p><strong>নমিনীর মোবাইল:</strong> ${member.nomineePhone || '-'}</p>
+                            ${member.nidDoc ? `<div class="pt-2"><strong>NID এর ফটোকপি:</strong><br><img src="${member.nidDoc}" class="h-28 object-cover rounded border mt-1"></div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- INDIVIDUAL DEPOSIT SUMMARY SECTION (নতুন ডিপোজিট সামারি) -->
+                    <div class="space-y-3">
+                        <h4 class="font-bold text-indigo-900 border-b pb-2 flex justify-between items-center">
+                            <span><i data-lucide="wallet" class="inline w-4 h-4 mr-1"></i> সদস্য ডিপোজিট সামারি (Deposit Summary)</span>
+                            <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border">
+                                <thead class="bg-indigo-900 text-white font-bold">
+                                    <tr>
+                                        <th class="p-2 border text-center">তারিখ</th>
+                                        <th class="p-2 border text-center">জমার মাস / স্কিম</th>
+                                        <th class="p-2 border text-right">মূল ডিপোজিট (৳)</th>
+                                        <th class="p-2 border text-right">খরচ বাবদ জমা (৳)</th>
+                                        <th class="p-2 border text-right">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
+                                        <th class="p-2 border text-right">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
+                                        <th class="p-2 border text-center">মেথড</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${depositSummaryRows.length > 0 ? depositSummaryRows : '<tr><td colspan="5" class="p-4 text-center text-gray-400">এখনো কোনো ডিপোজিট জমা হয়নি</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // MONTHLY SUMMARY VIEW LOGIC
+        // Selected month summary plus yearly 12-month summary.
+        function renderMonthlySummary() {
+            const year = document.getElementById('summaryYear').value;
+            const monthFilter = document.getElementById('summaryMonthFilter').value;
+
+            const monthNames = {
+                '01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল',
+                '05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট',
+                '09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'
+            };
+
+            const monthKey = `${year}-${monthFilter}`;
+            const monthLabel = `${monthNames[monthFilter] || monthFilter} ${year}`;
+
+            document.getElementById('summaryYearLabel').innerText = monthLabel;
+            document.getElementById('summarySelectedMonth').innerText = monthLabel;
+
+            const header = document.getElementById('summaryTableHeader');
+            const tbody = document.getElementById('summaryTableBody');
+            const footer = document.getElementById('summaryTableFooter');
+
+            header.innerHTML = `
+                <tr>
+                    <th class="border border-gray-300 p-2">ক্রমিক</th>
+                    <th class="border border-gray-300 p-2 text-left">সদস্য আইডি</th>
+                    <th class="border border-gray-300 p-2 text-left">সদস্যের নাম</th>
+                    <th class="border border-gray-300 p-2">ডিপোজিট সংখ্যা</th>
+                    <th class="border border-gray-300 p-2">ডিপোজিটের ধরণ</th>
+                    <th class="border border-gray-300 p-2">জমার তারিখ</th>
+                    <th class="border border-gray-300 p-2 text-right">মূল ডিপোজিট (৳)</th>
+                    <th class="border border-gray-300 p-2 text-right text-purple-700">খরচ জমা (৳)</th>
+                    <th class="border border-gray-300 p-2 text-right text-emerald-700">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
+                    <th class="border border-gray-300 p-2 text-right text-amber-700">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
+                    <th class="border border-gray-300 p-2">পেমেন্ট মেথড</th>
+                    <th class="border border-gray-300 p-2">অবস্থা</th>
+                </tr>
+            `;
+
+            tbody.innerHTML = '';
+            footer.innerHTML = '';
+
+            let paidMembers = 0;
+            let totalDeposit = 0;
+            let totalExpense = 0;
+            let totalDreamProsperity = 0;
+            let totalDreamDevelopment = 0;
+
+            db.members.forEach((m, index) => {
+                const memberDeps = db.deposits.filter(d =>
+                    d.memberCode === m.code && d.month === monthKey
+                );
+
+                if (memberDeps.length > 0) {
+                    paidMembers++;
+
+                    memberDeps.forEach(d => {
+                        const amount = parseFloat(d.amount || 0);
+                        const expense = parseFloat(d.expenseAmount || 0);
+                        const dreamProsperity = parseFloat(d.dreamProsperityAmount || 0);
+                        const dreamDevelopment = parseFloat(d.dreamDevelopmentAmount || 0);
+                        totalDeposit += amount;
+                        totalExpense += expense;
+                        totalDreamProsperity += dreamProsperity;
+                        totalDreamDevelopment += dreamDevelopment;
+
+                        const schemeText =
+                            d.scheme === 'মাসিক' ? 'মাসিক সাধারণ ডিপোজিট' :
+                            d.scheme === 'অর্ধ-বার্ষিক' ? 'স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)' :
+                            d.scheme === 'বার্ষিক' ? 'স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)' :
+                            (d.scheme || '-');
+
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50">
+                                <td class="border border-gray-300 p-2">${index + 1}</td>
+                                <td class="border border-gray-300 p-2 text-left font-bold text-indigo-700">${m.code}</td>
+                                <td class="border border-gray-300 p-2 text-left font-semibold">${m.name}</td>
+                                <td class="border border-gray-300 p-2">${m.units || 1}টি</td>
+                                <td class="border border-gray-300 p-2 text-xs">${schemeText}</td>
+                                <td class="border border-gray-300 p-2 text-xs">${formatDateDDMMYY(d.date)}</td>
+                                <td class="border border-gray-300 p-2 text-right font-bold text-emerald-700">৳${amount.toLocaleString()}</td>
+                                <td class="border border-gray-300 p-2 text-right font-bold text-purple-700">৳${expense.toLocaleString()}</td>
+                                <td class="border border-gray-300 p-2 text-right font-bold text-emerald-700">৳${dreamProsperity.toLocaleString()}</td>
+                                <td class="border border-gray-300 p-2 text-right font-bold text-amber-700">৳${dreamDevelopment.toLocaleString()}</td>
+                                <td class="border border-gray-300 p-2 text-xs">${d.method || 'ক্যাশ'}</td>
+                                <td class="border border-gray-300 p-2">
+                                    <span class="inline-block bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-xs font-bold">জমা হয়েছে</span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML += `
+                        <tr class="bg-rose-50/40">
+                            <td class="border border-gray-300 p-2">${index + 1}</td>
+                            <td class="border border-gray-300 p-2 text-left font-bold text-indigo-700">${m.code}</td>
+                            <td class="border border-gray-300 p-2 text-left font-semibold">${m.name}</td>
+                            <td class="border border-gray-300 p-2">${m.units || 1}টি</td>
+                            <td class="border border-gray-300 p-2 text-xs">-</td>
+                            <td class="border border-gray-300 p-2 text-xs">-</td>
+                            <td class="border border-gray-300 p-2 text-right font-bold">৳0</td>
+                            <td class="border border-gray-300 p-2 text-right font-bold">৳0</td>
+                            <td class="border border-gray-300 p-2 text-right font-bold">৳0</td>
+                            <td class="border border-gray-300 p-2 text-right font-bold">৳0</td>
+                            <td class="border border-gray-300 p-2 text-xs">-</td>
+                            <td class="border border-gray-300 p-2">
+                                <span class="inline-block bg-rose-100 text-rose-700 px-2 py-1 rounded-full text-xs font-bold">বকেয়া</span>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            const totalMembers = db.members.length;
+            const unpaidMembers = Math.max(0, totalMembers - paidMembers);
+            const totalDemand = db.members.reduce((sum, m) => sum + (parseInt(m.units || 1) * 500), 0);
+            const totalDue = Math.max(0, totalDemand - totalDeposit);
+
+            document.getElementById('summaryPaidMembers').innerText = paidMembers;
+            document.getElementById('summaryUnpaidMembers').innerText = unpaidMembers;
+            document.getElementById('summaryTotalDeposit').innerText = totalDeposit.toLocaleString();
+            document.getElementById('summaryTotalDue').innerText = totalDue.toLocaleString();
+
+            renderYearlySummary(year);
+
+            footer.innerHTML = `
+                <tr>
+                    <td colspan="6" class="border border-gray-300 p-3 text-right">সর্বমোট</td>
+                    <td class="border border-gray-300 p-3 text-right text-emerald-800">৳${totalDeposit.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-purple-800">৳${totalExpense.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-emerald-800">৳${totalDreamProsperity.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-amber-800">৳${totalDreamDevelopment.toLocaleString()}</td>
+                    <td colspan="2" class="border border-gray-300 p-3 text-center">জমা: ${paidMembers} জন | বকেয়া: ${unpaidMembers} জন</td>
+                </tr>
+            `;
+        }
+
+        // PRINT ONLY THE MONTHLY DEPOSIT SUMMARY (EXCLUDES YEARLY SUMMARY)
+        function printMonthlySummary() {
+            const source = document.getElementById('view-summary');
+            if (!source) {
+                alert('মাস ভিত্তিক ডিপোজিট সামারি পাওয়া যায়নি।');
+                return;
+            }
+
+            const printRoot = document.createElement('div');
+            printRoot.id = 'dbg-print-root';
+            printRoot.setAttribute('data-print-title', 'DBG মাস ভিত্তিক সদস্য ডিপোজিট সামারি');
+
+            const clone = source.cloneNode(true);
+            // The yearly summary is inside the monthly-summary view, so remove it explicitly.
+            const yearlySection = clone.querySelector('#yearly-summary-section');
+            if (yearlySection) yearlySection.remove();
+
+            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+
+            clone.querySelectorAll('select, textarea').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            clone.querySelectorAll('input').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            // Print-only company headline for the monthly summary.
+            const companyHeader = document.createElement('div');
+            companyHeader.className = 'dbg-print-company-header';
+            companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+            printRoot.appendChild(companyHeader);
+            printRoot.appendChild(clone);
+            document.body.appendChild(printRoot);
+            document.body.classList.add('dbg-printing');
+
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('dbg-printing');
+                    printRoot.remove();
+                }, 300);
+            }, 50);
+        }
+
+        // PRINT ONLY THE YEARLY DEPOSIT SUMMARY
+        function printYearlySummary() {
+            const source = document.getElementById('yearly-summary-section');
+            if (!source) {
+                alert('বার্ষিক ডিপোজিট সামারি পাওয়া যায়নি।');
+                return;
+            }
+
+            const printRoot = document.createElement('div');
+            printRoot.id = 'dbg-print-root';
+            printRoot.setAttribute('data-print-title', 'DBG বার্ষিক ডিপোজিট সামারি');
+
+            const clone = source.cloneNode(true);
+            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+
+            clone.querySelectorAll('select, textarea').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            clone.querySelectorAll('input').forEach(el => {
+                const span = document.createElement('span');
+                span.textContent = el.value || '';
+                span.style.cssText = 'display:inline-block; padding:2px 0;';
+                el.replaceWith(span);
+            });
+
+            // Print-only company headline for the monthly summary.
+            const companyHeader = document.createElement('div');
+            companyHeader.className = 'dbg-print-company-header';
+            companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+            printRoot.appendChild(companyHeader);
+            printRoot.appendChild(clone);
+            document.body.appendChild(printRoot);
+            document.body.classList.add('dbg-printing');
+
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('dbg-printing');
+                    printRoot.remove();
+                }, 300);
+            }, 50);
+        }
+
+        // YEARLY SUMMARY VIEW LOGIC
+        function renderYearlySummary(yearValue = null) {
+            const year = String(yearValue || document.getElementById('summaryYear').value || new Date().getFullYear());
+            const monthNames = {
+                '01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল',
+                '05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট',
+                '09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'
+            };
+
+            const totalUnits = db.members.reduce((sum, m) => sum + parseInt(m.units || 1), 0);
+            const monthlyDemand = totalUnits * 500;
+            let yearlyDeposit = 0;
+            let yearlyDue = 0;
+            let yearlyDemand = 0;
+            const tbody = document.getElementById('yearlySummaryTableBody');
+            const footer = document.getElementById('yearlySummaryTableFooter');
+            if (!tbody || !footer) return;
+            tbody.innerHTML = '';
+
+            for (let month = 1; month <= 12; month++) {
+                const mm = String(month).padStart(2, '0');
+                const monthKey = `${year}-${mm}`;
+                const monthDeposits = db.deposits.filter(d => d.month === monthKey);
+                const totalDeposit = monthDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+                const dreamProsperityDeposit = monthDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
+                const dreamDevelopmentDeposit = monthDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
+                const paidMembers = new Set(monthDeposits.map(d => d.memberCode)).size;
+                const unpaidMembers = Math.max(0, db.members.length - paidMembers);
+                const demand = monthlyDemand;
+                const due = Math.max(0, demand - totalDeposit);
+
+                yearlyDeposit += totalDeposit;
+                yearlyDue += due;
+                yearlyDemand += demand;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="border border-gray-300 p-2">${month}</td>
+                        <td class="border border-gray-300 p-2 text-left font-semibold">${monthNames[mm]} ${year}</td>
+                        <td class="border border-gray-300 p-2 text-right text-indigo-700">৳${demand.toLocaleString()}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold text-emerald-700">৳${totalDeposit.toLocaleString()}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold text-emerald-700">৳${dreamProsperityDeposit.toLocaleString()}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold text-amber-700">৳${dreamDevelopmentDeposit.toLocaleString()}</td>
+                        <td class="border border-gray-300 p-2 text-right font-bold text-orange-600">৳${due.toLocaleString()}</td>
+                        <td class="border border-gray-300 p-2 text-emerald-700">${paidMembers} জন</td>
+                        <td class="border border-gray-300 p-2 text-rose-600">${unpaidMembers} জন</td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('yearlySummaryYearLabel').innerText = year;
+            document.getElementById('yearlyTotalDeposit').innerText = yearlyDeposit.toLocaleString();
+            document.getElementById('yearlyTotalDue').innerText = yearlyDue.toLocaleString();
+            document.getElementById('yearlyTotalDemand').innerText = yearlyDemand.toLocaleString();
+
+            footer.innerHTML = `
+                <tr>
+                    <td colspan="2" class="border border-gray-300 p-3 text-right">সর্বমোট</td>
+                    <td class="border border-gray-300 p-3 text-right text-indigo-800">৳${yearlyDemand.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-emerald-800">৳${yearlyDeposit.toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-emerald-800">৳${db.deposits.filter(d => String(d.month || '').startsWith(year + '-')).reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0).toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-amber-800">৳${db.deposits.filter(d => String(d.month || '').startsWith(year + '-')).reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0).toLocaleString()}</td>
+                    <td class="border border-gray-300 p-3 text-right text-orange-700">৳${yearlyDue.toLocaleString()}</td>
+                    <td colspan="2" class="border border-gray-300 p-3 text-center">${year} সালের সারসংক্ষেপ</td>
+                </tr>
+            `;
+        }
+
+        // MEMBER FORM MODAL MANAGEMENT
+        function openMemberModal(member = null) {
+            document.getElementById('memberModal').classList.remove('hidden');
+            document.getElementById('memberModal').classList.add('flex');
+            
+            if (member) {
+                document.getElementById('memberModalTitle').innerText = 'সদস্য তথ্য এডিট করুন';
+                document.getElementById('editMemberId').value = member.code;
+                document.getElementById('mCode').value = member.code;
+                document.getElementById('mName').value = member.name;
+                document.getElementById('mNameEn').value = member.nameEn || '';
+                document.getElementById('mFatherName').value = member.fatherName || '';
+                document.getElementById('mDob').value = member.dob || '';
+                document.getElementById('mNid').value = member.nid || '';
+                document.getElementById('mPassport').value = member.passport || '';
+                document.getElementById('mPhone').value = member.phone || '';
+                document.getElementById('mBloodGroup').value = member.bloodGroup || '';
+                document.getElementById('mEducation').value = member.education || '';
+                document.getElementById('mReligion').value = member.religion || 'ইসলাম';
+                document.getElementById('mNationality').value = member.nationality || 'বাংলাদেশী';
+                document.getElementById('mOccupation').value = member.occupation || '';
+                document.getElementById('mPresentAddress').value = member.presentAddress || '';
+                document.getElementById('mPermanentAddress').value = member.permanentAddress || '';
+                document.getElementById('mCurrentCountry').value = member.currentCountry || 'বাংলাদেশ';
+                document.getElementById('mNomineeName').value = member.nomineeName || '';
+                document.getElementById('mNomineeRelation').value = member.nomineeRelation || '';
+                document.getElementById('mNomineePhone').value = member.nomineePhone || '';
+                document.getElementById('mUnits').value = member.units || 1;
+            } else {
+                document.getElementById('memberModalTitle').innerText = 'নতুন সদস্য যুক্ত করুন';
+                document.getElementById('editMemberId').value = '';
+                document.getElementById('memberForm').reset();
+                const nextNum = db.members.length + 1;
+                document.getElementById('mCode').value = `DBG-${String(nextNum).padStart(3, '0')}`;
+            }
+        }
+
+        function closeMemberModal() {
+            document.getElementById('memberModal').classList.add('hidden');
+            document.getElementById('memberModal').classList.remove('flex');
+        }
+
+        function saveMember(e) {
+            e.preventDefault();
+            const editCode = document.getElementById('editMemberId').value;
+            
+            const photoFile = document.getElementById('mPhotoFile').files[0];
+            const nidFile = document.getElementById('mNidFile').files[0];
+
+            const executeSave = (photoBase64, nidBase64) => {
+                const memberData = {
+                    code: document.getElementById('mCode').value,
+                    name: document.getElementById('mName').value,
+                    nameEn: document.getElementById('mNameEn').value,
+                    fatherName: document.getElementById('mFatherName').value,
+                    dob: document.getElementById('mDob').value,
+                    nid: document.getElementById('mNid').value,
+                    passport: document.getElementById('mPassport').value,
+                    phone: document.getElementById('mPhone').value,
+                    bloodGroup: document.getElementById('mBloodGroup').value,
+                    education: document.getElementById('mEducation').value,
+                    religion: document.getElementById('mReligion').value,
+                    nationality: document.getElementById('mNationality').value,
+                    occupation: document.getElementById('mOccupation').value,
+                    presentAddress: document.getElementById('mPresentAddress').value,
+                    permanentAddress: document.getElementById('mPermanentAddress').value,
+                    currentCountry: document.getElementById('mCurrentCountry').value,
+                    nomineeName: document.getElementById('mNomineeName').value,
+                    nomineeRelation: document.getElementById('mNomineeRelation').value,
+                    nomineePhone: document.getElementById('mNomineePhone').value,
+                    units: parseInt(document.getElementById('mUnits').value),
+                    photo: photoBase64 || (editCode ? (db.members.find(m => m.code === editCode)?.photo || '') : ''),
+                    nidDoc: nidBase64 || (editCode ? (db.members.find(m => m.code === editCode)?.nidDoc || '') : '')
+                };
+
+                if (editCode) {
+                    const idx = db.members.findIndex(m => m.code === editCode);
+                    if (idx !== -1) db.members[idx] = memberData;
+                } else {
+                    db.members.push(memberData);
+                }
+
+                saveData();
+                closeMemberModal();
+            };
+
+            let photoB64 = '', nidB64 = '';
+            const readPhoto = new Promise(resolve => {
+                if (photoFile) {
+                    const r = new FileReader();
+                    r.onload = e => resolve(e.target.result);
+                    r.readAsDataURL(photoFile);
+                } else resolve('');
+            });
+
+            const readNid = new Promise(resolve => {
+                if (nidFile) {
+                    const r = new FileReader();
+                    r.onload = e => resolve(e.target.result);
+                    r.readAsDataURL(nidFile);
+                } else resolve('');
+            });
+
+            Promise.all([readPhoto, readNid]).then(([pImg, nImg]) => {
+                executeSave(pImg, nImg);
+            });
+        }
+
+        function editMember(code) {
+            const member = db.members.find(m => m.code === code);
+            if (member) openMemberModal(member);
+        }
+
+        function deleteMember(code) {
+            if (confirm(`আপনি কি নিশ্চিত সদস্য ${code} ডিলিট করতে চান?`)) {
+                db.members = db.members.filter(m => m.code !== code);
+                saveData();
+            }
+        }
+
+        // DEPOSITS MANAGEMENT WITH SMS TRIGGER
+        function calculateDepAmount() {
+            const code = document.getElementById('depMemberSelect').value;
+            const member = db.members.find(m => m.code === code);
+            document.getElementById('depAmount').value = member ? member.units * 500 : 0;
+        }
+
+        // Send SMS to Member via Bulk SMS Dhaka API
+        async function sendDepositSMS(deposit) {
+            const member = db.members.find(m => m.code === deposit.memberCode);
+            if (!member || !member.phone) {
+                alert('সদস্যের মোবাইল নম্বর পাওয়া যায়নি।');
+                return false;
+            }
+
+            const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
+            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${deposit.month} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
+
+            // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
+            let cleanPhone = String(member.phone).replace(/\D/g, '');
+            if (cleanPhone.startsWith('0')) cleanPhone = '880' + cleanPhone.slice(1);
+            else if (cleanPhone.startsWith('88') && !cleanPhone.startsWith('880')) cleanPhone = '880' + cleanPhone.slice(2);
+            else if (!cleanPhone.startsWith('880')) cleanPhone = '880' + cleanPhone;
+
+            if (!/^8801[3-9]\d{8}$/.test(cleanPhone)) {
+                alert(`মোবাইল নম্বরটি সঠিক নয়: ${member.phone}\nসঠিক ফরম্যাট: 01XXXXXXXXX`);
+                return false;
+            }
+
+            const apiKey = '66900e63f37d45ce25a6dcff5272bb976b8a85c6';
+            const callerID = 'Random';
+            const endpoint = 'https://bulksmsdhaka.net/api/sendtext';
+
+            const params = new URLSearchParams({
+                apikey: apiKey,
+                callerID: callerID,
+                number: cleanPhone,
+                message: smsText
+            });
+
+            try {
+                const response = await fetch(`${endpoint}?${params.toString()}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-store'
+                });
+
+                const raw = await response.text();
+                let result = raw;
+                try {
+                    const json = JSON.parse(raw);
+                    result = json.message || json.status || json.error || raw;
+                } catch (_) {}
+
+                const lower = String(raw).toLowerCase();
+                const failed = !response.ok || /error|failed|invalid|insufficient|unauthor|balance|rejected|denied/.test(lower);
+                if (failed) {
+                    alert(`SMS পাঠানো যায়নি।\nGateway response: ${result}`);
+                    return false;
+                }
+
+                alert(`SMS gateway-তে পাঠানো হয়েছে।\nমোবাইল: 0${cleanPhone.slice(3)}\nGateway response: ${result}`);
+                return true;
+            } catch (error) {
+                console.error('SMS API error:', error);
+                alert(`SMS পাঠানো যায়নি।\nকারণ: ${error.message || error}`);
+                return false;
+            }
+        }
+
+        async function saveDeposit(e) {
+            e.preventDefault();
+            const memberCode = document.getElementById('depMemberSelect').value;
+            const selectedMonth = document.getElementById('depMonthSelect').value;
+            const selectedYear = document.getElementById('depYearSelect').value;
+            const month = `${selectedYear}-${selectedMonth}`;
+            const scheme = document.getElementById('depScheme').value;
+            const dateInput = document.getElementById('depDate').value;
+            const date = parseDepositDate(dateInput);
+            if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
+            const amount = parseFloat(document.getElementById('depAmount').value);
+            const expenseAmount = parseFloat(document.getElementById('depExpenseAmount').value || 0);
+            const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
+            const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
+            const method = document.getElementById('depMethod').value;
+
+            const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
+            db.deposits.push(newDeposit);
+            saveData();
+            
+            showReceipt(newDeposit);
+            
+            // Ask & Trigger SMS
+            if (confirm("জমা সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
+                await sendDepositSMS(newDeposit);
+            }
+
+            document.getElementById('depositForm').reset();
+            document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+        }
+
+        function renderDeposits() {
+            const filter = document.getElementById('filterDepMember').value;
+            const tbody = document.getElementById('depositsTableBody');
+            tbody.innerHTML = '';
+            const list = (filter === 'ALL') ? db.deposits : db.deposits.filter(d => d.memberCode === filter);
+
+            list.slice().reverse().forEach(d => {
+                const member = db.members.find(m => m.code === d.memberCode);
+                const schemeText = d.scheme ? ` (${d.scheme})` : '';
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(d.date)}</td>
+                        <td class="p-2.5 font-semibold text-gray-800">${d.memberCode} - ${member ? member.name : ''}</td>
+                        <td class="p-2.5 text-indigo-700 font-medium">${d.month}${schemeText}</td>
+                        <td class="p-2.5 text-right font-bold text-emerald-600">৳${d.amount}</td>
+                        <td class="p-2.5 text-right font-bold text-purple-700">৳${d.expenseAmount || 0}</td>
+                        <td class="p-2.5 text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
+                        <td class="p-2.5 text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
+                        <td class="p-2.5 text-center space-x-1 no-print">
+                            <button onclick='showReceipt(${JSON.stringify(d)})' class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
+                                <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick='sendDepositSMS(${JSON.stringify(d)})' class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
+                                <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="editDepositDate(${d.id})" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="জমার তারিখ সংশোধন">
+                                <i data-lucide="calendar-cog" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteDeposit(${d.id})" class="bg-rose-600 text-white p-1 rounded hover:bg-rose-700" title="ডিলিট">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function editDepositDate(id) {
+            const deposit = db.deposits.find(d => d.id === id);
+            if (!deposit) return;
+            const currentDate = deposit.date ? deposit.date.split('-').reverse().join('-') : '';
+            const newDateInput = prompt('নতুন জমার তারিখ দিন (DD-MM-YYYY):', currentDate);
+            if (newDateInput === null) return;
+            const newDate = parseDepositDate(newDateInput.trim());
+            if (!newDate) {
+                alert('সঠিক DD-MM-YYYY তারিখ দিন।');
+                return;
+            }
+            deposit.date = newDate;
+            saveData();
+        }
+
+        function deleteDeposit(id) {
+            if (confirm("আপনি কি জমার রেকর্ডটি ডিলিট করতে চান?")) {
+                db.deposits = db.deposits.filter(d => d.id !== id);
+                saveData();
+            }
+        }
+
+        function showReceipt(deposit) {
+            const member = db.members.find(m => m.code === deposit.memberCode);
+            document.getElementById('recId').innerText = `#R-${deposit.id.toString().slice(-4)}`;
+            document.getElementById('recDate').innerText = formatDateDDMMYY(deposit.date);
+            document.getElementById('recMCode').innerText = deposit.memberCode;
+            document.getElementById('recMName').innerText = member ? member.name : '';
+            document.getElementById('recMonth').innerText = `${deposit.month} ${deposit.scheme ? '['+deposit.scheme+']' : ''}`;
+            document.getElementById('recMethod').innerText = deposit.method || 'ক্যাশ';
+            document.getElementById('recAmount').innerText = deposit.amount;
+            document.getElementById('recExpenseAmount').innerText = deposit.expenseAmount || 0;
+            document.getElementById('recDreamProsperityAmount').innerText = deposit.dreamProsperityAmount || 0;
+            document.getElementById('recDreamDevelopmentAmount').innerText = deposit.dreamDevelopmentAmount || 0;
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+            document.getElementById('receiptModal').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+            document.getElementById('receiptModal').classList.remove('flex');
+        }
+
+        // INVESTMENTS LOGIC
+        function saveInvestment(e) {
+            e.preventDefault();
+            db.investments.push({
+                id: Date.now(),
+                title: document.getElementById('invTitle').value,
+                category: document.getElementById('invCategory').value,
+                amount: parseFloat(document.getElementById('invAmount').value),
+                profit: parseFloat(document.getElementById('invProfit').value || 0),
+                date: document.getElementById('invDate').value,
+                status: document.getElementById('invStatus').value
+            });
+            saveData();
+            document.getElementById('investForm').reset();
+        }
+
+        function renderInvestments() {
+            const tbody = document.getElementById('investmentsTableBody');
+            tbody.innerHTML = '';
+            let totalProfitSum = 0;
+
+            db.investments.forEach(inv => {
+                totalProfitSum += parseFloat(inv.profit || 0);
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 font-bold text-gray-800">${inv.title} <span class="text-xs text-gray-400 block font-normal">${inv.category || ''}</span></td>
+                        <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(inv.date)}</td>
+                        <td class="p-2.5 text-right font-semibold">৳${inv.amount}</td>
+                        <td class="p-2.5 text-right font-bold text-emerald-600">৳${inv.profit || 0}</td>
+                        <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}">${inv.status}</span></td>
+                        <td class="p-2.5 text-center no-print">
+                            <button onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const totalUnits = db.members.reduce((sum, m) => sum + parseInt(m.units || 1), 0);
+            const profitPerUnit = totalUnits > 0 ? (totalProfitSum / totalUnits) : 0;
+
+            document.getElementById('calcTotalProfit').innerText = totalProfitSum.toLocaleString();
+            document.getElementById('calcProfitPerUnit').innerText = profitPerUnit.toFixed(2);
+            document.getElementById('calc2UnitProfit').innerText = (profitPerUnit * 2).toFixed(2);
+            document.getElementById('calc3UnitProfit').innerText = (profitPerUnit * 3).toFixed(2);
+            document.getElementById('calc4UnitProfit').innerText = (profitPerUnit * 4).toFixed(2);
+            lucide.createIcons();
+        }
+
+        function deleteInvestment(id) {
+            if (confirm("ইনভেস্টমেন্ট প্রজেক্টটি মুছে ফেলতে চান?")) {
+                db.investments = db.investments.filter(i => i.id !== id);
+                saveData();
+            }
+        }
+
+
+        // ================= INVESTOR PROFILE LOGIC =================
+        let editingInvestorId = null;
+
+        function nextInvestorCode() {
+            const nums = db.investorProfiles.map(x => parseInt(String(x.code || '').replace(/\D/g,''),10)).filter(Number.isFinite);
+            const n = nums.length ? Math.max(...nums) + 1 : 1;
+            return 'INV-' + String(n).padStart(3,'0');
+        }
+
+        function resetInvestorForm() {
+            editingInvestorId = null;
+            const form = document.getElementById('investorForm');
+            if (!form) return;
+            form.reset();
+            document.getElementById('investorEditId').value = '';
+            document.getElementById('investorCode').value = nextInvestorCode();
+            document.getElementById('investorAmount').value = 0;
+            document.getElementById('investorProfitShare').value = 0;
+            document.getElementById('investorStatus').value = 'চলমান';
+            document.getElementById('investorDate').value = new Date().toISOString().slice(0,10);
+            document.getElementById('investorSaveBtn').textContent = 'ইনভেস্টর সেভ করুন';
+        }
+
+        async function readInvestorPhoto(file) {
+            if (!file) return null;
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveInvestorProfile(e) {
+            e.preventDefault();
+            const editId = editingInvestorId;
+            const existing = editId ? db.investorProfiles.find(x => x.id === editId) : null;
+            let photo = existing?.photo || '';
+            const photoInput = document.getElementById('investorPhoto');
+            if (photoInput?.files?.[0]) photo = await readInvestorPhoto(photoInput.files[0]);
+
+            const record = {
+                id: editId || Date.now(),
+                code: document.getElementById('investorCode').value || nextInvestorCode(),
+                name: document.getElementById('investorName').value.trim(),
+                nameEn: document.getElementById('investorNameEn').value.trim(),
+                father: document.getElementById('investorFather').value.trim(),
+                mobile: document.getElementById('investorMobile').value.trim(),
+                nid: document.getElementById('investorNid').value.trim(),
+                occupation: document.getElementById('investorOccupation').value.trim(),
+                address: document.getElementById('investorAddress').value.trim(),
+                amount: parseFloat(document.getElementById('investorAmount').value || 0),
+                date: document.getElementById('investorDate').value,
+                project: document.getElementById('investorProject').value.trim(),
+                profitShare: parseFloat(document.getElementById('investorProfitShare').value || 0),
+                status: document.getElementById('investorStatus').value,
+                photo,
+                notes: document.getElementById('investorNotes').value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (editId) {
+                const i = db.investorProfiles.findIndex(x => x.id === editId);
+                if (i >= 0) db.investorProfiles[i] = {...db.investorProfiles[i], ...record};
+            } else {
+                db.investorProfiles.push(record);
+            }
+            saveData();
+            resetInvestorForm();
+            const sel = document.getElementById('investorProfileSelect');
+            if (sel) sel.value = String(record.id);
+            renderSelectedInvestorProfile();
+        }
+
+        function editInvestorProfile(id) {
+            const inv = db.investorProfiles.find(x => x.id === id);
+            if (!inv) return;
+            editingInvestorId = id;
+            document.getElementById('investorEditId').value = id;
+            document.getElementById('investorCode').value = inv.code || '';
+            document.getElementById('investorName').value = inv.name || '';
+            document.getElementById('investorNameEn').value = inv.nameEn || '';
+            document.getElementById('investorFather').value = inv.father || '';
+            document.getElementById('investorMobile').value = inv.mobile || '';
+            document.getElementById('investorNid').value = inv.nid || '';
+            document.getElementById('investorOccupation').value = inv.occupation || '';
+            document.getElementById('investorAddress').value = inv.address || '';
+            document.getElementById('investorAmount').value = inv.amount ?? 0;
+            document.getElementById('investorDate').value = inv.date || '';
+            document.getElementById('investorProject').value = inv.project || '';
+            document.getElementById('investorProfitShare').value = inv.profitShare ?? 0;
+            document.getElementById('investorStatus').value = inv.status || 'চলমান';
+            document.getElementById('investorNotes').value = inv.notes || '';
+            document.getElementById('investorSaveBtn').textContent = 'পরিবর্তন সেভ করুন';
+            switchTab('investor-profile');
+            document.getElementById('investorName')?.focus();
+        }
+
+        function deleteInvestorProfile(id) {
+            const inv = db.investorProfiles.find(x => x.id === id);
+            if (!inv) return;
+            if (confirm(`ইনভেস্টর ${inv.code || ''} - ${inv.name || ''} এর প্রোফাইল মুছে ফেলতে চান?`)) {
+                db.investorProfiles = db.investorProfiles.filter(x => x.id !== id);
+                saveData();
+                resetInvestorForm();
+            }
+        }
+
+        function renderInvestorProfiles() {
+            const tbody = document.getElementById('investorTableBody');
+            if (!tbody) return;
+            const q = (document.getElementById('investorSearch')?.value || '').trim().toLowerCase();
+            const list = db.investorProfiles.filter(inv => {
+                const hay = [inv.code, inv.name, inv.nameEn, inv.mobile, inv.nid, inv.project].join(' ').toLowerCase();
+                return !q || hay.includes(q);
+            });
+            tbody.innerHTML = list.length ? list.map(inv => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2.5 font-mono font-bold text-indigo-700">${inv.code || ''}</td>
+                    <td class="p-2.5 font-semibold text-gray-800">${inv.name || ''}<span class="block text-[10px] text-gray-400">${inv.nameEn || ''}</span></td>
+                    <td class="p-2.5">${inv.mobile || ''}</td>
+                    <td class="p-2.5 text-right font-bold text-emerald-700">৳${Number(inv.amount || 0).toLocaleString()}</td>
+                    <td class="p-2.5">${inv.project || ''}</td>
+                    <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : inv.status === 'সম্পন্ন' ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-800'}">${inv.status || ''}</span></td>
+                    <td class="p-2.5 text-center no-print">
+                        <button onclick="editInvestorProfile(${inv.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="এডিট"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="deleteInvestorProfile(${inv.id})" class="text-rose-600 hover:text-rose-800" title="ডিলিট"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('') : `<tr><td colspan="7" class="p-6 text-center text-gray-400">কোনো ইনভেস্টর পাওয়া যায়নি।</td></tr>`;
+            lucide.createIcons();
+            const sel = document.getElementById('investorProfileSelect');
+            if (sel) {
+                const current = sel.value;
+                sel.innerHTML = `<option value="">ইনভেস্টর নির্বাচন করুন</option>` + db.investorProfiles.map(inv => `<option value="${inv.id}">${inv.code} - ${inv.name}</option>`).join('');
+                if (current && db.investorProfiles.some(x => String(x.id) === current)) sel.value = current;
+                else if (db.investorProfiles[0]) sel.value = String(db.investorProfiles[0].id);
+            }
+        }
+
+        function renderSelectedInvestorProfile() {
+            const box = document.getElementById('investorProfileContainer');
+            const sel = document.getElementById('investorProfileSelect');
+            if (!box || !sel) return;
+            const id = Number(sel.value);
+            const inv = db.investorProfiles.find(x => x.id === id);
+            if (!inv) {
+                box.innerHTML = `<div class="p-10 text-center text-gray-400">একজন ইনভেস্টর নির্বাচন করুন।</div>`;
+                return;
+            }
+            box.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-5 items-start">
+                    <div class="flex justify-center">
+                        ${inv.photo ? `<img src="${inv.photo}" class="w-32 h-32 object-cover rounded-xl border-4 border-white shadow-md">` : `<div class="w-32 h-32 rounded-xl bg-indigo-50 border flex items-center justify-center text-indigo-300"><i data-lucide="user-round" class="w-12 h-12"></i></div>`}
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap justify-between gap-3 border-b pb-3 mb-3">
+                            <div>
+                                <div class="text-xs text-gray-400 font-mono">${inv.code || ''}</div>
+                                <h2 class="text-2xl font-bold text-indigo-950">${inv.name || ''}</h2>
+                                <div class="text-sm text-gray-500">${inv.nameEn || ''}</div>
+                            </div>
+                            <span class="self-start text-xs px-3 py-1 rounded-full font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : inv.status === 'সম্পন্ন' ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-800'}">${inv.status || ''}</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div><span class="text-gray-400">পিতা/স্বামী:</span> <strong>${inv.father || '—'}</strong></div>
+                            <div><span class="text-gray-400">মোবাইল:</span> <strong>${inv.mobile || '—'}</strong></div>
+                            <div><span class="text-gray-400">NID:</span> <strong>${inv.nid || '—'}</strong></div>
+                            <div><span class="text-gray-400">পেশা:</span> <strong>${inv.occupation || '—'}</strong></div>
+                            <div class="md:col-span-2"><span class="text-gray-400">ঠিকানা:</span> <strong>${inv.address || '—'}</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="rounded-xl bg-indigo-50 p-4"><div class="text-xs text-gray-500">প্রাথমিক বিনিয়োগ</div><div class="text-xl font-bold text-indigo-800">৳${Number(inv.amount||0).toLocaleString()}</div></div>
+                    <div class="rounded-xl bg-emerald-50 p-4"><div class="text-xs text-gray-500">লভ্যাংশ</div><div class="text-xl font-bold text-emerald-700">${Number(inv.profitShare||0).toLocaleString()}%</div></div>
+                    <div class="rounded-xl bg-amber-50 p-4"><div class="text-xs text-gray-500">বিনিয়োগের তারিখ</div><div class="text-xl font-bold text-amber-700">${inv.date ? formatDateDDMMYY(inv.date) : '—'}</div></div>
+                    <div class="rounded-xl bg-slate-50 p-4"><div class="text-xs text-gray-500">প্রজেক্ট</div><div class="text-base font-bold text-slate-700">${inv.project || '—'}</div></div>
+                </div>
+                ${inv.notes ? `<div class="rounded-xl border p-4 text-sm"><div class="font-bold text-gray-700 mb-1">নোট</div><div>${inv.notes}</div></div>` : ''}
+            `;
+            lucide.createIcons();
+        }
+
+        // ACCOUNTS LOGIC
+        function calculateAccountAmount() {
+            const qty = parseFloat(document.getElementById('accQty').value || 0);
+            const rate = parseFloat(document.getElementById('accRate').value || 0);
+            document.getElementById('accAmount').value = (qty * rate).toFixed(2).replace(/\.00$/, '');
+        }
+
+        function syncAccountAmountFromTotal() {
+            const amount = parseFloat(document.getElementById('accAmount').value || 0);
+            const qty = parseFloat(document.getElementById('accQty').value || 0);
+            if (qty > 0) document.getElementById('accRate').value = (amount / qty).toFixed(2).replace(/\.00$/, '');
+        }
+
+        function saveAccount(e) {
+            e.preventDefault();
+            const qty = parseFloat(document.getElementById('accQty').value || 0);
+            const rate = parseFloat(document.getElementById('accRate').value || 0);
+            const amount = parseFloat(document.getElementById('accAmount').value || (qty * rate));
+            db.accounts.push({
+                id: Date.now(),
+                type: document.getElementById('accType').value,
+                title: document.getElementById('accTitle').value,
+                quantity: qty,
+                rate: rate,
+                amount: amount,
+                date: document.getElementById('accDate').value
+            });
+            saveData();
+            document.getElementById('accForm').reset();
+            document.getElementById('accQty').value = 1;
+            document.getElementById('accRate').value = 0;
+            document.getElementById('accAmount').value = 0;
+        }
+
+        function renderAccounts() {
+            const tbody = document.getElementById('accountsTableBody');
+            tbody.innerHTML = '';
+            db.accounts.slice().reverse().forEach(a => {
+                const isExpense = a.type === 'EXPENSE';
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(a.date)}</td>
+                        <td class="p-2.5 text-xs font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${isExpense ? 'ব্যয়/খরচ' : 'অন্যান্য আয়'}</td>
+                        <td class="p-2.5 font-medium text-gray-800">${a.title}</td>
+                        <td class="p-2.5 text-right font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${isExpense ? '-' : '+'}${a.amount}</td>
+                        <td class="p-2.5 text-center no-print">
+                            <button onclick="showAccountVoucher(${a.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="রশিদ / ভাউচার">
+                                <i data-lucide="receipt-text" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteAccount(${a.id})" class="text-rose-600 hover:text-rose-800" title="মুছুন">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function showAccountVoucher(id) {
+            const a = db.accounts.find(x => x.id === id);
+            if (!a) return;
+            const isExpense = a.type === 'EXPENSE';
+            document.getElementById('voucherTypeLabel').innerText = isExpense ? 'ব্যয় / খরচ ভাউচার' : 'অন্যান্য আয় রশিদ';
+            document.getElementById('voucherId').innerText = `#A-${a.id.toString().slice(-6)}`;
+            document.getElementById('voucherDate').innerText = formatDateDDMMYY(a.date);
+            document.getElementById('voucherTitle').innerText = a.title || '';
+            document.getElementById('voucherQty').innerText = a.quantity ?? 1;
+            document.getElementById('voucherRate').innerText = Number(a.rate ?? a.amount ?? 0).toLocaleString();
+            document.getElementById('voucherAmount').innerText = Number(a.amount || 0).toLocaleString();
+            document.getElementById('accountVoucherModal').classList.remove('hidden');
+            document.getElementById('accountVoucherModal').classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeAccountVoucher() {
+            document.getElementById('accountVoucherModal').classList.add('hidden');
+            document.getElementById('accountVoucherModal').classList.remove('flex');
+        }
+
+        function printAccountVoucher() {
+            const source = document.getElementById('accountVoucherContent');
+            if (!source) return;
+            const root = document.createElement('div');
+            root.id = 'dbg-print-root';
+            const clone = source.cloneNode(true);
+            root.appendChild(clone);
+            document.body.appendChild(root);
+            document.body.classList.add('dbg-printing');
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => { document.body.classList.remove('dbg-printing'); root.remove(); }, 300);
+            }, 50);
+        }
+
+        function downloadAccountVoucher() {
+            const source = document.getElementById('accountVoucherContent');
+            if (!source) return;
+            const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style></head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
+            const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `DBG-Voucher-${document.getElementById('voucherId').innerText.replace('#','')}.html`;
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        }
+
+        function deleteAccount(id) {
+            if (confirm("রেকর্ডটি ডিলিট করতে চান?")) {
+                db.accounts = db.accounts.filter(a => a.id !== id);
+                saveData();
+            }
+        }
+
+        // Web Crypto helpers used only for Google Drive encrypted backup.
+const DBG_SECURE_ITERATIONS = 250000;
+        const te = new TextEncoder(), td = new TextDecoder();
+        function bytesToB64(bytes) {
+            let bin=''; const chunk=0x8000;
+            for(let i=0;i<bytes.length;i+=chunk) bin += String.fromCharCode(...bytes.subarray(i,i+chunk));
+            return btoa(bin);
+        }
+        function b64ToBytes(b64) {
+            const bin=atob(b64), out=new Uint8Array(bin.length);
+            for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+            return out;
+        }
+        async function deriveDBGKey(password, salt) {
+            const base=await crypto.subtle.importKey('raw', te.encode(password), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:DBG_SECURE_ITERATIONS,hash:'SHA-256'}, base, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+        }
+    </script>
+
+<script>
+/* =========================
+   DBG V13 - Google Drive for Desktop Backup
+   Select the local Google Drive sync folder once.
+   Future backups are written directly into that folder,
+   and Google Drive for desktop syncs them to the cloud.
+   No Google Cloud / OAuth / Client ID required.
+   ========================= */
+const DBG_DRIVE_DB_NAME = 'DBG_Backup_Settings';
+const DBG_DRIVE_STORE = 'settings';
+const DBG_DRIVE_HANDLE_KEY = 'driveBackupFolderHandle';
+
+function setDriveStatus(msg, good=false) {
+    const el=document.getElementById('driveStatus');
+    if(!el) return;
+    el.textContent=msg;
+    el.className='text-[9px] text-center leading-relaxed px-1 '+(good?'text-emerald-200':'text-sky-200');
+}
+
+function openGoogleDrive() {
+    window.open('https://drive.google.com/drive/u/0/my-drive', '_blank', 'noopener');
+}
+
+function openDriveSettingsDB() {
+    return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DBG_DRIVE_DB_NAME,1);
+        req.onupgradeneeded=()=>req.result.createObjectStore(DBG_DRIVE_STORE);
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
+    });
+}
+async function storeDriveHandle(handle) {
+    const dbx=await openDriveSettingsDB();
+    await new Promise((resolve,reject)=>{
+        const tx=dbx.transaction(DBG_DRIVE_STORE,'readwrite');
+        tx.objectStore(DBG_DRIVE_STORE).put(handle,DBG_DRIVE_HANDLE_KEY);
+        tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+    });
+    dbx.close();
+}
+async function loadDriveHandle() {
+    try{
+        const dbx=await openDriveSettingsDB();
+        const handle=await new Promise((resolve,reject)=>{
+            const tx=dbx.transaction(DBG_DRIVE_STORE,'readonly');
+            const req=tx.objectStore(DBG_DRIVE_STORE).get(DBG_DRIVE_HANDLE_KEY);
+            req.onsuccess=()=>resolve(req.result||null); req.onerror=()=>reject(req.error);
+        });
+        dbx.close(); return handle;
+    }catch(e){ return null; }
+}
+async function verifyDriveHandle(handle) {
+    if(!handle) return false;
+    try{
+        if(handle.queryPermission){
+            let p=await handle.queryPermission({mode:'readwrite'});
+            if(p==='granted') return true;
+            if(p==='prompt') p=await handle.requestPermission({mode:'readwrite'});
+            return p==='granted';
+        }
+        return true;
+    }catch(e){ return false; }
+}
+async function selectDBGDriveFolder() {
+    if(!window.showDirectoryPicker){
+        alert('আপনার Chrome-এ সরাসরি Drive Folder-এ Backup লেখার সুবিধা পাওয়া যাচ্ছে না। Google Drive for desktop ইনস্টল করে আবার চেষ্টা করুন, অথবা Chrome আপডেট করুন।');
+        return;
+    }
+    try{
+        const handle=await window.showDirectoryPicker({mode:'readwrite'});
+        const ok=await verifyDriveHandle(handle);
+        if(!ok){ alert('এই Folder-এ লিখার অনুমতি দেওয়া হয়নি।'); return; }
+        await storeDriveHandle(handle);
+        setDriveStatus('✅ Google Drive Backup Folder সংযুক্ত হয়েছে',true);
+        alert('Backup Folder সংযুক্ত হয়েছে।\n\nএখন “Google Drive Backup” চাপলে Backup সরাসরি এই Folder-এ সেভ হবে। Google Drive for desktop থাকলে ফাইলটি নিজে থেকেই Cloud-এ Sync হবে।');
+    }catch(e){
+        if(e?.name!=='AbortError') alert('Folder নির্বাচন করা যায়নি:\n'+e.message);
+    }
+}
+
+function downloadSecureVault(vault) {
+    const filename=`DBG_Secure_Backup_${new Date().toISOString().replace(/[:.]/g,'-')}.dbgsecure`;
+    const blob=new Blob([JSON.stringify(vault)], {type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    return filename;
+}
+
+async function buildSecureVault(password) {
+    if(!window.crypto?.subtle) throw new Error('এই Browser-এ নিরাপদ Encryption সুবিধা পাওয়া যাচ্ছে না।');
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await deriveDBGKey(password,salt);
+    const plaintext=te.encode(JSON.stringify({db,exportedAt:new Date().toISOString()}));
+    const ciphertext=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plaintext));
+    return {
+        format:'DBG-SECURE-BACKUP',
+        version:4,
+        kdf:'PBKDF2-SHA256',
+        iterations:DBG_SECURE_ITERATIONS,
+        cipher:'AES-256-GCM',
+        salt:bytesToB64(salt),
+        iv:bytesToB64(iv),
+        data:bytesToB64(ciphertext),
+        createdAt:new Date().toISOString()
+    };
+}
+
+
+async function decryptSecureVault(vault, password) {
+    if(!vault || vault.format!=='DBG-SECURE-BACKUP' || !vault.salt || !vault.iv || !vault.data) {
+        throw new Error('এটি বৈধ DBG Secure Backup ফাইল নয়।');
+    }
+    const salt=b64ToBytes(vault.salt);
+    const iv=b64ToBytes(vault.iv);
+    const ciphertext=b64ToBytes(vault.data);
+    const key=await deriveDBGKey(password,salt);
+    try {
+        const plaintext=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ciphertext);
+        return JSON.parse(td.decode(plaintext));
+    } catch(e) {
+        throw new Error('Backup Password ভুল অথবা Backup ফাইলটি ক্ষতিগ্রস্ত।');
+    }
+}
+
+async function restoreFromDriveBackup() {
+    if(!window.showDirectoryPicker){
+        alert('এই Browser-এ Folder নির্বাচন সুবিধা নেই। সর্বশেষ Chrome/Edge ব্যবহার করুন।');
+        return;
+    }
+    let handle=await loadDriveHandle();
+    if(!await verifyDriveHandle(handle)) {
+        const choose=confirm('Google Drive Backup Folder সংযুক্ত নেই।\n\nOK চাপলে আপনার Google Drive for desktop-এর DBG Secure Backups Folder নির্বাচন করতে পারবেন।');
+        if(!choose) return;
+        await selectDBGDriveFolder();
+        handle=await loadDriveHandle();
+        if(!await verifyDriveHandle(handle)) return;
+    }
+    try {
+        const files=[];
+        for await (const [name,entry] of handle.entries()) {
+            if(entry.kind==='file' && name.toLowerCase().endsWith('.dbgsecure')) {
+                const file=await entry.getFile();
+                files.push({name,file,lastModified:file.lastModified,handle:entry});
+            }
+        }
+        if(!files.length){
+            alert('এই Google Drive Backup Folder-এ কোনো .dbgsecure Backup পাওয়া যায়নি।');
+            return;
+        }
+        files.sort((a,b)=>b.lastModified-a.lastModified);
+        let selected=files[0];
+        if(files.length>1){
+            const list=files.slice(0,10).map((f,i)=>`${i+1}. ${f.name}`).join('\n');
+            const ans=prompt('যে Backup Restore করতে চান তার নম্বর দিন।\n\n'+list+'\n\nসর্বশেষ Backup = 1', '1');
+            if(ans===null) return;
+            const idx=parseInt(ans,10)-1;
+            if(!Number.isInteger(idx) || idx<0 || idx>=Math.min(files.length,10)){ alert('সঠিক Backup নম্বর দিন।'); return; }
+            selected=files[idx];
+        }
+        const password=prompt('এই Backup-এর Password দিন:\n\n'+selected.name);
+        if(password===null) return;
+        setDriveStatus('⏳ Backup যাচাই ও Restore হচ্ছে...');
+        const vault=JSON.parse(await selected.file.text());
+        const payload=await decryptSecureVault(vault,password);
+        if(!payload || !payload.db || !Array.isArray(payload.db.members) || !Array.isArray(payload.db.deposits) || !Array.isArray(payload.db.investments) || !Array.isArray(payload.db.accounts)) {
+            throw new Error('Backup-এর ডাটা কাঠামো সঠিক নয়।');
+        }
+        if(!confirm('এই Backup Restore করলে এই কম্পিউটারের বর্তমান ডাটা প্রতিস্থাপিত হবে।\n\nBackup: '+selected.name+'\n\nআপনি কি Restore করতে চান?')) return;
+        db={
+            logo: payload.db.logo || '',
+            members: payload.db.members || [],
+            deposits: payload.db.deposits || [],
+            investments: payload.db.investments || [],
+            investorProfiles: payload.db.investorProfiles || [],
+            accounts: payload.db.accounts || []
+        };
+        saveLocalData();
+        if(db.logo && document.getElementById('groupLogoImg')) document.getElementById('groupLogoImg').src=db.logo;
+        renderAll();
+        setDriveStatus('✅ Google Drive থেকে ডাটা Restore হয়েছে',true);
+        alert('সফলভাবে Restore হয়েছে।\n\nসদস্য: '+db.members.length+' জন\nইনভেস্টর: '+db.investorProfiles.length+' জন\nডিপোজিট রেকর্ড: '+db.deposits.length+' টি');
+    } catch(e) {
+        console.error(e);
+        setDriveStatus('❌ Restore ব্যর্থ হয়েছে');
+        alert('Google Drive Restore করতে সমস্যা হয়েছে:\n'+e.message);
+    }
+}
+
+async function createAndSaveDriveBackup() {
+    let handle=await loadDriveHandle();
+    if(!await verifyDriveHandle(handle)){
+        if(!window.showDirectoryPicker){
+            alert('Google Drive for desktop-এর একটি স্থানীয় Sync Folder নির্বাচন করা হয়নি বা এই Browser তা সমর্থন করছে না।\n\nপ্রথমে “Drive Backup Folder নির্বাচন” চাপুন।');
+            return;
+        }
+        const choose=confirm('Google Drive Backup Folder এখনো সংযুক্ত নেই।\n\nOK চাপলে আপনার কম্পিউটারের Google Drive/My Drive-এর “DBG Secure Backups” Folder নির্বাচন করতে পারবেন।');
+        if(!choose) return;
+        await selectDBGDriveFolder();
+        handle=await loadDriveHandle();
+        if(!await verifyDriveHandle(handle)) return;
+    }
+
+    // Backup password is kept only in memory for the current browser session.
+    // It is never written to LocalStorage/Drive. The first backup asks twice;
+    // later backups in the same session reuse it automatically.
+    let p1=window.__dbgDriveBackupPassword || '';
+    if(!p1){
+        p1=prompt('Google Drive-এ রাখার নিরাপদ Backup-এর Password দিন।\n\nকমপক্ষে 8 অক্ষর।\n\nএই সেশন চলাকালে পরের Backup-এ আর Password চাইবে না।');
+        if(p1===null) return;
+        if(p1.length<8){ alert('Password কমপক্ষে 8 অক্ষরের হতে হবে।'); return; }
+        const p2=prompt('Password আবার লিখুন:');
+        if(p2===null) return;
+        if(p1!==p2){ alert('দুইটি Password মিলছে না।'); return; }
+        window.__dbgDriveBackupPassword=p1;
+    }
+
+    try{
+        setDriveStatus('⏳ Secure Backup তৈরি ও Drive Folder-এ সেভ হচ্ছে...');
+        const vault=await buildSecureVault(p1);
+        const filename=`DBG_Secure_Backup_${new Date().toISOString().replace(/[:.]/g,'-')}.dbgsecure`;
+        const fileHandle=await handle.getFileHandle(filename,{create:true});
+        const writable=await fileHandle.createWritable();
+        await writable.write(new Blob([JSON.stringify(vault)],{type:'application/octet-stream'}));
+        await writable.close();
+        setDriveStatus('✅ Backup Google Drive Sync Folder-এ সেভ হয়েছে',true);
+        alert('সফল হয়েছে!\n\nBackup সরাসরি আপনার Google Drive Sync Folder-এ সেভ হয়েছে:\n'+filename+'\n\nGoogle Drive for desktop থাকলে এটি এখন নিজে থেকেই Cloud-এ Sync হবে।\n\nএই সেশন চলাকালে পরের Backup-এ আর Password চাইবে না।\n\nBackup Password নিরাপদে সংরক্ষণ করুন।');
+    }catch(e){
+        console.error(e);
+        setDriveStatus('❌ Backup সেভ হয়নি');
+        alert('Google Drive Backup সেভ করতে সমস্যা হয়েছে:\n'+e.message+'\n\nপ্রয়োজনে আবার “Drive Backup Folder নির্বাচন” করুন।');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+    const h=await loadDriveHandle();
+    if(await verifyDriveHandle(h)) setDriveStatus('☁️ Google Drive Backup Folder প্রস্তুত আছে',true);
+});
+</script>
+</body>
+</html>
+<!-- ========================================================================= -->
+<!-- ১. রেডিমেড সিকিউর লগইন ওভারলে (যা সমস্ত কন্টেন্ট জোরপূর্বক ঢেকে রাখবে) -->
+<!-- ========================================================================= -->
+<div id="dbg-login-overlay" style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f4f6f9 !important; z-index: 999999999 !important; display: flex !important; justify-content: center !important; align-items: center !important; font-family: sans-serif !important;">
+  <div style="background: #fff !important; padding: 40px !important; border-radius: 12px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; width: 100% !important; max-width: 400px !important; box-sizing: border-box !important;">
+    <h2 style="text-align: center !important; color: #333 !important; margin-bottom: 5px !important; font-weight: bold !important;">Dreams Business Group</h2>
+    <p style="text-align: center !important; color: #777 !important; font-size: 14px !important; margin-top: 0 !important; margin-bottom: 25px !important;">ERP & Fund Management System</p>
+    
+    <div style="margin-bottom: 15px !important;">
+      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">ইমেইল অ্যাড্রেস:</label>
+      <input type="email" id="login-email" placeholder="example@dbg.com" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important;">
+    </div>
+    
+    <div style="margin-bottom: 10px !important; position: relative !important;">
+      <label style="display: block !important; margin-bottom: 5px !important; color: #555 !important; font-weight: bold !important; font-size: 14px !important;">পাসওয়ার্ড:</label>
+      <input type="password" id="login-password" placeholder="••••••••" style="width: 100% !important; padding: 10px !important; border: 1px solid #ccc !important; border-radius: 6px !important; box-sizing: border-box !important; font-size: 15px !important; padding-right: 40px !important;">
+      <span id="toggle-password" style="position: absolute !important; right: 12px !important; top: 35px !important; cursor: pointer !important; color: #777 !important; font-size: 18px !important; user-select: none !important;">👁️</span>
+    </div>
+
+    <div style="text-align: right !important; margin-bottom: 20px !important;">
+      <a href="#" id="link-forgot-password" style="color: #007bff !important; text-decoration: none !important; font-size: 13px !important; font-weight: bold !important;">পাসওয়ার্ড ভুলে গেছেন?</a>
+    </div>
+    
+    <button id="btn-login" style="width: 100% !important; padding: 12px !important; background: #007bff !important; color: #fff !important; border: none !important; border-radius: 6px !important; font-size: 16px !important; font-weight: bold !important; cursor: pointer !important; transition: 0.2s !important;">লগইন করুন</button>
+    <p id="login-error" style="color: #dc3545 !important; text-align: center !important; margin-top: 15px !important; font-size: 14px !important; display: none !important; font-weight: bold !important;"></p>
+  </div>
+</div>
+
+<!-- ২. ফায়ারবেস অথেনটিকেশন ও রোল লজিক স্ক্রিপ্ট -->
+<script type="module">
+  import { initializeApp } from "https://gstatic.com";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://gstatic.com";
+  import { getDatabase, ref, get } from "https://gstatic.com";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://firebaseio.com",
+    projectId: "dbgsoftware-6c9b9",
+    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+    messagingSenderId: "726215672769",
+    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const database = getDatabase(app);
+
+  document.getElementById("toggle-password").addEventListener("click", function() {
+    const passwordInput = document.getElementById("login-password");
+    passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+    this.textContent = passwordInput.type === "password" ? "👁️" : "🙈";
+  });
+
+  document.getElementById("btn-login").addEventListener("click", () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errorEl = document.getElementById("login-error");
+    errorEl.style.setProperty('display', 'none', 'important');
+
+    signInWithEmailAndPassword(auth, email, password)
+      .catch((error) => {
+        errorEl.innerText = "ভুল ইমেইল বা পাসওয়ার্ড! আবার চেষ্টা করুন।";
+        errorEl.style.setProperty('display', 'block', 'important');
+      });
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    const loginOverlay = document.getElementById("dbg-login-overlay");
+    if (user) {
+      get(ref(database, 'dbg_users/' + user.uid)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          loginOverlay.style.setProperty('display', 'none', 'important');
+          if (userData.role === "accountant") {
+            // Accountant হলে ডিলিট অপশন হাইড করার লজিক
+            document.querySelectorAll('button, a, span, div').forEach(el => {
+              const text = el.innerText || el.textContent;
+              if (text.includes('ডিলিট') || text.includes('মুছুন') || text.includes('Delete')) {
+                el.style.setProperty('display', 'none', 'important');
+              }
+            });
+          }
+        } else {
+          alert("রোল সেট করা নেই!");
+          signOut(auth);
+        }
+      });
+    } else {
+      loginOverlay.style.setProperty('display', 'flex', 'important');
+    }
+  });
+</script>
