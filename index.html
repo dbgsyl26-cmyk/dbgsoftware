@@ -3120,83 +3120,93 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(await verifyDriveHandle(h)) setDriveStatus('☁️ Google Drive Backup Folder প্রস্তুত আছে',true);
 });
 </script>
-    // ==========================================================
-  // FIREBASE CONFIGURATION & REALTIME LOGIC (ADDED)
-  // ==========================================================
-  // Firebase SDK মডিউলসমূহ ডাইনামিক ইম্পোর্ট করা হচ্ছে
-  import("https://gstatic.com").then((FirebaseApp) => {
-    import("https://gstatic.com").then((FirebaseDB) => {
-      
-      const firebaseConfig = {
-        apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
-        authDomain: "://firebaseapp.com",
-        databaseURL: "https://firebaseio.com",
-        projectId: "dbgsoftware-6c9b9",
-        storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
-        messagingSenderId: "726215672769",
-        appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
-      };
+    <!-- ফাইলের একদম শেষে পুরোনো স্ক্রিপ্টটুকু মুছে ঠিক এই কোডটি বসান -->
+<script type="module">
+  // ফায়ারবেস মডিউলসমূহ সঠিক ইউআরএল থেকে ইম্পোর্ট করা হচ্ছে
+  import { initializeApp } from "https://gstatic.com";
+  import { getDatabase, ref, push, onValue } from "https://gstatic.com";
 
-      // Firebase ইনিশিয়ালাইজেশন
-      const app = FirebaseApp.initializeApp(firebaseConfig);
-      const db = FirebaseDB.getDatabase(app);
+  // আপনার ফায়ারবেস কনফিগারেশন 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://firebaseio.com",
+    projectId: "dbgsoftware-6c9b9",
+    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+    messagingSenderId: "726215672769",
+    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+  };
 
-      // ১. লগইন হ্যান্ডলার
-      const loginBtn = document.getElementById('loginBtn');
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // পেজ লোড হওয়ার পর লগইন বাটন সচল করার লজিক
+  document.addEventListener('DOMContentLoaded', () => {
+      // আপনার ফাইলের ২৬ নম্বর লাইনের আইডি 'btn-login' অনুযায়ী বাটনটি ধরা হলো
+      const loginBtn = document.getElementById('btn-login'); 
+      const emailInput = document.getElementById('login-email');
+      const passwordInput = document.getElementById('login-password');
+      const errorMsg = document.getElementById('login-error');
+
       if (loginBtn) {
           loginBtn.addEventListener('click', (e) => {
               e.preventDefault();
-              const email = document.getElementById('emailInput')?.value;
-              const password = document.getElementById('passwordInput')?.value;
-              if (email === "dbg.syl26@gmail.com" && password) {
-                  alert("লগইন সফল হয়েছে!");
-              } else {
-                  alert("ভুল ইমেইল অথবা পাসওয়ার্ড!");
+              
+              const email = emailInput?.value.trim();
+              const password = passwordInput?.value.trim();
+
+              if (!email || !password) {
+                  if(errorMsg) errorMsg.innerText = "দয়া করে ইমেইল এবং পাসওয়ার্ড দুটিই লিখুন।";
+                  return;
+              }
+
+              // সুপার এডমিন এবং অ্যাকাউন্ট্যান্ট লগইন কন্ডিশন
+              if (email === "dbg.syl26@gmail.com" && password === "admin123") { // আপনার পছন্দমতো পাসওয়ার্ড দিন
+                  alert("সুপার এডমিন হিসেবে লগইন সফল হয়েছে!");
+                  if(errorMsg) errorMsg.innerText = "";
+                  লগইন_সফল_হয়েছে();
+              } 
+              else if (email === "accountant@gmail.com" && password === "acc123") { // অ্যাকাউন্ট্যান্ট পাসওয়ার্ড দিন
+                  alert("অ্যাকাউন্ট্যান্ট হিসেবে লগইন সফল হয়েছে!");
+                  if(errorMsg) errorMsg.innerText = "";
+                  লগইন_সফল_হয়েছে();
+              } 
+              else {
+                  if(errorMsg) errorMsg.innerText = "দুঃখিত! ভুল ইমেইল অথবা পাসওয়ার্ড।";
+                  alert("দুঃখিত! ভুল ইমেইল অথবা পাসওয়ার্ড।");
               }
           });
       }
-
-      // ২. নতুন সদস্য যোগ করার ফরম (Write)
-      const saveMemberBtn = document.getElementById('saveMemberBtn');
-      if (saveMemberBtn) {
-          saveMemberBtn.addEventListener('click', (e) => {
-              e.preventDefault();
-              const memberData = {
-                  memberId: document.getElementById('memberIdInput')?.value || "DBG-001",
-                  nameBangla: document.getElementById('nameBanglaInput')?.value || "",
-                  nameEnglish: document.getElementById('nameEnglishInput')?.value || "",
-                  mobile: document.getElementById('mobileInput')?.value || "",
-                  country: document.getElementById('countryInput')?.value || "",
-                  timestamp: new Date().toISOString()
-              };
-              FirebaseDB.push(FirebaseDB.ref(db, 'members'), memberData)
-                  .then(() => alert('নতুন সদস্য সফলভাবে ক্লাউডে সেভ হয়েছে!'))
-                  .catch((err) => console.error(err));
-          });
-      }
-
-      // ৩. রিয়েলটাইম সদস্য তালিকা আপডেট (Read)
-      const memberListRef = FirebaseDB.ref(db, 'members');
-      FirebaseDB.onValue(memberListRef, (snapshot) => {
-          const data = snapshot.val();
-          const tableBody = document.getElementById('memberTableBody');
-          if (data && tableBody) {
-              let rows = '';
-              Object.keys(data).forEach(key => {
-                  const member = data[key];
-                  rows += `<tr>
-                      <td>${member.memberId}</td>
-                      <td>${member.nameEnglish}</td>
-                      <td>${member.mobile}</td>
-                      <td><button class="action-btn">অ্যাকশন</button></td>
-                  </tr>`;
-              });
-              tableBody.innerHTML = rows;
-          }
-      });
-
-    });
   });
+
+  // লগইন সফল হলে ওভারলে স্ক্রিন সরিয়ে ড্যাশবোর্ড দেখানোর ফাংশন
+  function লগইন_সফল_হয়েছে() {
+      const loginOverlay = document.getElementById('dbg-login-overlay');
+      if (loginOverlay) {
+          // এটি আপনার ৬ নম্বর লাইনের লগইন ওভারলে বক্সটিকে স্ক্রিন থেকে সরিয়ে মূল ইন্টারফেসটি দেখাবে
+          loginOverlay.style.setProperty('display', 'none', 'important'); 
+          console.log("লগইন সফল, ড্যাশবোর্ড ওপেন হয়েছে।");
+      }
+  }
+
+  // ==========================================
+  // সদস্য ও ডিপোজিট রিয়েলটাইম লজিক
+  // ==========================================
+  const saveMemberBtn = document.getElementById('saveMemberBtn');
+  if (saveMemberBtn) {
+      saveMemberBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const memberData = {
+              memberId: document.getElementById('memberIdInput')?.value || "DBG-001",
+              nameEnglish: document.getElementById('nameEnglishInput')?.value || "",
+              mobile: document.getElementById('mobileInput')?.value || "",
+              timestamp: new Date().toISOString()
+          };
+          push(ref(db, 'members'), memberData).then(() => alert('সদস্য তথ্য ক্লাউডে সংরক্ষিত!'));
+      });
+  }
+</script>
+
 
 </body>
 </html>
