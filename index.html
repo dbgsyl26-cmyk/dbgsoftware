@@ -3184,8 +3184,146 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       }
     });
   }
+<!-- ১. রেডিমেড সিকিউর লগইন ইন্টারফেস (Show/Hide Password ও Forgot Password সহ) -->
+<div id="dbg-login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; z-index: 999999; display: flex; justify-content: center; align-items: center; font-family: sans-serif;">
+  <div style="background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; box-sizing: border-box;">
+    <h2 style="text-align: center; color: #333; margin-bottom: 5px;">Dreams Business Group</h2>
+    <p style="text-align: center; color: #777; font-size: 14px; margin-top: 0; margin-bottom: 25px;">ERP & Fund Management System</p>
+    
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 14px;">ইমেইল অ্যাড্রেস:</label>
+      <input type="email" id="login-email" placeholder="example@dbg.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px;">
+    </div>
+    
+    <div style="margin-bottom: 10px; position: relative;">
+      <label style="display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 14px;">পাসওয়ার্ড:</label>
+      <input type="password" id="login-password" placeholder="••••••••" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; padding-right: 40px;">
+      <span id="toggle-password" style="position: absolute; right: 12px; top: 35px; cursor: pointer; color: #777; font-size: 18px;">👁️</span>
+    </div>
 
-  // ডাটা সেভ এবং রিয়েলটাইম কাউন্টার লজিক
+    <div style="text-align: right; margin-bottom: 20px;">
+      <a href="#" id="link-forgot-password" style="color: #007bff; text-decoration: none; font-size: 13px; font-weight: bold;">পাসওয়ার্ড ভুলে গেছেন?</a>
+    </div>
+    
+    <button id="btn-login" style="width: 100%; padding: 12px; background: #007bff; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;">লগইন করুন</button>
+    
+    <p id="login-error" style="color: #dc3545; text-align: center; margin-top: 15px; font-size: 14px; display: none; font-weight: bold;"></p>
+  </div>
+</div>
+
+<script type="module">
+  // আনপ্যাকেজড এবং গিটহাব ফ্রেন্ডলি সিডিএন লিংক (CORS Error এড়ানোর জন্য ও লগইন ১০০% সচল করতে)
+  import { initializeApp } from "https://gstatic.com";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://gstatic.com";
+  import { getDatabase, ref, get, set, push } from "https://gstatic.com";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+    authDomain: "://firebaseapp.com",
+    databaseURL: "https://dbgsoftware-6c9b9-default-rtdb.firebaseio.com",
+    projectId: "dbgsoftware-6c9b9",
+    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+    messagingSenderId: "726215672769",
+    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const database = getDatabase(app);
+
+  document.getElementById("toggle-password").addEventListener("click", function() {
+    const passwordInput = document.getElementById("login-password");
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      this.textContent = "🙈";
+    } else {
+      passwordInput.type = "password";
+      this.textContent = "👁️";
+    }
+  });
+
+  document.getElementById("link-forgot-password").addEventListener("click", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value;
+    const errorEl = document.getElementById("login-error");
+
+    if(!email) {
+      errorEl.innerText = "পাসওয়ার্ড রিসেট করতে প্রথমে ওপরে আপনার ইমেইলটি লিখুন।";
+      errorEl.style.display = "block";
+      errorEl.style.color = "#dc3545";
+      return;
+    }
+
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        errorEl.innerText = "আপনার ইমেইলে পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে। ইনবক্স দেখুন।";
+        errorEl.style.display = "block";
+        errorEl.style.color = "green";
+      })
+      .catch(() => {
+        errorEl.innerText = "এই ইমেইলটি দিয়ে কোনো অ্যাকাউন্ট খোলা নেই।";
+        errorEl.style.display = "block";
+        errorEl.style.color = "#dc3545";
+      });
+  });
+
+  document.getElementById("btn-login").addEventListener("click", () => {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
+    const errorEl = document.getElementById("login-error");
+
+    errorEl.style.display = "none";
+
+    if(!email || !password) {
+      errorEl.innerText = "দয়া করে ইমেইল এবং পাসওয়ার্ড দুটিই লিখুন।";
+      errorEl.style.display = "block";
+      errorEl.style.color = "#dc3545";
+      return;
+    }
+
+    signInWithEmailAndPassword(auth, email, password)
+      .catch(() => {
+        errorEl.innerText = "ভুল ইমেইল বা পাসওয়ার্ড! আবার চেষ্টা করুন।";
+        errorEl.style.display = "block";
+        errorEl.style.color = "#dc3545";
+      });
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    const loginOverlay = document.getElementById("dbg-login-overlay");
+    if (user) {
+      get(ref(database, 'dbg_users/' + user.uid)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          loginOverlay.style.display = "none";
+          if (userData.role === "accountant") {
+            applyAccountantRestrictions();
+          }
+        } else {
+          alert("আপনার অ্যাকাউন্টের কোনো রোল ডাটাবেসে সেট করা নেই!");
+          signOut(auth);
+        }
+      });
+    } else {
+      loginOverlay.style.display = "flex";
+    }
+  });
+
+  function applyAccountantRestrictions() {
+    document.querySelectorAll('button, a, span, div').forEach(el => {
+      const text = el.innerText || el.textContent;
+      if (text.includes('ডিলিট') || text.includes('муছুন') || text.includes('Delete')) {
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
+    document.querySelectorAll('h1, h2, h3, div, button').forEach(el => {
+      const text = el.innerText || el.textContent;
+      if (text.includes('Google Drive') || text.includes('Backup') || text.includes('Restore')) {
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
+  }
+
   window.saveNewMember = function(memberId, nameBangla, nameEnglish, mobile) {
     set(ref(database, 'dbg_members/' + memberId), {
       memberId: memberId, nameBangla: nameBangla, nameEnglish: nameEnglish, mobile: mobile, joinedAt: new Date().toISOString()
@@ -3193,16 +3331,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
 
   window.saveDeposit = function(memberId, scheme, month, year, amount, costAmount) {
-    const newDepositRef = push(ref(database, 'dbg_deposits'));
-    set(newDepositRef, {
+    set(push(ref(database, 'dbg_deposits')), {
       memberId: memberId, scheme: scheme, month: month, year: year, amount: Number(amount), costAmount: Number(costAmount), date: new Date().toLocaleDateString('en-GB')
     }).then(() => alert("ডিপোজিট সফলভাবে এন্ট্রি হয়েছে!"));
   }
 
-  // লগআউট করার গ্লোবাল ফাংশন
   window.logoutUser = function() {
     signOut(auth).then(() => { location.reload(); });
   }
 </script>
+
 </body>
 </html>
