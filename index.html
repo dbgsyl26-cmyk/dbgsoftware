@@ -3433,26 +3433,62 @@ async function applyFirebasePayload(payload) {
 }
 
 async function initializeFirebaseERPData(role) {
-    const normalizedRole = normalizeRole(role);
-    clearRealtimeListeners();
-    dbgFirebaseSyncReady = false;
+    try {
+        if (!firebaseDb || !firebaseAuth.currentUser) {
+            console.error("Firebase initialized, but Auth/DB reference is missing.");
+            return false;
+        }
 
-    // Authentication can restore a session before the DOMContentLoaded member
-    // migration finishes. Always wait for IndexedDB/local data initialization
-    // before building the first Firebase payload.
-    if (!memberStorageReady) {
-        try { await initMemberStorage(); } catch (_) {}
-    }
+        const normalizedRole = String(role || '').toLowerCase().replace(/\s+/g, '_');
+        const isAdmin = ['admin', 'super_admin'].includes(normalizedRole);
 
-    if (!isAccountantRole(normalizedRole) && !isAdminRole(normalizedRole)) {
-        setAuthStatus('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
+        // Firebase reference for dbg_erp
+        const erpRef = ref(firebaseDb, 'dbg_erp');
+
+        // Fetch existing data from Firebase
+        const snapshot = await get(erpRef);
+
+        if (!snapshot.exists()) {
+            // If dbg_erp does not exist in Firebase
+            if (isAdmin) {
+                console.log("dbg_erp not found. Creating initial structure from local data...");
+                
+                // Construct safe payload to upload
+                const initialPayload = {
+                    members: db.members || [],
+                    deposits: db.deposits || [],
+                    investments: db.investments || [],
+                    accounts: db.accounts || [],
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: firebaseAuth.currentUser.uid
+                };
+
+                await set(erpRef, initialPayload);
+                console.log("Successfully created dbg_erp in Firebase!");
+                return true;
+            } else {
+                console.warn("dbg_erp does not exist and current user is not an Admin to create it.");
+                return false;
+            }
+        } else {
+            // Data exists, sync it to local db
+            const remoteData = snapshot.val();
+            if (remoteData) {
+                if (remoteData.members) db.members = remoteData.members;
+                if (remoteData.deposits) db.deposits = remoteData.deposits;
+                if (remoteData.investments) db.investments = remoteData.investments;
+                if (remoteData.accounts) db.accounts = remoteData.accounts;
+                
+                if (typeof renderAllViews === 'function') renderAllViews();
+                else if (typeof renderDeposits === 'function') renderDeposits();
+            }
+            return true;
+        }
+    } catch (error) {
+        console.error("Error inside initializeFirebaseERPData:", error);
         return false;
     }
-
-    if (dbgFirebaseInitPromise) {
-        try { await dbgFirebaseInitPromise; } catch (_) {}
-    }
-
+}
     dbgFirebaseInitPromise = (async () => {
         try {
             const dataRef = ref(firebaseDB, 'dbg_erp');
