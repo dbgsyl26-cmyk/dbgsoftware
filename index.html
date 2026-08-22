@@ -3294,6 +3294,7 @@ async function loadFirebaseUserRole(user) {
    ========================================================== */
 let dbgFirebaseSyncReady = false;
 let dbgFirebaseApplyingRemote = false;
+let dbgFirebasePendingSync = false;
 let dbgFirebaseSyncTimer = null;
 let dbgFirebaseUnsubscribe = null;
 let dbgFirebaseAccountantUnsubs = [];
@@ -3362,7 +3363,13 @@ async function writeFirebaseDataNow() {
 }
 
 window.dbgSyncToFirebase = function () {
-    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    if (dbgFirebaseApplyingRemote) return;
+    if (!dbgFirebaseSyncReady) {
+        // Queue the save; initializeFirebaseERPData() will flush it after the
+        // realtime listener is connected.
+        dbgFirebasePendingSync = true;
+        return;
+    }
     clearTimeout(dbgFirebaseSyncTimer);
     dbgFirebaseSyncTimer = setTimeout(writeFirebaseDataNow, 250);
 };
@@ -3415,22 +3422,45 @@ async function initializeFirebaseERPData(role) {
                 // First migration: move the existing local ERP data to Firebase.
                 await set(dataRef, buildFirebasePayload());
             } else if (isAdminRole(normalizedRole) && snap.exists()) {
-                // If an older Firebase dataset is incomplete, fill only missing
-                // branches from the current Admin's local data. Existing Firebase
-                // data is never overwritten during this repair step.
+                // IMPORTANT: Firebase is the shared source of truth. However, on the
+                // very first migration an older Admin browser may still have the real
+                // ERP data only in LocalStorage/IndexedDB while Firebase contains
+                // empty arrays. The old code treated an empty array as valid remote
+                // data, so it never migrated that Admin data and the Accountant saw 0.
+                // We now repair missing/empty Firebase branches ONCE per browser.
                 const remote = snap.val() || {};
-                const missing = {};
                 const localPayload = buildFirebasePayload();
+                const migrationKey = 'dbg_firebase_erp_migration_v2_done';
+                const migrationDone = localStorage.getItem(migrationKey) === '1';
+                const migrationUpdates = {};
+
                 ['logo','members','deposits','investments','investorProfiles','accounts'].forEach(key => {
                     const remoteValue = remote[key];
-                    const isMissing = remoteValue === undefined || remoteValue === null;
                     const localValue = localPayload[key];
-                    const hasLocalData = key === 'logo'
+                    const remoteMissing = remoteValue === undefined || remoteValue === null;
+                    const remoteEmpty = Array.isArray(remoteValue) && remoteValue.length === 0;
+                    const localHasData = key === 'logo'
                         ? !!localValue
                         : Array.isArray(localValue) && localValue.length > 0;
-                    if (isMissing && hasLocalData) missing[`dbg_erp/${key}`] = localValue;
+
+                    // Migrate only when Firebase has no useful value and this browser
+                    // has real local data. This prevents a later login from replacing
+                    // a valid Firebase dataset with an old local cache.
+                    if (!migrationDone && localHasData && (remoteMissing || remoteEmpty)) {
+                        migrationUpdates[`dbg_erp/${key}`] = localValue;
+                    }
                 });
-                if (Object.keys(missing).length) await update(ref(firebaseDB), missing);
+
+                if (Object.keys(migrationUpdates).length) {
+                    migrationUpdates['dbg_erp/updatedAt'] = Date.now();
+                    await update(ref(firebaseDB), migrationUpdates);
+                    localStorage.setItem(migrationKey, '1');
+                    console.info('DBG Firebase: legacy local ERP data migrated to Firebase.');
+                } else if (!migrationDone) {
+                    // Mark the migration as checked only when there is nothing useful
+                    // left to migrate. Future Admin logins will trust Firebase.
+                    localStorage.setItem(migrationKey, '1');
+                }
             }
 
             dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
@@ -3444,6 +3474,12 @@ async function initializeFirebaseERPData(role) {
 
             dbgFirebaseSyncReady = true;
             setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয়');
+            // If a user saved data while Firebase initialization was still running,
+            // flush that pending change now instead of leaving it only in local cache.
+            if (dbgFirebasePendingSync) {
+                dbgFirebasePendingSync = false;
+                try { window.dbgSyncToFirebase(); } catch (_) {}
+            }
             return true;
         }
 
