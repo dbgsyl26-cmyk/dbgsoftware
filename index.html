@@ -3120,5 +3120,83 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(await verifyDriveHandle(h)) setDriveStatus('☁️ Google Drive Backup Folder প্রস্তুত আছে',true);
 });
 </script>
+    // ==========================================================
+  // FIREBASE CONFIGURATION & REALTIME LOGIC (ADDED)
+  // ==========================================================
+  // Firebase SDK মডিউলসমূহ ডাইনামিক ইম্পোর্ট করা হচ্ছে
+  import("https://gstatic.com").then((FirebaseApp) => {
+    import("https://gstatic.com").then((FirebaseDB) => {
+      
+      const firebaseConfig = {
+        apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+        authDomain: "://firebaseapp.com",
+        databaseURL: "https://firebaseio.com",
+        projectId: "dbgsoftware-6c9b9",
+        storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+        messagingSenderId: "726215672769",
+        appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+      };
+
+      // Firebase ইনিশিয়ালাইজেশন
+      const app = FirebaseApp.initializeApp(firebaseConfig);
+      const db = FirebaseDB.getDatabase(app);
+
+      // ১. লগইন হ্যান্ডলার
+      const loginBtn = document.getElementById('loginBtn');
+      if (loginBtn) {
+          loginBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const email = document.getElementById('emailInput')?.value;
+              const password = document.getElementById('passwordInput')?.value;
+              if (email === "dbg.syl26@gmail.com" && password) {
+                  alert("লগইন সফল হয়েছে!");
+              } else {
+                  alert("ভুল ইমেইল অথবা পাসওয়ার্ড!");
+              }
+          });
+      }
+
+      // ২. নতুন সদস্য যোগ করার ফরম (Write)
+      const saveMemberBtn = document.getElementById('saveMemberBtn');
+      if (saveMemberBtn) {
+          saveMemberBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const memberData = {
+                  memberId: document.getElementById('memberIdInput')?.value || "DBG-001",
+                  nameBangla: document.getElementById('nameBanglaInput')?.value || "",
+                  nameEnglish: document.getElementById('nameEnglishInput')?.value || "",
+                  mobile: document.getElementById('mobileInput')?.value || "",
+                  country: document.getElementById('countryInput')?.value || "",
+                  timestamp: new Date().toISOString()
+              };
+              FirebaseDB.push(FirebaseDB.ref(db, 'members'), memberData)
+                  .then(() => alert('নতুন সদস্য সফলভাবে ক্লাউডে সেভ হয়েছে!'))
+                  .catch((err) => console.error(err));
+          });
+      }
+
+      // ৩. রিয়েলটাইম সদস্য তালিকা আপডেট (Read)
+      const memberListRef = FirebaseDB.ref(db, 'members');
+      FirebaseDB.onValue(memberListRef, (snapshot) => {
+          const data = snapshot.val();
+          const tableBody = document.getElementById('memberTableBody');
+          if (data && tableBody) {
+              let rows = '';
+              Object.keys(data).forEach(key => {
+                  const member = data[key];
+                  rows += `<tr>
+                      <td>${member.memberId}</td>
+                      <td>${member.nameEnglish}</td>
+                      <td>${member.mobile}</td>
+                      <td><button class="action-btn">অ্যাকশন</button></td>
+                  </tr>`;
+              });
+              tableBody.innerHTML = rows;
+          }
+      });
+
+    });
+  });
+
 </body>
 </html>
