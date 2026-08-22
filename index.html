@@ -1526,6 +1526,12 @@
             return memberStorageReady ? 'IndexedDB' : 'LocalStorage fallback';
         }
 
+        // Backward-compatible status hook. Older builds called this during startup.
+        // Keep it harmless so it never blocks dashboard rendering.
+        window.updateLocalStatus = function () {
+            return getMemberStorageStatus();
+        };
+
         // Upload & Update Group Logo
         function uploadGroupLogo(input) {
             const file = input.files[0];
@@ -1572,7 +1578,7 @@
             renderAll();
             resetInvestorForm();
             lucide.createIcons();
-            updateLocalStatus();
+            // Firebase/Local storage status is handled by the authentication sync module.
         });
 
         function switchTab(tabId) {
@@ -3297,11 +3303,13 @@ function normalizeRole(role) {
 }
 
 function isAccountantRole(role) {
-    return ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(normalizeRole(role));
+    const r = String(role || '').trim().toLowerCase();
+    return ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(r);
 }
 
 function isAdminRole(role) {
-    return ['admin','super_admin','superadmin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(normalizeRole(role));
+    const r = String(role || '').trim().toLowerCase();
+    return ['admin','super_admin','superadmin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(r);
 }
 
 function clearRealtimeListeners() {
@@ -3391,7 +3399,7 @@ async function applyFirebasePayload(payload) {
 }
 
 async function initializeFirebaseERPData(role) {
-    const normalizedRole = normalizeRole(role);
+    const normalizedRole = String(role || '').trim().toLowerCase();
     clearRealtimeListeners();
     dbgFirebaseSyncReady = false;
 
