@@ -3619,7 +3619,7 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         if (role === 'accountant' || role === 'Accountant') {
             if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'none';
             if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'none';
-            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'none';
+            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'flex';
             if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'none';
             
             const memberCard = document.getElementById('dashTotalMembers')?.closest('.bg-white');
