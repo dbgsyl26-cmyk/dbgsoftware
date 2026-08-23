@@ -3526,8 +3526,14 @@ async function initializeFirebaseERPData(role) {
             }
 
             dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
-                if (snapshot.exists()) {
-                    await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
+    if (snapshot.exists()) {
+        await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
+        
+        // 🚀 ডাটাবেজে যেকোনো পরিবর্তনের সাথে সাথে রিফ্রেশ ছাড়াই পুরো অ্যাপ লাইভ আপডেট হবে
+        if (typeof renderAll === "function") {
+            renderAll();
+        }
+    }
                 }
             }, error => {
                 console.error('DBG Firebase realtime listener failed:', error);
