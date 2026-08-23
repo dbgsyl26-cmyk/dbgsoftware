@@ -3237,10 +3237,19 @@ function setLoggedInUI(user, role = '') {
     window.dbgFirebaseUser = user;
     window.dbgFirebaseRole = role || '';
     window.dbgFirebaseLogout = () => signOut(firebaseAuth);
-    initializeFirebaseERPData(role).then(ok => {
-        dbgFirebaseSyncReady = !!ok;
-        if (!ok) console.error('DBG Firebase ERP initialization did not complete successfully.');
-    });
+
+    // Login submit and onAuthStateChanged can both reach this function. Prevent
+    // two Firebase initializations from racing each other.
+    if (dbgFirebaseInitializedUid !== user?.uid) {
+        dbgFirebaseInitializedUid = user?.uid || '';
+        dbgFirebaseInitPromise = initializeFirebaseERPData(role).then(ok => {
+            if (ok) dbgFirebaseSyncReady = true;
+            return ok;
+        }).catch(err => {
+            console.error('DBG Firebase init promise failed:', err);
+            return false;
+        });
+    }
     if (isAccountant) {
         // Do not leave the accountant on Dashboard after login.
         setTimeout(() => { try { switchTab('deposits'); } catch (_) {} }, 0);
@@ -3266,6 +3275,9 @@ function setLoggedInUI(user, role = '') {
 
 function setLoggedOutUI() {
     dbgFirebaseSyncReady = false;
+    dbgFirebaseInitializedUid = '';
+    dbgFirebaseInitPromise = null;
+    dbgFirebasePendingSync = false;
     if (dbgFirebaseUnsubscribe) { try { dbgFirebaseUnsubscribe(); } catch (_) {} dbgFirebaseUnsubscribe = null; }
     document.body.classList.add('dbg-logged-out');
     overlay?.classList.remove('hidden');
@@ -3297,11 +3309,12 @@ async function loadFirebaseUserRole(user) {
    ========================================================== */
 let dbgFirebaseSyncReady = false;
 let dbgFirebaseApplyingRemote = false;
+let dbgFirebasePendingSync = false;
 let dbgFirebaseSyncTimer = null;
 let dbgFirebaseUnsubscribe = null;
-let dbgFirebaseInitPromise = null;
-let dbgFirebaseInitialMigrationDone = false;
 let dbgFirebaseAccountantUnsubs = [];
+let dbgFirebaseInitPromise = null;
+let dbgFirebaseInitializedUid = '';
 
 function normalizeRole(role) {
     return String(role || '').trim().toLowerCase();
@@ -3341,64 +3354,41 @@ function buildFirebasePayload() {
 }
 
 async function writeFirebaseDataNow() {
-    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return false;
-    const role = normalizeRole(window.dbgFirebaseRole || '');
-    if (!role) return false;
+    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
+    if (!role) return;
     try {
         const dataRef = ref(firebaseDB, 'dbg_erp');
-        const isAccountant = isAccountantRole(role);
+        const isAccountant = ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(role);
         if (isAccountant) {
             // Accountant is allowed to write ONLY Deposit Collection and Income/Expense.
-            // IMPORTANT: write directly to child paths because Firebase Rules may deny
-            // an Accountant write to the parent /dbg_erp path.
+            // IMPORTANT: write directly to the two child paths. The Firebase Rules
+            // intentionally deny Accountant writes to /dbg_erp itself.
             await Promise.all([
                 set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []),
                 set(ref(firebaseDB, 'dbg_erp/accounts'), Array.isArray(db.accounts) ? db.accounts : [])
             ]);
-        } else if (isAdminRole(role)) {
-            // Admin synchronizes the complete ERP dataset.
-            await update(dataRef, buildFirebasePayload());
         } else {
-            return false;
+            // Admin can synchronize all ERP collections.
+            await update(dataRef, buildFirebasePayload());
         }
         console.info('DBG Firebase: data synced successfully.');
-        return true;
     } catch (e) {
         console.error('DBG Firebase write failed:', e);
-        setAuthStatus('❌ Firebase-এ ডেটা Sync হয়নি: ' + (e?.message || 'Permission/Network error'));
-        return false;
+        // Do not interrupt local operation when Firebase is temporarily offline.
     }
 }
 
 window.dbgSyncToFirebase = function () {
-    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    if (dbgFirebaseApplyingRemote) return;
+    if (!dbgFirebaseSyncReady) {
+        // Queue the save; initializeFirebaseERPData() will flush it after the
+        // realtime listener is connected.
+        dbgFirebasePendingSync = true;
+        return;
+    }
     clearTimeout(dbgFirebaseSyncTimer);
     dbgFirebaseSyncTimer = setTimeout(writeFirebaseDataNow, 250);
-};
-
-// Manual recovery hook: run window.dbgForceAdminSync() once after an Admin login
-// if an older browser still has the ERP data locally. It never runs for Accountant.
-window.dbgForceAdminSync = async function () {
-    const role = normalizeRole(window.dbgFirebaseRole || '');
-    if (!isAdminRole(role)) {
-        setAuthStatus('শুধুমাত্র Admin এই Recovery Sync চালাতে পারবেন।');
-        return false;
-    }
-    if (!memberStorageReady) {
-        try { await initMemberStorage(); } catch (_) {}
-    }
-    dbgFirebaseSyncReady = true;
-    const ok = await writeFirebaseDataNow();
-    if (ok) {
-        const verify = await get(ref(firebaseDB, 'dbg_erp'));
-        if (!verify.exists()) {
-            setAuthStatus('❌ Sync সম্পন্ন বলা হলেও dbg_erp পাওয়া যাচ্ছে না। Firebase Rules পরীক্ষা করুন।');
-            return false;
-        }
-        await applyFirebasePayload(verify.val(), { accountantOnly: false });
-        setAuthStatus('✅ Admin-এর সম্পূর্ণ ডেটা Firebase-এ Sync হয়েছে।');
-    }
-    return ok;
 };
 
 async function applyFirebasePayload(payload) {
@@ -3433,90 +3423,100 @@ async function applyFirebasePayload(payload) {
 }
 
 async function initializeFirebaseERPData(role) {
-    const normalizedRole = normalizeRole(role);
+    const normalizedRole = String(role || '').trim().toLowerCase();
     clearRealtimeListeners();
     dbgFirebaseSyncReady = false;
 
-    // Authentication can restore a session before the DOMContentLoaded member
-    // migration finishes. Always wait for IndexedDB/local data initialization
-    // before building the first Firebase payload.
-    if (!memberStorageReady) {
-        try { await initMemberStorage(); } catch (_) {}
-    }
+    try {
+        // IMPORTANT: wait until the local member store has finished loading.
+        // Otherwise an Admin can log in while IndexedDB is still loading and
+        // Firebase may receive only the temporary/default member list.
+        if (!memberStorageReady && typeof initMemberStorage === 'function') {
+            await initMemberStorage();
+        }
 
-    if (!isAccountantRole(normalizedRole) && !isAdminRole(normalizedRole)) {
-        setAuthStatus('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
-        return false;
-    }
-
-    if (dbgFirebaseInitPromise) {
-        try { await dbgFirebaseInitPromise; } catch (_) {}
-    }
-
-    dbgFirebaseInitPromise = (async () => {
-        try {
+        // Both Admin and Accountant can READ the complete ERP dataset.
+        // Only Admin can write the whole /dbg_erp tree; Accountant writes
+        // only /deposits and /accounts in writeFirebaseDataNow().
+        if (isAccountantRole(normalizedRole) || isAdminRole(normalizedRole)) {
             const dataRef = ref(firebaseDB, 'dbg_erp');
-            let snap = await get(dataRef);
+            const snap = await get(dataRef);
 
-            if (isAdminRole(normalizedRole)) {
-                if (!snap.exists()) {
-                    // FIRST MIGRATION: Admin's existing local/IndexedDB data becomes
-                    // the shared Firebase source of truth.
-                    const payload = buildFirebasePayload();
-                    await set(dataRef, payload);
-                    snap = await get(dataRef);
-                    if (!snap.exists()) {
-                        throw new Error('dbg_erp তৈরি করা যায়নি। Firebase Database Rules/Permission পরীক্ষা করুন।');
+            if (isAdminRole(normalizedRole) && !snap.exists()) {
+                // FIRST CLOUD INITIALIZATION: Firebase has no ERP tree yet.
+                // Upload the current Admin's complete local/IndexedDB dataset.
+                const initialPayload = buildFirebasePayload();
+                await set(dataRef, initialPayload);
+                console.info('DBG Firebase: initial Admin ERP migration completed.', initialPayload);
+            } else if (isAdminRole(normalizedRole) && snap.exists()) {
+                // IMPORTANT: Firebase is the shared source of truth. However, on the
+                // very first migration an older Admin browser may still have the real
+                // ERP data only in LocalStorage/IndexedDB while Firebase contains
+                // empty arrays. The old code treated an empty array as valid remote
+                // data, so it never migrated that Admin data and the Accountant saw 0.
+                // We now repair missing/empty Firebase branches ONCE per browser.
+                const remote = snap.val() || {};
+                const localPayload = buildFirebasePayload();
+                const migrationKey = 'dbg_firebase_erp_migration_v2_done';
+                const migrationDone = localStorage.getItem(migrationKey) === '1';
+                const migrationUpdates = {};
+
+                ['logo','members','deposits','investments','investorProfiles','accounts'].forEach(key => {
+                    const remoteValue = remote[key];
+                    const localValue = localPayload[key];
+                    const remoteMissing = remoteValue === undefined || remoteValue === null;
+                    const remoteEmpty = Array.isArray(remoteValue) && remoteValue.length === 0;
+                    const localHasData = key === 'logo'
+                        ? !!localValue
+                        : Array.isArray(localValue) && localValue.length > 0;
+
+                    // Migrate only when Firebase has no useful value and this browser
+                    // has real local data. This prevents a later login from replacing
+                    // a valid Firebase dataset with an old local cache.
+                    if (!migrationDone && localHasData && (remoteMissing || remoteEmpty)) {
+                        migrationUpdates[`dbg_erp/${key}`] = localValue;
                     }
-                    dbgFirebaseInitialMigrationDone = true;
-                } else {
-                    // Repair only missing branches. Existing Firebase data is never
-                    // overwritten automatically.
-                    const remote = snap.val() || {};
-                    const localPayload = buildFirebasePayload();
-                    const missing = {};
-                    ['logo','members','deposits','investments','investorProfiles','accounts'].forEach(key => {
-                        const remoteMissing = remote[key] === undefined || remote[key] === null;
-                        const localValue = localPayload[key];
-                        const hasLocalData = key === 'logo'
-                            ? !!localValue
-                            : Array.isArray(localValue) && localValue.length > 0;
-                        if (remoteMissing && hasLocalData) {
-                            missing[`dbg_erp/${key}`] = localValue;
-                        }
-                    });
-                    if (Object.keys(missing).length) {
-                        await update(ref(firebaseDB), missing);
-                        snap = await get(dataRef);
-                    }
+                });
+
+                if (Object.keys(migrationUpdates).length) {
+                    migrationUpdates['dbg_erp/updatedAt'] = Date.now();
+                    await update(ref(firebaseDB), migrationUpdates);
+                    localStorage.setItem(migrationKey, '1');
+                    console.info('DBG Firebase: legacy local ERP data migrated to Firebase.');
+                } else if (!migrationDone) {
+                    // Mark the migration as checked only when there is nothing useful
+                    // left to migrate. Future Admin logins will trust Firebase.
+                    localStorage.setItem(migrationKey, '1');
                 }
             }
 
-            // Start the real-time listener only after the initial migration/repair.
             dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
                 if (snapshot.exists()) {
                     await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
                 }
             }, error => {
                 console.error('DBG Firebase realtime listener failed:', error);
-                setAuthStatus('❌ Firebase Realtime Database সংযোগে সমস্যা হয়েছে: ' + (error?.message || 'Unknown error'));
+                setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
             });
 
             dbgFirebaseSyncReady = true;
             setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয়');
+            // If a user saved data while Firebase initialization was still running,
+            // flush that pending change now instead of leaving it only in local cache.
+            if (dbgFirebasePendingSync) {
+                dbgFirebasePendingSync = false;
+                try { window.dbgSyncToFirebase(); } catch (_) {}
+            }
             return true;
-        } catch (e) {
-            console.error('DBG Firebase ERP initialization failed:', e);
-            dbgFirebaseSyncReady = false;
-            setAuthStatus('❌ Firebase Database সংযোগ/Sync ব্যর্থ: ' + (e?.message || 'Unknown error'));
-            return false;
         }
-    })();
 
-    try {
-        return await dbgFirebaseInitPromise;
-    } finally {
-        dbgFirebaseInitPromise = null;
+        setAuthStatus('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
+        return false;
+    } catch (e) {
+        console.error('DBG Firebase ERP initialization failed:', e);
+        console.error('DBG Firebase ERP error details:', e?.code || '', e?.message || e);
+        setAuthStatus(`Firebase Database সংযোগ/ডাটা Sync ব্যর্থ: ${e?.code || e?.message || 'unknown error'}`);
+        return false;
     }
 }
 if (togglePassword) {
