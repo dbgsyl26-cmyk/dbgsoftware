@@ -3633,10 +3633,10 @@ onAuthStateChanged(firebaseAuth, async (user) => {
             }
         } else {
             // অ্যাডমিন বা অন্যদের জন্য সব মেনু স্বাভাবিকভাবে দেখাবে
-            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'flex';
-            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'flex';
-            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'flex';
-            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'flex';
+            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'block';
+            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'block';
+            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'block';
+            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'block';
             
             const driveSection = document.querySelector('.border-t.border-indigo-800');
             if (driveSection) driveSection.style.display = 'block';
