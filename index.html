@@ -3526,33 +3526,17 @@ async function initializeFirebaseERPData(role) {
             }
 
             dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
-    // 🌟 সেফটি গার্ড: যদি স্ক্রিনে লগইন পেজ থাকে, তবে কোনো কোড রান না করে এখানেই থেমে যাবে (লগইন আর আটকাবে না)
-    if (!document.querySelector('nav')) {
-        return; 
-    }
-
     if (snapshot.exists()) {
         await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
         
+        // 🚀 রিফ্রেশ ছাড়া লাইভ আপডেটের জন্য একদম নিরাপদ লজিক (যা লগইন পেজকে কখনো আটকাবে না)
         try {
-            const activeTabButton = document.querySelector('nav button.bg-indigo-800');
-            const currentTab = activeTabButton ? activeTabButton.id.replace('tab-', '') : 'dashboard';
-
-            // যদি বর্তমান ওপেন থাকা ট্যাবটি অ্যাকাউন্ট্যান্টের অনুমোদিত ট্যাব হয়
-            if (currentTab === 'accounts' || currentTab === 'deposits' || currentTab === 'summary' || currentTab === 'dashboard') {
-                if (currentTab === 'dashboard' && typeof renderDashboard === "function") renderDashboard();
-                if (currentTab === 'accounts' && typeof renderAccounts === "function") renderAccounts();
-                if (currentTab === 'deposits' && typeof renderDeposits === "function") renderDeposits();
-                if (currentTab === 'summary' && typeof renderMonthlySummary === "function") renderMonthlySummary();
-                if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
-            } else {
-                // অ্যাডমিন যদি অন্য কোনো ট্যাবে থাকে তবে সম্পূর্ণ অ্যাপ রেন্ডার হবে
-                if (typeof renderAll === "function") {
-                    renderAll();
-                }
+            if (typeof renderAll === "function") {
+                renderAll();
             }
-        } catch (renderError) {
-            console.warn("রেন্ডার স্কিপ করা হয়েছে:", renderError);
+        } catch (e) {
+            // লগইন পেজে renderAll না থাকলেও কোড ক্র্যাশ করবে না, নীরবে এড়িয়ে যাবে
+            console.log("লগইন পেজে রেন্ডার স্কিপ করা হয়েছে।");
         }
     }
 }, error => {
@@ -3561,29 +3545,6 @@ async function initializeFirebaseERPData(role) {
 });
 
 
-            // যদি বর্তমান ট্যাবটি অ্যাকাউন্ট্যান্টের অনুমোদিত ট্যাবগুলোর একটি হয়
-            if (currentTab === 'accounts' || currentTab === 'deposits' || currentTab === 'summary' || currentTab === 'dashboard') {
-                if (currentTab === 'dashboard' && typeof renderDashboard === "function") renderDashboard();
-                if (currentTab === 'accounts' && typeof renderAccounts === "function") renderAccounts();
-                if (currentTab === 'deposits' && typeof renderDeposits === "function") renderDeposits();
-                if (currentTab === 'summary' && typeof renderMonthlySummary === "function") renderMonthlySummary();
-                if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
-            } else {
-                // অ্যাডমিন যদি অন্য কোনো ট্যাবে থাকে তবে সম্পূর্ণ অ্যাপ একবারে রেন্ডার হবে
-                if (typeof renderAll === "function") {
-                    renderAll();
-                }
-            }
-        } catch (renderError) {
-            console.warn("রেন্ডার করতে সামান্য সমস্যা হয়েছে, তবে ডাটা সিঙ্কড:", renderError);
-        }
-
-    }
-                }
-            }, error => {
-                console.error('DBG Firebase realtime listener failed:', error);
-                setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
-            });
 
             dbgFirebaseSyncReady = true;
             window.dbgFirebaseSyncReady = true;
