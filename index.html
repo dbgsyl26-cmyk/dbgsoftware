@@ -3529,22 +3529,16 @@ async function initializeFirebaseERPData(role) {
     if (snapshot.exists()) {
         await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
         
-        // 🚀 রিফ্রেশ ছাড়া লাইভ আপডেটের জন্য একদম নিরাপদ লজিক (যা লগইন পেজকে কখনো আটকাবে না)
-        try {
-            if (typeof renderAll === "function") {
-                renderAll();
-            }
-        } catch (e) {
-            // লগইন পেজে renderAll না থাকলেও কোড ক্র্যাশ করবে না, নীরবে এড়িয়ে যাবে
-            console.log("লগইন পেজে রেন্ডার স্কিপ করা হয়েছে।");
+        // 🚀 ডাটাবেজে যেকোনো পরিবর্তনের সাথে সাথে রিফ্রেশ ছাড়াই পুরো অ্যাপ লাইভ আপডেট হবে
+        if (typeof renderAll === "function") {
+            renderAll();
         }
     }
-}, error => {
-    console.error('DBG Firebase realtime listener failed:', error);
-    setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
-});
-
-
+                }
+            }, error => {
+                console.error('DBG Firebase realtime listener failed:', error);
+                setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
+            });
 
             dbgFirebaseSyncReady = true;
             window.dbgFirebaseSyncReady = true;
