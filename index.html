@@ -3182,6 +3182,24 @@ const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
 
+window.dbgFirebaseDiagnostics = async function () {
+    const user = firebaseAuth.currentUser;
+    const result = { uid: user?.uid || '', auth: !!user, role: window.dbgFirebaseRole || '', syncReady: !!dbgFirebaseSyncReady };
+    if (user?.uid) {
+        try {
+            const snap = await get(ref(firebaseDB, `dbg_users/${user.uid}`));
+            result.profileExists = snap.exists();
+            result.profile = snap.exists() ? snap.val() : null;
+        } catch (e) {
+            result.profileExists = false;
+            result.errorCode = e?.code || '';
+            result.errorMessage = e?.message || String(e);
+        }
+    }
+    console.log('DBG Firebase diagnostics:', result);
+    return result;
+};
+
 const overlay = document.getElementById('dbg-auth-overlay');
 const loginForm = document.getElementById('dbgFirebaseLoginForm');
 const emailInput = document.getElementById('dbgLoginEmail');
@@ -3275,6 +3293,7 @@ function setLoggedInUI(user, role = '') {
 
 function setLoggedOutUI() {
     dbgFirebaseSyncReady = false;
+    window.dbgFirebaseSyncReady = false;
     dbgFirebaseInitializedUid = '';
     dbgFirebaseInitPromise = null;
     dbgFirebasePendingSync = false;
@@ -3287,18 +3306,32 @@ function setLoggedOutUI() {
 }
 
 async function loadFirebaseUserRole(user) {
-    // Role data is optional. If database rules do not allow this read,
-    // authentication still remains successful.
+    // Load the role from the same Realtime Database used by the Rules.
+    // Fail loudly in the console so a permission/path problem cannot silently
+    // leave the role empty and disable ERP synchronization.
     try {
-        const snap = await get(ref(firebaseDB, `dbg_users/${user.uid}`));
-        if (snap.exists()) {
-            const profile = snap.val() || {};
-            return profile.role || profile.userRole || '';
+        if (!user?.uid) {
+            console.error('DBG role load failed: Firebase user UID is missing.');
+            return '';
         }
+        const roleRef = ref(firebaseDB, `dbg_users/${user.uid}`);
+        const snap = await get(roleRef);
+        if (!snap.exists()) {
+            console.error('DBG role profile NOT FOUND at:', `dbg_users/${user.uid}`);
+            return '';
+        }
+        const profile = snap.val() || {};
+        const role = String(profile.role || profile.userRole || '').trim();
+        console.info('DBG Firebase role loaded:', { uid: user.uid, profile, role });
+        return role;
     } catch (e) {
-        console.warn('DBG user role could not be loaded:', e);
+        console.error('DBG user role could not be loaded:', {
+            uid: user?.uid || '',
+            code: e?.code || '',
+            message: e?.message || String(e)
+        });
+        return '';
     }
-    return '';
 }
 
 
@@ -3308,6 +3341,7 @@ async function loadFirebaseUserRole(user) {
    to this browser's LocalStorage/IndexedDB for offline fallback.
    ========================================================== */
 let dbgFirebaseSyncReady = false;
+window.dbgFirebaseSyncReady = false;
 let dbgFirebaseApplyingRemote = false;
 let dbgFirebasePendingSync = false;
 let dbgFirebaseSyncTimer = null;
@@ -3426,6 +3460,7 @@ async function initializeFirebaseERPData(role) {
     const normalizedRole = String(role || '').trim().toLowerCase();
     clearRealtimeListeners();
     dbgFirebaseSyncReady = false;
+    window.dbgFirebaseSyncReady = false;
 
     try {
         // IMPORTANT: wait until the local member store has finished loading.
@@ -3500,6 +3535,7 @@ async function initializeFirebaseERPData(role) {
             });
 
             dbgFirebaseSyncReady = true;
+            window.dbgFirebaseSyncReady = true;
             setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয়');
             // If a user saved data while Firebase initialization was still running,
             // flush that pending change now instead of leaving it only in local cache.
