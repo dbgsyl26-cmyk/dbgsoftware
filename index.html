@@ -3529,15 +3529,16 @@ async function initializeFirebaseERPData(role) {
     if (snapshot.exists()) {
         await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
         
-                // 🚀 অ্যাকাউন্ট্যান্ট ও অ্যাডমিনের জন্য আলাদা নিরাপদ লাইভ রেন্ডার লজিক
-                // 🚀 লগইন পেজ ক্র্যাশ এড়াতে এবং নিখুঁত লাইভ সিঙ্কের চূড়ান্ত নিরাপদ কোড
+        // 🚀 লগইন পেজ ক্র্যাশ এড়ানোর জন্য সম্পূর্ণ নিরাপদ লাইভ রেন্ডার লজিক
         try {
-            const activeTabButton = document.querySelector('nav button.bg-indigo-800');
-            
-            // যদি মেনুবার থাকে এবং তার আইডি থাকে, তবেই আইডি রিড হবে, নাহলে ডিফল্ট ড্যাশবোর্ড হবে
-            const currentTab = (activeTabButton && typeof activeTabButton.id === 'string') ? activeTabButton.id.replace('tab-', '') : 'dashboard';
+            // যদি আমরা লগইন পেজে থাকি (যেমন স্ক্রিনে কোনো নেভিগেশন বাটন নেই), তবে রেন্ডার স্কিপ হবে
+            const navExists = document.querySelector('nav');
+            if (!navExists) return;
 
-            // যদি ইউজার অ্যাকাউন্ট্যান্টের অনুমোদিত কোনো ট্যাবে থাকে
+            const activeTabButton = document.querySelector('nav button.bg-indigo-800');
+            const currentTab = activeTabButton ? activeTabButton.id.replace('tab-', '') : 'dashboard';
+
+            // যদি বর্তমান ওপেন থাকা ট্যাবটি অ্যাকাউন্ট্যান্টের অনুমোদিত ট্যাব হয়
             if (currentTab === 'accounts' || currentTab === 'deposits' || currentTab === 'summary' || currentTab === 'dashboard') {
                 if (currentTab === 'dashboard' && typeof renderDashboard === "function") renderDashboard();
                 if (currentTab === 'accounts' && typeof renderAccounts === "function") renderAccounts();
@@ -3545,15 +3546,19 @@ async function initializeFirebaseERPData(role) {
                 if (currentTab === 'summary' && typeof renderMonthlySummary === "function") renderMonthlySummary();
                 if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
             } else {
-                // অ্যাডমিন যদি অন্য কোনো ট্যাবে থাকে তবে সম্পূর্ণ অ্যাপ রেন্ডার হবে
+                // অ্যাডমিন যদি অন্য কোনো আনলকড ট্যাবে থাকে তবে সম্পূর্ণ অ্যাপ রেন্ডার হবে
                 if (typeof renderAll === "function") {
                     renderAll();
                 }
             }
         } catch (renderError) {
-            console.warn("লাইভ রেন্ডার স্কিপ করা হয়েছে, তবে ডাটা সিঙ্কড:", renderError);
+            console.warn("রেন্ডার স্কিপ করা হয়েছে:", renderError);
         }
-
+    }
+}, error => {
+    console.error('DBG Firebase realtime listener failed:', error);
+    setAuthStatus('Firebase Realtime Database সংযোগে সমস্যা হয়েছে।');
+});
 
             // যদি বর্তমান ট্যাবটি অ্যাকাউন্ট্যান্টের অনুমোদিত ট্যাবগুলোর একটি হয়
             if (currentTab === 'accounts' || currentTab === 'deposits' || currentTab === 'summary' || currentTab === 'dashboard') {
