@@ -3614,6 +3614,35 @@ onAuthStateChanged(firebaseAuth, async (user) => {
     if (user) {
         const role = await loadFirebaseUserRole(user);
         setLoggedInUI(user, role);
+
+        // 🌟 এখানে অ্যাকাউন্ট্যান্টের জন্য মেনু হাইড করার কোড শুরু
+        if (role === 'accountant' || role === 'Accountant') {
+            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'none';
+            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'none';
+            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'none';
+            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'none';
+            
+            const memberCard = document.getElementById('dashTotalMembers')?.closest('.bg-white');
+            if (memberCard) memberCard.style.display = 'none';
+
+            const driveSection = document.querySelector('.border-t.border-indigo-800');
+            if (driveSection) driveSection.style.display = 'none';
+
+            if (typeof switchTab === "function") {
+                switchTab('accounts'); // লগইন করার পর সরাসরি আয়-ব্যয় পেজে নিয়ে যাবে
+            }
+        } else {
+            // অ্যাডমিন বা অন্যদের জন্য সব মেনু স্বাভাবিকভাবে দেখাবে
+            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'block';
+            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'block';
+            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'block';
+            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'block';
+            
+            const driveSection = document.querySelector('.border-t.border-indigo-800');
+            if (driveSection) driveSection.style.display = 'block';
+        }
+        // 🌟 কোড শেষ
+
     } else {
         setLoggedOutUI();
     }
