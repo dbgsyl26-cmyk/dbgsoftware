@@ -3529,10 +3529,28 @@ async function initializeFirebaseERPData(role) {
     if (snapshot.exists()) {
         await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
         
-        // 🚀 ডাটাবেজে যেকোনো পরিবর্তনের সাথে সাথে রিফ্রেশ ছাড়াই পুরো অ্যাপ লাইভ আপডেট হবে
-        if (typeof renderAll === "function") {
-            renderAll();
+                // 🚀 অ্যাকাউন্ট্যান্ট ও অ্যাডমিনের জন্য আলাদা নিরাপদ লাইভ রেন্ডার লজিক
+        try {
+            const activeTabButton = document.querySelector('nav button.bg-indigo-800');
+            const currentTab = activeTabButton ? activeTabButton.id.replace('tab-', '') : '';
+
+            // যদি বর্তমান ট্যাবটি অ্যাকাউন্ট্যান্টের অনুমোদিত ট্যাবগুলোর একটি হয়
+            if (currentTab === 'accounts' || currentTab === 'deposits' || currentTab === 'summary' || currentTab === 'dashboard') {
+                if (currentTab === 'dashboard' && typeof renderDashboard === "function") renderDashboard();
+                if (currentTab === 'accounts' && typeof renderAccounts === "function") renderAccounts();
+                if (currentTab === 'deposits' && typeof renderDeposits === "function") renderDeposits();
+                if (currentTab === 'summary' && typeof renderMonthlySummary === "function") renderMonthlySummary();
+                if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+            } else {
+                // অ্যাডমিন যদি অন্য কোনো ট্যাবে থাকে তবে সম্পূর্ণ অ্যাপ একবারে রেন্ডার হবে
+                if (typeof renderAll === "function") {
+                    renderAll();
+                }
+            }
+        } catch (renderError) {
+            console.warn("রেন্ডার করতে সামান্য সমস্যা হয়েছে, তবে ডাটা সিঙ্কড:", renderError);
         }
+
     }
                 }
             }, error => {
