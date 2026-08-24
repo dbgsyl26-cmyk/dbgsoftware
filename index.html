@@ -582,6 +582,12 @@
                             </thead>
                             <tbody id="depositsTableBody" class="divide-y divide-gray-100"></tbody>
                         </table>
+                        <!-- পেজিনেশন বাটন -->
+<div class="flex justify-between items-center mt-4 px-2 no-print">
+    <button onclick="changeDepPage(-1)" id="btnPrevDep" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed">Previous</button>
+    <span id="depPageInfo" class="text-xs font-bold text-gray-600">Page 1</span>
+    <button onclick="changeDepPage(1)" id="btnNextDep" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed">Next</button>
+</div>
                     </div>
                 </div>
             </div>
@@ -2445,44 +2451,73 @@
             document.getElementById('depositForm').reset();
             document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
         }
+    let currentDepPage = 1;
+    const depPageSize = 10;
 
-        function renderDeposits() {
-            const filter = document.getElementById('filterDepMember').value;
-            const tbody = document.getElementById('depositsTableBody');
-            tbody.innerHTML = '';
-            const list = (filter === 'ALL') ? db.deposits : db.deposits.filter(d => d.memberCode === filter);
+       function renderDeposits() {
+    const filter = document.getElementById('filterDepMember').value;
+    const tbody = document.getElementById('depositsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const list = (filter === 'ALL') ? db.deposits : db.deposits.filter(d => d.memberCode === filter);
+    
+    const reversedList = list.slice().reverse();
+    const totalItems = reversedList.length;
+    const totalPages = Math.ceil(totalItems / depPageSize) || 1;
+    
+    if (currentDepPage > totalPages) currentDepPage = totalPages;
+    if (currentDepPage < 1) currentDepPage = 1;
+    
+    const startIndex = (currentDepPage - 1) * depPageSize;
+    const endIndex = startIndex + depPageSize;
+    const paginatedList = reversedList.slice(startIndex, endIndex);
 
-            list.slice().reverse().forEach(d => {
-                const member = db.members.find(m => m.code === d.memberCode);
-                const schemeText = d.scheme ? ` (${d.scheme})` : '';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(d.date)}</td>
-                        <td class="p-2.5 font-semibold text-gray-800">${d.memberCode} - ${member ? member.name : ''}</td>
-                        <td class="p-2.5 text-indigo-700 font-medium">${d.month}${schemeText}</td>
-                        <td class="p-2.5 text-right font-bold text-emerald-600">৳${d.amount}</td>
-                        <td class="p-2.5 text-right font-bold text-purple-700">৳${d.expenseAmount || 0}</td>
-                        <td class="p-2.5 text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
-                        <td class="p-2.5 text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
-                        <td class="p-2.5 text-center space-x-1 no-print">
-                            <button onclick='showReceipt(${JSON.stringify(d)})' class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
-                                <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick='sendDepositSMS(${JSON.stringify(d)})' class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
-                                <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="editDepositDate(${d.id})" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="জমার তারিখ সংশোধন">
-                                <i data-lucide="calendar-cog" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="deleteDeposit(${d.id})" class="bg-rose-600 text-white p-1 rounded hover:bg-rose-700" title="ডিলিট">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            lucide.createIcons();
-        }
+    const pageInfo = document.getElementById('depPageInfo');
+    const btnPrev = document.getElementById('btnPrevDep');
+    const btnNext = document.getElementById('btnNextDep');
+    
+    if (pageInfo) pageInfo.innerText = `Page ${currentDepPage} of ${totalPages} (Total: ${totalItems})`;
+    if (btnPrev) btnPrev.disabled = (currentDepPage === 1);
+    if (btnNext) btnNext.disabled = (currentDepPage === totalPages);
+
+    paginatedList.forEach(d => {
+        const member = db.members.find(m => m.code === d.memberCode);
+        const schemeText = d.scheme ? ` (${d.scheme})` : '';
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(d.date)}</td>
+                <td class="p-2.5 font-semibold text-gray-800">${d.memberCode} - ${member ? member.name : ''}</td>
+                <td class="p-2.5 text-indigo-700 font-medium">${d.month}${schemeText}</td>
+                <td class="p-2.5 text-right font-bold text-emerald-600">৳${d.amount}</td>
+                <td class="p-2.5 text-right font-bold text-purple-700">৳${d.expenseAmount || 0}</td>
+                <td class="p-2.5 text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
+                <td class="p-2.5 text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
+                <td class="p-2.5 text-center space-x-1 no-print">
+                    <button onclick='showReceipt(${JSON.stringify(d)})' class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick='sendDepositSMS(${JSON.stringify(d)})' class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
+                        <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="editDepositDate(${d.id})" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="জমার তারিখ সংশোধন">
+                        <i data-lucide="calendar-cog" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="deleteDeposit(${d.id})" class="bg-rose-600 text-white p-1 rounded hover:bg-rose-700" title="ডিলিট">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+}
+
+function changeDepPage(direction) {
+    currentDepPage += direction;
+    renderDeposits();
+}
+
 
         function editDepositDate(id) {
             const deposit = db.deposits.find(d => d.id === id);
