@@ -1737,12 +1737,14 @@ const memPageSize = 10;
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // আপনার আসল ডাটাবেজ অনুযায়ী ফিল্টারিং লজিক
+    // ১. আপনার আসল ডাটাবেজ অনুযায়ী নিরাপদ ফিল্টারিং লজিক
     const filteredList = db.members.filter(m => 
         (m.code && m.code.toLowerCase().includes(search)) || 
         (m.name && m.name.toLowerCase().includes(search)) || 
         (m.nameEn && m.nameEn.toLowerCase().includes(search)) ||
-        (m.phone && m.phone.includes(search))
+        (m.phone && m.phone.includes(search)) ||
+        (m.mobile && m.mobile.includes(search)) ||
+        (m.whatsapp && m.whatsapp.includes(search))
     );
 
     const totalItems = filteredList.length;
@@ -1764,18 +1766,23 @@ const memPageSize = 10;
     if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
 
     paginatedList.forEach(m => {
-        // ১. ডিপোজিট সংখ্যা গণনার নিখুঁত ও নিরাপদ লজিক
+        // ২. ডিপোজিট সংখ্যা গণনার জন্য ডাইনামিক ও সবরকম সম্ভাবনা মেলানোর লজিক
         let depositCount = 0;
         if (db.deposits && Array.isArray(db.deposits)) {
-            depositCount = db.deposits.filter(d => 
-                String(d.memberCode).trim() === String(m.code).trim()
-            ).length;
+            depositCount = db.deposits.filter(d => {
+                const dCode = d.memberCode ? String(d.memberCode).toLowerCase().trim() : '';
+                const mCode = m.code ? String(m.code).toLowerCase().trim() : '';
+                const mName = m.name ? String(m.name).toLowerCase().trim() : '';
+                
+                // আপনার ডাটাবেজে কোড মিলুক বা সদস্যের নাম মিলুক বা আইডি মিলুক—সব লজিক একসাথে চেক
+                return dCode === mCode || dCode.includes(mCode) || dCode.includes(mName);
+            }).length;
         }
 
-        // ২. মোবাইল নাম্বার ও মাসিক দেয় টাকার সঠিক অবজেক্ট কি (Key)
+        // ৩. মোবাইল নাম্বার ও মাসিক দেয় টাকার ডাইনামিক ব্যাকআপ লজিক
         const photoSrc = m.photo || 'https://placeholder.com';
-        const memberMobile = m.phone || '';
-        const monthlyDue = m.units ? (m.units * 500) : 0;
+        const memberMobile = m.phone || m.mobile || m.whatsapp || '';
+        const monthlyDue = m.units ? (m.units * 500) : (m.monthlyAmount || 0);
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
@@ -1813,6 +1820,7 @@ function changeMemPage(direction) {
     currentMemPage += direction;
     renderMembers();
 }
+
 
 
         function populateMemberDropdowns() {
