@@ -1785,7 +1785,7 @@ const memPageSize = 10;
 
                 <td class="p-3">
                     <div class="font-bold text-gray-800">${member.name}</div>
-                    <div class="text-xs text-gray-500 font-medium">${member.nameEn || ''}</div>
+                    <div class="text-xs text-gray-500 font-medium">${String(member.nameEn || '').toUpperCase()}</div>
                 </td>
 
                 <td class="p-3 font-mono text-gray-600">
