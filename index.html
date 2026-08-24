@@ -1767,10 +1767,15 @@ const memPageSize = 10;
 
     // ৩. ডাটা রেন্ডারিং (আপনার ডাটাবেজ অবজেক্টের সঠিক ম্যাপিং)
     paginatedList.forEach(m => {
-        const deposits = db.deposits ? db.deposits.filter(d => d.memberCode === m.code || d.memberCode === m.id || d.memberId === m.code) : [];
+                // আপনার ডাটাবেজের আসল অবজেক্ট প্রপার্টি ম্যাপিং লজিক
+        const deposits = db.deposits ? db.deposits.filter(d => 
+            (d.memberCode && d.memberCode === m.code) || 
+            (d.memberCode && d.memberCode === m.id) || 
+            (d.memberId && d.memberId === m.code)
+        ) : [];
         const photoSrc = m.photo || 'https://placeholder.com';
-        const memberMobile = m.phone || m.mobile || '';
-        const monthlyDue = m.units ? (m.units * 500) : (m.monthlyAmount || 0);
+        const memberMobile = m.mobile || m.phone || m.whatsapp || '';
+        const monthlyDue = m.monthlyAmount || (m.units ? (m.units * 500) : 0);
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
