@@ -1737,7 +1737,6 @@ const memPageSize = 10;
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // আপনার আসল ডাটাবেজ অবজেক্ট অনুযায়ী ফিল্টারিং লজিক
     const filteredList = db.members.filter(member => 
         (member.code && member.code.toLowerCase().includes(search)) || 
         (member.name && member.name.toLowerCase().includes(search)) || 
@@ -1764,8 +1763,14 @@ const memPageSize = 10;
     if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
 
     paginatedList.forEach(member => {
-        // ১৮৬২ নম্বর লাইনের আসল প্রোফাইল লজিক অনুযায়ী ডিপোজিট ফিল্টার
-        const memberDeposits = db.deposits ? db.deposits.filter(d => d.memberCode === member.code) : [];
+        // ফায়ারবেজ ও লোকাল মেমোরি ডেটা লুপ সুরক্ষাকরণ
+        let totalDepositsCount = 0;
+        if (db.deposits && Array.isArray(db.deposits)) {
+            totalDepositsCount = db.deposits.filter(d => 
+                String(d.memberCode || d.member_code || '').trim().toLowerCase() === String(member.code || '').trim().toLowerCase()
+            ).length;
+        }
+
         const photoSrc = member.photo || 'https://placeholder.com';
         const memberMobile = member.phone || '';
         const monthlyDue = member.units ? (member.units * 500) : 0;
@@ -1782,7 +1787,7 @@ const memPageSize = 10;
                 </td>
                 <td class="p-3 font-mono text-gray-600">${memberMobile}</td>
                 <td class="p-3 text-center">
-                    <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold text-xs">${memberDeposits.length}টি</span>
+                    <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold text-xs">${totalDepositsCount}টি</span>
                 </td>
                 <td class="p-3 font-bold text-emerald-600">৳${monthlyDue}</td>
                 <td class="p-3 text-center space-x-1 no-print">
@@ -1806,7 +1811,6 @@ function changeMemPage(direction) {
     currentMemPage += direction;
     renderMembers();
 }
-
 
         function populateMemberDropdowns() {
             const depSelect = document.getElementById('depMemberSelect');
