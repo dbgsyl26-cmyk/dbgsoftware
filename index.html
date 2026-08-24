@@ -1737,16 +1737,13 @@ const memPageSize = 10;
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    // ১. আপনার আসল ফিল্টারিং লজিক (নাম, কোড ও মোবাইল দিয়ে সার্চ)
     const filteredList = db.members.filter(m => 
         m.code.toLowerCase().includes(search) || 
         m.name.toLowerCase().includes(search) || 
         (m.nameEn && m.nameEn.toLowerCase().includes(search)) ||
-        (m.phone && m.phone.includes(search)) ||
         (m.mobile && m.mobile.includes(search))
     );
 
-    // ২. পেজিনেশন বা পৃষ্ঠা বিন্যাস হিসাব
     const totalItems = filteredList.length;
     const totalPages = Math.ceil(totalItems / memPageSize) || 1;
 
@@ -1765,17 +1762,12 @@ const memPageSize = 10;
     if (btnPrev) btnPrev.disabled = (currentMemPage === 1);
     if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
 
-    // ৩. ডাটা রেন্ডারিং (আপনার ডাটাবেজ অবজেক্টের সঠিক ম্যাপিং)
     paginatedList.forEach(m => {
-                // আপনার ডাটাবেজের আসল অবজেক্ট প্রপার্টি ম্যাপিং লজিক
-        const deposits = db.deposits ? db.deposits.filter(d => 
-            (d.memberCode && d.memberCode === m.code) || 
-            (d.memberCode && d.memberCode === m.id) || 
-            (d.memberId && d.memberId === m.code)
-        ) : [];
+        // আপনার ডাটাবেজের রিয়েল ফিল্ড অনুসারে ডিপোজিট সংখ্যা ও মোবাইল ফিল্টার
+        const deposits = db.deposits ? db.deposits.filter(d => d.memberCode === m.code) : [];
         const photoSrc = m.photo || 'https://placeholder.com';
-        const memberMobile = m.mobile || m.phone || m.whatsapp || '';
-        const monthlyDue = m.monthlyAmount || (m.units ? (m.units * 500) : 0);
+        const memberMobile = m.mobile || '';
+        const monthlyDue = m.units ? (m.units * 500) : 0;
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
