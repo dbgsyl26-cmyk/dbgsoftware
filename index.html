@@ -1767,7 +1767,7 @@ const memPageSize = 10;
 
     // ৩. ডাটা রেন্ডারিং (আপনার ডাটাবেজ অবজেক্টের সঠিক ম্যাপিং)
     paginatedList.forEach(m => {
-        const deposits = db.deposits ? db.deposits.filter(d => d.memberCode === m.code) : [];
+        const deposits = db.deposits ? db.deposits.filter(d => d.memberCode === m.code || d.memberCode === m.id || d.memberId === m.code) : [];
         const photoSrc = m.photo || 'https://placeholder.com';
         const memberMobile = m.phone || m.mobile || '';
         const monthlyDue = m.units ? (m.units * 500) : (m.monthlyAmount || 0);
