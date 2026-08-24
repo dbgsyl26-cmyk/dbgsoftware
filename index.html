@@ -443,6 +443,13 @@
                         </thead>
                         <tbody id="membersTableBody" class="divide-y divide-gray-100"></tbody>
                     </table>
+                    <!-- মেম্বার পেজিনেশন বাটন -->
+<div class="flex justify-between items-center mt-4 px-2 no-print">
+    <button onclick="changeMemPage(-1)" id="btnPrevMem" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed">Previous</button>
+    <span id="memPageInfo" class="text-xs font-bold text-gray-600">Page 1</span>
+    <button onclick="changeMemPage(1)" id="btnNextMem" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed">Next</button>
+</div>
+
                 </div>
             </div>
         </section>
@@ -1722,48 +1729,73 @@
         }
 
         // MEMBERS LIST
+        let currentMemPage = 1;
+const memPageSize = 10;
         function renderMembers() {
-            const query = document.getElementById('memberSearch').value.toLowerCase();
-            const tbody = document.getElementById('membersTableBody');
-            tbody.innerHTML = '';
+    const search = document.getElementById('memberSearch').value.toLowerCase().trim();
+    const tbody = document.getElementById('membersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
 
-            const filtered = db.members.filter(m => 
-                m.code.toLowerCase().includes(query) || 
-                m.name.toLowerCase().includes(query) ||
-                (m.nameEn && m.nameEn.toLowerCase().includes(query)) ||
-                m.phone.includes(query)
-            );
+    // সার্চ ফিল্টারিং
+    const filteredList = db.members.filter(m => 
+        m.code.toLowerCase().includes(search) || 
+        m.name.toLowerCase().includes(search) || 
+        (m.nameEn && m.nameEn.toLowerCase().includes(search))
+    );
 
-            filtered.forEach(m => {
-                const monthlyAmount = m.units * 500;
-                const photoSrc = m.photo || 'https://via.placeholder.com/150';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-3">
-                            <img src="${photoSrc}" class="w-10 h-10 rounded-full object-cover border border-indigo-200">
-                        </td>
-                        <td class="p-3 font-bold text-indigo-700">${m.code}</td>
-                        <td class="p-3">
-                            <div class="font-bold text-gray-800">${m.name}</div>
-                            <div class="text-xs text-gray-500 font-mono">${m.nameEn || ''}</div>
-                        </td>
-                        <td class="p-3 text-gray-600 font-semibold">${m.phone}</td>
-                        <td class="p-3"><span class="bg-indigo-100 text-indigo-800 text-xs px-2.5 py-1 rounded-full font-bold">${m.units} টি</span></td>
-                        <td class="p-3 font-bold text-emerald-600">৳${monthlyAmount}</td>
-                        <td class="p-3 text-center space-x-1 no-print">
-                            <button onclick="editMember('${m.code}')" class="bg-amber-500 text-white p-1.5 rounded hover:bg-amber-600" title="এডিট">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="deleteMember('${m.code}')" class="bg-rose-600 text-white p-1.5 rounded hover:bg-rose-700" title="ডিলিট">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            lucide.createIcons();
-        }
+    // পেজিনেশন হিসাব
+    const totalItems = filteredList.length;
+    const totalPages = Math.ceil(totalItems / memPageSize) || 1;
 
+    if (currentMemPage > totalPages) currentMemPage = totalPages;
+    if (currentMemPage < 1) currentMemPage = 1;
+
+    const startIndex = (currentMemPage - 1) * memPageSize;
+    const endIndex = startIndex + memPageSize;
+    const paginatedList = filteredList.slice(startIndex, endIndex);
+
+    const pageInfo = document.getElementById('memPageInfo');
+    const btnPrev = document.getElementById('btnPrevMem');
+    const btnNext = document.getElementById('btnNextMem');
+
+    if (pageInfo) pageInfo.innerText = `Page ${currentMemPage} of ${totalPages} (Total Members: ${totalItems})`;
+    if (btnPrev) btnPrev.disabled = (currentMemPage === 1);
+    if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
+
+    paginatedList.forEach(m => {
+        const deposits = db.deposits.filter(d => d.memberCode === m.code);
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-3">
+                    <img src="${m.photo || 'https://placeholder.com'}" class="w-10 h-10 rounded-full object-cover border">
+                </td>
+                <td class="p-3 font-mono font-bold text-gray-700">${m.code}</td>
+                <td class="p-3">
+                    <div class="font-bold text-gray-800">${m.name}</div>
+                    <div class="text-xs text-gray-500 font-medium">${m.nameEn || ''}</div>
+                </td>
+                <td class="p-3 font-mono text-gray-600">${m.mobile || ''}</td>
+                <td class="p-3 text-center"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold text-xs">${deposits.length}টি</span></td>
+                <td class="p-3 font-bold text-emerald-600">৳${m.monthlyAmount || 0}</td>
+                <td class="p-3 text-center space-x-1 no-print">
+                    <button onclick="viewMemberProfile('${m.code}')" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="প্রোফাইল">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="editMember('${m.code}')" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="এডিট">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+}
+
+function changeMemPage(direction) {
+    currentMemPage += direction;
+    renderMembers();
+}
         function populateMemberDropdowns() {
             const depSelect = document.getElementById('depMemberSelect');
             const filterSelect = document.getElementById('filterDepMember');
