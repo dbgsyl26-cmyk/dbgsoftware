@@ -1763,12 +1763,14 @@ const memPageSize = 10;
     if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
 
     paginatedList.forEach(member => {
-        // ফায়ারবেজ ও লোকাল মেমোরি ডেটা লুপ সুরক্ষাকরণ
-        let totalDepositsCount = 0;
-                if (db.deposits && Array.isArray(db.deposits)) {
-            totalDepositsCount = db.deposits.filter(d => 
-                (d.memberCode && String(d.memberCode).trim() === String(member.code).trim())
-            ).length;
+        // ডাটাবেজের আইডি স্ট্রিং এবং নাম্বার ফরম্যাট সেফ ম্যাচিং লজিক
+        let depositCount = 0;
+        if (db.deposits && Array.isArray(db.deposits)) {
+            depositCount = db.deposits.filter(d => {
+                const dCode = d.memberCode ? String(d.memberCode).trim().toLowerCase() : '';
+                const mCode = member.code ? String(member.code).trim().toLowerCase() : '';
+                return dCode === mCode && mCode !== '';
+            }).length;
         }
 
         const photoSrc = member.photo || 'https://placeholder.com';
@@ -1787,7 +1789,7 @@ const memPageSize = 10;
                 </td>
                 <td class="p-3 font-mono text-gray-600">${memberMobile}</td>
                 <td class="p-3 text-center">
-                    <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold text-xs">${totalDepositsCount}টি</span>
+                    <span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold text-xs">${depositCount}টি</span>
                 </td>
                 <td class="p-3 font-bold text-emerald-600">৳${monthlyDue}</td>
                 <td class="p-3 text-center space-x-1 no-print">
@@ -1811,6 +1813,7 @@ function changeMemPage(direction) {
     currentMemPage += direction;
     renderMembers();
 }
+
 
         function populateMemberDropdowns() {
             const depSelect = document.getElementById('depMemberSelect');
