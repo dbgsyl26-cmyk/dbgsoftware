@@ -2378,14 +2378,27 @@ function changeMemPage(direction) {
                 };
 
                 if (editCode) {
-                    const idx = db.members.findIndex(m => m.code === editCode);
-                    if (idx !== -1) db.members[idx] = memberData;
-                } else {
-                    db.members.push(memberData);
-                }
+    const idx = db.members.findIndex(m => m.code === editCode);
 
-                saveData();
-                closeMemberModal();
+    if (idx !== -1) {
+        db.members[idx] = memberData;
+    }
+} else {
+    db.members.push(memberData);
+}
+
+// প্রথমে LocalStorage/IndexedDB-তে সংরক্ষণ
+saveLocalData();
+
+// UI আপডেট
+renderAll();
+
+// Firebase-এ নতুন Member Data নিশ্চিতভাবে Sync
+if (typeof window.dbgSyncToFirebase === 'function') {
+    window.dbgSyncToFirebase();
+}
+
+closeMemberModal();
             };
 
             let photoB64 = '', nidB64 = '';
