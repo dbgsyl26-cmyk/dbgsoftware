@@ -1737,11 +1737,14 @@ const memPageSize = 10;
     if (!tbody) return;
     tbody.innerHTML = '';
 
+    // ডাটাবেজের সবরকম সম্ভাব্য ফিল্ডের ওপর ভিত্তি করে সার্চ ফিল্টারিং
     const filteredList = db.members.filter(member => 
-        (member.code && member.code.toLowerCase().includes(search)) || 
-        (member.name && member.name.toLowerCase().includes(search)) || 
-        (member.nameEn && member.nameEn.toLowerCase().includes(search)) ||
-        (member.phone && member.phone.includes(search))
+        (member.code && String(member.code).toLowerCase().includes(search)) || 
+        (member.name && String(member.name).toLowerCase().includes(search)) || 
+        (member.nameEn && String(member.nameEn).toLowerCase().includes(search)) ||
+        (member.phone && String(member.phone).includes(search)) ||
+        (member.mobile && String(member.mobile).includes(search)) ||
+        (member.whatsapp && String(member.whatsapp).includes(search))
     );
 
     const totalItems = filteredList.length;
@@ -1763,26 +1766,28 @@ const memPageSize = 10;
     if (btnNext) btnNext.disabled = (currentMemPage === totalPages);
 
     paginatedList.forEach(member => {
-        // ডাটাবেজের আইডি স্ট্রিং এবং নাম্বার ফরম্যাট সেফ ম্যাচিং লজিক
+        // [ডিপোজিট সংখ্যা ফিক্স লজিক]: ডাটাবেজে যেভাবে কোড সেভ হোক না কেন তা খুঁজে বের করার অল-রাউন্ডার কন্ডিশন
         let depositCount = 0;
         if (db.deposits && Array.isArray(db.deposits)) {
             depositCount = db.deposits.filter(d => {
-                const dCode = d.memberCode ? String(d.memberCode).trim().toLowerCase() : '';
+                const dCode = d.memberCode ? String(d.memberCode).trim().toLowerCase() : (d.member_code ? String(d.member_code).trim().toLowerCase() : '');
                 const mCode = member.code ? String(member.code).trim().toLowerCase() : '';
-                return dCode === mCode && mCode !== '';
+                const mId = member.id ? String(member.id).trim().toLowerCase() : '';
+                return (dCode === mCode && mCode !== '') || (dCode === mId && mId !== '');
             }).length;
         }
 
+        // [মোবাইল নাম্বার ফিক্স লজিক]: ফর্ম সেভ করার সময় যে নামেই যাক না কেন তা অটো-ডিট্যাক্ট করবে
         const photoSrc = member.photo || 'https://placeholder.com';
-        const memberMobile = member.phone || '';
-        const monthlyDue = member.units ? (member.units * 500) : 0;
+        const memberMobile = member.phone || member.mobile || member.whatsapp || '';
+        const monthlyDue = member.units ? (member.units * 500) : (member.monthlyAmount || 0);
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
                 <td class="p-3">
                     <img src="${photoSrc}" class="w-10 h-10 rounded-full object-cover border">
                 </td>
-                <td class="p-3 font-mono font-bold text-gray-700">${member.code}</td>
+                <td class="p-3 font-mono font-bold text-gray-700">${member.code || member.id || ''}</td>
                 <td class="p-3">
                     <div class="font-bold text-gray-800">${member.name}</div>
                     <div class="text-xs text-gray-500 font-medium">${member.nameEn || ''}</div>
@@ -1793,13 +1798,13 @@ const memPageSize = 10;
                 </td>
                 <td class="p-3 font-bold text-emerald-600">৳${monthlyDue}</td>
                 <td class="p-3 text-center space-x-1 no-print">
-                    <button onclick="document.getElementById('profileSelect').value = '${member.code}'; renderIndividualProfile(); switchTab('profile');" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="প্রোফাইল">
+                    <button onclick="document.getElementById('profileSelect').value = '${member.code || member.id}'; renderIndividualProfile(); switchTab('profile');" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="প্রোফাইল">
                         <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="editMember('${member.code}')" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="এডিট">
+                    <button onclick="editMember('${member.code || member.id}')" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="এডিট">
                         <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="deleteMember('${member.code}')" class="bg-rose-600 text-white p-1 rounded hover:bg-rose-700" title="ডিলিট">
+                    <button onclick="deleteMember('${member.code || member.id}')" class="bg-rose-600 text-white p-1 rounded hover:bg-rose-700" title="ডিলিট">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
                 </td>
@@ -1813,7 +1818,6 @@ function changeMemPage(direction) {
     currentMemPage += direction;
     renderMembers();
 }
-
 
         function populateMemberDropdowns() {
             const depSelect = document.getElementById('depMemberSelect');
