@@ -3307,182 +3307,6 @@ async function buildSecureVault(password) {
         createdAt:new Date().toISOString()
     };
 }
-// ================= MEMBER PORTAL SECURITY & ROUTING LOGIC =================
-
-// পেজ লোড হওয়ার সাথে সাথে মেইন ফায়ারবেস লগইন বক্সটি হাইড রাখার ফাংশন
-function initGatewaySetup() {
-    try {
-        // ১. আমাদের নতুন ৩টি কার্ডের রোল গেটওয়ে স্ক্রিনে দৃশ্যমান রাখা
-        const roleCard = document.getElementById('role-selection-card');
-        if (roleCard) {
-            roleCard.style.display = 'block';
-        }
-
-        // ২. আপনার মূল ফায়ারবেস লগইন বক্সটি খুঁজে বের করে হাইড করা
-        const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
-        if (originalLoginCard) {
-            originalLoginCard.style.display = 'none';
-        }
-
-        // ৩. মেম্বার লগইন প্যানেলটিও শুরুতে হাইড থাকবে
-        const memberPanel = document.getElementById('member-login-panel');
-        if (memberPanel) {
-            memberPanel.style.display = 'none';
-        }
-    } catch(e) { 
-        console.error("Gateway Init Error: ", e); 
-    }
-}
-
-// ব্রাউজার পেজ পুরোপুরি লোড হলে এটি রান হবে
-if (document.readyState === 'loading') {
-    document.addEventListener("DOMContentLoaded", initGatewaySetup);
-} else {
-    initGatewaySetup();
-}
-
-// কার্ড সিলেকশন অনুযায়ী রাউটিং করা
-window.navigateToLogin = function(role) {
-    document.getElementById('role-selection-card').style.display = 'none';
-    
-    if (role === 'member') {
-        document.getElementById('member-login-panel').style.display = 'block';
-        const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
-        if (originalLoginCard) originalLoginCard.style.display = 'none';
-    } else {
-        // অ্যাডমিন বা অ্যাকাউন্ট্যান্ট হলে অরিজিনাল ফায়ারবেস লগইন পেজটি ওপেন হবে
-        const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
-        if (originalLoginCard) originalLoginCard.style.display = 'block';
-        document.getElementById('member-login-panel').style.display = 'none';
-    }
-}
-
-// পেছনে ফিরে যাওয়ার জন্য ফাংশন
-window.goBackToRoles = function() {
-    document.getElementById('role-selection-card').style.display = 'block';
-    document.getElementById('member-login-panel').style.display = 'none';
-    
-    const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
-    if (originalLoginCard) originalLoginCard.style.display = 'none';
-}
-
-// পাসওয়ার্ড হাইড এবং শো করার ফাংশন
-window.toggleMemberPassword = function() {
-    const passwordInput = document.getElementById('memberInputPassword');
-    const toggleBtn = document.getElementById('togglePasswordBtn');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleBtn.innerText = '🔒';
-    } else {
-        passwordInput.type = 'password';
-        toggleBtn.innerText = '👁️';
-    }
-}
-
-// মেম্বার আইডি ও পাসওয়ার্ড যাচাই করে লগইন করার ফাংশন
-window.handleMemberSecureLogin = function(event) {
-    event.preventDefault();
-    const inputId = document.getElementById('memberInputId').value.trim().toUpperCase();
-    const inputPassword = document.getElementById('memberInputPassword').value.trim();
-
-    if (typeof db === 'undefined' || !db || !db.members) {
-        alert("সিস্টেম ডাটাবেজ লোড হচ্ছে, অনুগ্রহ করে ৩-৪ সেকেন্ড পর আবার চেষ্টা করুন।");
-        return;
-    }
-
-    const member = db.members.find(m => {
-        const mId = m.memberId || m.id || m.memberNo || "";
-        return mId.trim().toUpperCase() === inputId;
-    });
-
-    if (!member) {
-        alert("ভুল সদস্য আইডি! আবার চেষ্টা করুন।");
-        return;
-    }
-
-    const savedPassword = member.password || "123456"; 
-    if (savedPassword !== inputPassword) {
-        alert("দুঃখিত, আপনার পাসওয়ার্ডটি সঠিক নয়!");
-        return;
-    }
-
-    // সফল লগইনে ব্যাকগ্রাউন্ডের মেইন ইন্টারফেস ও সাইডবার লক করা
-    if(document.getElementById('sidebar-menu')) document.getElementById('sidebar-menu').style.display = 'none';
-    if(document.getElementById('admin-dashboard-view')) document.getElementById('admin-dashboard-view').style.display = 'none';
-    
-    // লগইন স্ক্রিন সম্পূর্ণ বন্ধ করে মেম্বার ড্যাশবোর্ড প্রদর্শন
-    const overlay = document.getElementById('dbg-auth-overlay');
-    if (overlay) overlay.style.display = 'none'; 
-    document.getElementById('member-portal-view').style.display = 'block';
-
-    // প্রোফাইল ডেটা রেন্ডারিং
-    document.getElementById('m_Id').innerText = member.memberId || member.memberNo || inputId;
-    document.getElementById('m_Name').innerText = member.nameBn || member.name || '-';
-    document.getElementById('m_EnName').innerText = member.nameEn || '-';
-    document.getElementById('m_Country').innerText = member.country || 'বাংলাদেশ';
-    document.getElementById('m_FatherName').innerText = member.fatherName || '-';
-    document.getElementById('m_Dob').innerText = member.dob || '-';
-    document.getElementById('m_Nid').innerText = member.nid || '-';
-    document.getElementById('m_Mobile').innerText = member.mobile || '-';
-    document.getElementById('m_BloodGroup').innerText = member.bloodGroup || '-';
-    
-    document.getElementById('m_NomineeName').innerText = member.nomineeName || '-';
-    document.getElementById('m_NomineeRelation').innerText = member.nomineeRelation || '-';
-    document.getElementById('m_NomineeMobile').innerText = member.nomineeMobile || '-';
-    if(member.photoUrl) document.getElementById('m_Photo').src = member.photoUrl;
-
-    const depositList = db.deposits || db.depositList || [];
-    const memberDeposits = depositList.filter(d => {
-        const dId = d.memberId || d.id || d.memberNo || "";
-        return dId.trim().toUpperCase() === inputId;
-    });
-
-    let tableHtml = "";
-    let totalMain = 0, totalExpense = 0;
-
-    memberDeposits.forEach(d => {
-        totalMain += parseFloat(d.mainAmount || d.amount || 0);
-        totalExpense += parseFloat(d.expenseAmount || d.costAmount || 0);
-
-        tableHtml += `
-            <tr>
-                <td>${d.date || '-'}</td>
-                <td class="fw-bold text-primary">${d.monthOrScheme || d.month || '-'}</td>
-                <td>৳${d.mainAmount || d.amount || 0}</td>
-                <td>৳${d.expenseAmount || d.costAmount || 0}</td>
-                <td>৳${d.samriddhiAmount || 0}</td>
-                <td>৳${d.unnayanAmount || 0}</td>
-                <td><span class="badge bg-success" style="background:#22c55e; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">পরিশোধিত</span></td>
-            </tr>
-        `;
-    });
-
-    document.getElementById('m_DepositTableBody').innerHTML = tableHtml || `<tr><td colspan="7" style="padding:20px; color:#64748b;">কোনো জমার রেকর্ড পাওয়া যায়নি</td></tr>`;
-    document.getElementById('m_StatTotalDeposit').innerText = totalMain;
-    document.getElementById('m_StatTotalExpense').innerText = totalExpense;
-    document.getElementById('m_StatTotalDue').innerText = member.currentDue || '0';
-}
-
-// লগআউট করার ফাংশন
-window.handleMemberLogout = function() {
-    if (confirm("আপনি কি নিশ্চিতভাবে লগআউট করতে চান?")) {
-        document.getElementById('member-portal-view').style.display = 'none';
-        document.getElementById('memberInputId').value = "";
-        document.getElementById('memberInputPassword').value = "";
-        
-        const overlay = document.getElementById('dbg-auth-overlay');
-        if (overlay) overlay.style.display = 'flex';
-        
-        document.getElementById('role-selection-card').style.display = 'block';
-        document.getElementById('member-login-panel').style.display = 'none';
-    }
-}
-
-// পিডিএফ/প্রিন্ট ডাউনলোড করার ফাংশন
-window.downloadMemberProfile = function() {
-    window.print();
-}
-
 
 async function decryptSecureVault(vault, password) {
     if(!vault || vault.format!=='DBG-SECURE-BACKUP' || !vault.salt || !vault.iv || !vault.data) {
@@ -4263,6 +4087,188 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         setLoggedOutUI();
     }
 });
+</script>
+<!-- ================= COMPLETE SECURE WORKING GATEWAY LOGIC ================= -->
+<script>
+(function() {
+    // পেজ লোড হওয়া মাত্রই ইন্টারফেস সেটআপ করা
+    function enforceGatewayUI() {
+        try {
+            const roleCard = document.getElementById('role-selection-card');
+            if (roleCard) roleCard.style.setProperty('display', 'block', 'important');
+
+            const memberPanel = document.getElementById('member-login-panel');
+            if (memberPanel) memberPanel.style.setProperty('display', 'none', 'important');
+
+            const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
+            if (originalLoginCard) originalLoginCard.style.setProperty('display', 'none', 'important');
+        } catch(e) { console.error("UI Sync Error:", e); }
+    }
+
+    // টাইমআউট দিয়ে নিশ্চিত করা যেন ফায়ারবেস লোড হওয়ার পর আমাদের গেটওয়ে কাজ করে
+    setTimeout(enforceGatewayUI, 300);
+    setTimeout(enforceGatewayUI, 1000);
+
+    // ১. কার্ড সিলেকশন অনুযায়ী রাউটিং (অ্যাডমিন, অ্যাকাউন্ট্যান্ট ও মেম্বার বাটন ফিক্স)
+    window.navigateToLogin = function(role) {
+        const roleCard = document.getElementById('role-selection-card');
+        const memberPanel = document.getElementById('member-login-panel');
+        const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
+
+        if (roleCard) roleCard.style.setProperty('display', 'none', 'important');
+        
+        if (role === 'member') {
+            if (memberPanel) memberPanel.style.setProperty('display', 'block', 'important');
+            if (originalLoginCard) originalLoginCard.style.setProperty('display', 'none', 'important');
+        } else {
+            // অ্যাডমিন বা অ্যাকাউন্ট্যান্টে ক্লিক করলে আপনার আসল ফায়ারবেস লগইন বক্সটি ১০০% স্ক্রিনে আসবে
+            if (originalLoginCard) originalLoginCard.style.setProperty('display', 'block', 'important');
+            if (memberPanel) memberPanel.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // ২. পেছনে ফিরে যাওয়ার ব্যাক বাটন ফাংশন
+    window.goBackToRoles = function() {
+        const roleCard = document.getElementById('role-selection-card');
+        const memberPanel = document.getElementById('member-login-panel');
+        const originalLoginCard = document.querySelector('.dbg-auth-card:not(#role-selection-card):not(#member-login-panel)');
+
+        if (roleCard) roleCard.style.setProperty('display', 'block', 'important');
+        if (memberPanel) memberPanel.style.setProperty('display', 'none', 'important');
+        if (originalLoginCard) originalLoginCard.style.setProperty('none', 'important');
+    };
+
+    // ৩. পাসওয়ার্ড হাইড/শো ফাংশন
+    window.toggleMemberPassword = function() {
+        const passwordInput = document.getElementById('memberInputPassword');
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        if (passwordInput && passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            if (toggleBtn) toggleBtn.innerText = '🔒';
+        } else if (passwordInput) {
+            passwordInput.type = 'password';
+            if (toggleBtn) toggleBtn.innerText = '👁️';
+        }
+    };
+
+    // ৪. মেম্বার সিকিউর লগইন প্রোসেস এবং ডাইনামিক ডেটা ফিল্টারিং
+    window.handleMemberSecureLogin = function(event) {
+        if(event) event.preventDefault();
+        
+        const inputId = document.getElementById('memberInputId').value.trim().toUpperCase();
+        const inputPassword = document.getElementById('memberInputPassword').value.trim();
+
+        // গ্লোবাল উইন্ডো অবজেক্ট বা নরমাল অবজেক্ট থেকে db ভেরিয়েবল চেক করা
+        const database = window.db || (typeof db !== 'undefined' ? db : null);
+
+        if (!database || !database.members) {
+            alert("সিস্টেম ডেটাবেজ এখনো লোড হচ্ছে, অনুগ্রহ করে ৩-৪ সেকেন্ড পর আবার চেষ্টা করুন।");
+            return;
+        }
+
+        // db.members থেকে মেম্বার আইডি ম্যাচ করা
+        const member = database.members.find(m => {
+            const mId = m.memberId || m.memberNo || m.id || m.member_id || "";
+            return mId.toString().trim().toUpperCase() === inputId;
+        });
+
+        if (!member) {
+            alert("দুঃখিত, এই সদস্য আইডিটি সিস্টেমে পাওয়া যায়নি! সঠিক আইডি দিন (যেমন: DBG-001 বা DBG-008)");
+            return;
+        }
+
+        // পাসওয়ার্ড যাচাই (ডাটাবেজে না থাকলে ডিফল্ট '123456' কার্যকর হবে)
+        let savedPassword = member.password;
+        if (savedPassword === undefined || savedPassword === null || savedPassword.toString().trim() === "") {
+            savedPassword = "123456"; 
+        }
+
+        if (savedPassword.toString().trim() !== inputPassword) {
+            alert("দুঃখিত, আপনার পাসওয়ার্ডটি সঠিক নয়! প্রথমবার লগইনের জন্য '123456' ব্যবহার করুন।");
+            return;
+        }
+
+        // সফল লগইনে সব অথরাইজেশন প্যানেল লুকিয়ে মেম্বার পোর্টাল চালু করা
+        const authOverlay = document.getElementById('dbg-auth-overlay');
+        if (authOverlay) authOverlay.style.setProperty('display', 'none', 'important');
+        
+        const portalView = document.getElementById('member-portal-view');
+        if (portalView) portalView.style.setProperty('display', 'block', 'important');
+
+        // সাইডবার ও অ্যাডমিন ড্যাশবোর্ড লক করা
+        if(document.getElementById('sidebar-menu')) document.getElementById('sidebar-menu').style.setProperty('display', 'none', 'important');
+        if(document.getElementById('admin-dashboard-view')) document.getElementById('admin-dashboard-view').style.setProperty('display', 'none', 'important');
+
+        // প্রোফাইল ভ্যালু সেট করা
+        document.getElementById('m_Id').innerText = member.memberId || member.memberNo || member.id || inputId;
+        document.getElementById('m_Name').innerText = member.nameBn || member.name || member.memberName || '-';
+        document.getElementById('m_EnName').innerText = member.nameEn || member.englishName || '-';
+        document.getElementById('m_Country').innerText = member.country || 'বাংলাদেশ';
+        document.getElementById('m_FatherName').innerText = member.fatherName || member.father_name || '-';
+        document.getElementById('m_Dob').innerText = member.dob || member.dateOfBirth || '-';
+        document.getElementById('m_Nid').innerText = member.nid || member.nidNo || '-';
+        document.getElementById('m_Mobile').innerText = member.mobile || member.phone || '-';
+        document.getElementById('m_BloodGroup').innerText = member.bloodGroup || member.blood || '-';
+        
+        document.getElementById('m_NomineeName').innerText = member.nomineeName || member.nominee_name || '-';
+        document.getElementById('m_NomineeRelation').innerText = member.nomineeRelation || member.relation || '-';
+        document.getElementById('m_NomineeMobile').innerText = member.nomineeMobile || '-';
+        if(member.photoUrl || member.image) document.getElementById('m_Photo').src = member.photoUrl || member.image;
+
+        // ডেটাবেজ থেকে এই মেম্বারের ডিপোজিট সামারি বের করা
+        const depositList = database.deposits || database.depositList || database.memberDeposits || [];
+        const memberDeposits = depositList.filter(d => {
+            const dId = d.memberId || d.memberNo || d.id || d.member_id || "";
+            return dId.toString().trim().toUpperCase() === inputId;
+        });
+
+        let tableHtml = "";
+        let totalMain = 0, totalExpense = 0;
+
+        memberDeposits.forEach(d => {
+            totalMain += parseFloat(d.mainAmount || d.amount || d.depositAmount || 0);
+            totalExpense += parseFloat(d.expenseAmount || d.costAmount || d.expense || 0);
+
+            tableHtml += `
+                <tr>
+                    <td style="padding:10px; border:1px solid #e2e8f0;">${d.date || d.depositDate || '-'}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;" class="fw-bold text-primary">${d.monthOrScheme || d.month || d.scheme || '-'}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;">৳${d.mainAmount || d.amount || d.depositAmount || 0}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;">৳${d.expenseAmount || d.costAmount || d.expense || 0}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;">৳${d.samriddhiAmount || d.samriddhi || 0}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;">৳${d.unnayanAmount || d.unnayan || 0}</td>
+                    <td style="padding:10px; border:1px solid #e2e8f0;"><span style="background:#22c55e; color:white; padding:2px 6px; border-radius:4px; font-size:12px;">পরিশোধিত</span></td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('m_DepositTableBody').innerHTML = tableHtml || `<tr><td colspan="7" style="padding:20px; color:#64748b;">কোনো জমার রেকর্ড পাওয়া যায়নি</td></tr>`;
+        document.getElementById('m_StatTotalDeposit').innerText = totalMain;
+        document.getElementById('m_StatTotalExpense').innerText = totalExpense;
+        document.getElementById('m_StatTotalDue').innerText = member.currentDue || member.due || '0';
+    };
+
+    // ৫. লগআউট ফাংশন
+    window.handleMemberLogout = function() {
+        if (confirm("আপনি কি নিশ্চিতভাবে লগআউট করতে চান?")) {
+            const portalView = document.getElementById('member-portal-view');
+            if (portalView) portalView.style.setProperty('display', 'none', 'important');
+            
+            document.getElementById('memberInputId').value = "";
+            document.getElementById('memberInputPassword').value = "";
+            
+            const authOverlay = document.getElementById('dbg-auth-overlay');
+            if (authOverlay) authOverlay.style.setProperty('display', 'flex', 'important');
+            
+            enforceGatewayUI();
+        }
+    };
+
+    // ৬. পিডিএফ ডাউনলোড ফাংশন
+    window.downloadMemberProfile = function() {
+        window.print();
+    };
+})();
 </script>
 
 </body>
