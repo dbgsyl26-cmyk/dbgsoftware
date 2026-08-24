@@ -2430,7 +2430,11 @@
             const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
             db.deposits.push(newDeposit);
             saveData();
-            
+                        // ড্যাশবোর্ড, মেম্বার প্রোফাইল ও ইতিহাস রিয়েল-টাইমে আপডেট করার কোড
+            if (typeof renderAll === 'function') renderAll();
+            if (typeof renderDeposits === 'function') renderDeposits();
+            if (typeof renderDashboard === 'function') renderDashboard();
+
             showReceipt(newDeposit);
             
             // Ask & Trigger SMS
