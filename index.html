@@ -1765,9 +1765,9 @@ const memPageSize = 10;
     paginatedList.forEach(member => {
         // ফায়ারবেজ ও লোকাল মেমোরি ডেটা লুপ সুরক্ষাকরণ
         let totalDepositsCount = 0;
-        if (db.deposits && Array.isArray(db.deposits)) {
+                if (db.deposits && Array.isArray(db.deposits)) {
             totalDepositsCount = db.deposits.filter(d => 
-                String(d.memberCode || d.member_code || '').trim().toLowerCase() === String(member.code || '').trim().toLowerCase()
+                (d.memberCode && String(d.memberCode).trim() === String(member.code).trim())
             ).length;
         }
 
