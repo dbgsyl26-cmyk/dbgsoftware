@@ -123,21 +123,37 @@
         body.dbg-accountant-mode #tab-accounts { display: flex !important; }
 </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
+<body clas    <!-- নতুন মডার্ন লগইন ব্যাকগ্রাউন্ড এবং হোয়াইট কার্ড ডিজাইন -->
+    <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 min-h-screen flex items-center justify-center p-4 dbg-logged-out">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center" id="dbg-safe-auth-card">
+            
+            <!-- লোগো এবং হেডার -->
+            <div class="mb-6">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">ড্রীমস বিজনেস গ্রুপ</h2>
+                <p class="text-xs text-gray-500 mt-1">আপনার অ্যাকাউন্টের ধরন নির্বাচন করুন</p>
+            </div>
 
-    <!-- ================= FIREBASE LOGIN OVERLAY ================= -->
-    <div id="dbg-auth-overlay">
-      <div class="dbg-safe-auth-card">
-        <div class="text-center mb-5">
-          <div class="mx-auto mb-3 w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-emerald-100 flex items-center justify-center shadow-sm"><i data-lucide="sparkles" class="w-9 h-9 text-indigo-700"></i></div>
-          <h2 class="text-2xl font-bold text-slate-900">ড্রিমস বিজনেস গ্রুপ</h2>
-          <p class="text-sm text-slate-500 mt-1">নিরাপদ ও স্মার্ট লগইন</p>
-        </div>
-        <div class="grid grid-cols-3 gap-2 mb-5">
-          <button type="button" class="dbg-login-type active" data-type="admin"><i data-lucide="shield-check" class="role-icon"></i>Admin<span class="dbg-role-badge">Management</span></button>
-          <button type="button" class="dbg-login-type" data-type="accountant"><i data-lucide="calculator" class="role-icon"></i>Accountant<span class="dbg-role-badge">Accounts</span></button>
-          <button type="button" class="dbg-login-type" data-type="member"><i data-lucide="user-round" class="role-icon"></i>Member<span class="dbg-role-badge">Member Portal</span></button>
-        </div>
+            <!-- রোল সিলেক্টর ট্যাব (Admin, Accountant, Member) -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button type="button" class="dbg-login-type active border border-gray-200 p-3 rounded-xl transition-all duration-200 text-gray-600 bg-white" data-type="admin">
+                    <i data-lucide="shield-check" class="w-5 h-5 mx-auto mb-1"></i>
+                    <span class="block font-bold text-xs">Admin</span>
+                    <p class="text-[10px] text-gray-400">Management</p>
+                </button>
+                <button type="button" class="dbg-login-type border border-gray-200 p-3 rounded-xl transition-all duration-200 text-gray-600 bg-white" data-type="accountant">
+                    <i data-lucide="calculator" class="w-5 h-5 mx-auto mb-1"></i>
+                    <span class="block font-bold text-xs">Accountant</span>
+                    <p class="text-[10px] text-gray-400">Accounts</p>
+                </button>
+                <button type="button" class="dbg-login-type border border-gray-200 p-3 rounded-xl transition-all duration-200 text-gray-600 bg-white" data-type="member">
+                    <i data-lucide="user-round" class="w-5 h-5 mx-auto mb-1"></i>
+                    <span class="block font-bold text-xs">Member</span>
+                    <p class="text-[10px] text-gray-400">Member Portal</p>
+                </button>
+            </div>
         <div id="dbgStaffLoginPanel">
           <div class="mb-4 text-center"><div id="dbgStaffPanelTitle" class="text-lg font-extrabold text-slate-800">Admin Login</div><div id="dbgStaffPanelSubtitle" class="text-xs text-slate-500 mt-1">সিস্টেম পরিচালনার জন্য নিরাপদ লগইন</div></div>
           <form id="dbgFirebaseLoginForm" class="space-y-4">
