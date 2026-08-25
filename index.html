@@ -3331,18 +3331,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
-    authDomain: "dbgsoftware-6c9b9.firebaseapp.com",
-    databaseURL: "https://dbgsoftware-6c9b9-default-rtdb.firebaseio.com",
-    projectId: "dbgsoftware-6c9b9",
-    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
-    messagingSenderId: "726215672769",
-    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
+    apiKey: "AIzaSyC8PJDBTj1w3ctIqj754n9P5nCGVhOH0Is",
+    authDomain: "dbgsoftware-fb58a.firebaseapp.com",
+    databaseURL: "https://dbgsoftware-fb58a-default-rtdb.firebaseio.com",
+    projectId: "dbgsoftware-fb58a",
+    storageBucket: "dbgsoftware-fb58a.firebasestorage.app",
+    messagingSenderId: "372375897652",
+    appId: "1:372375897652:web:330e3a1042e262061dac61"
 };
 
 
 /* ================= MEMBER AUTH + PORTAL (ADDITIVE, DOES NOT ALTER dbg_erp) ================= */
-const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-6c9b9.firebaseapp.com';
+const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-fb58a.firebaseapp.com';
 const dbgMemberPanel = document.getElementById('dbgMemberAuthPanel');
 const dbgAdminPanel = document.getElementById('dbgAdminLoginPanel');
 const dbgMemberAuthError = document.getElementById('dbgMemberAuthError');
@@ -3462,10 +3462,21 @@ document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',asyn
     if(dbgMemberNormalizeMobile(member.phone)!==mobile){dbgMemberSetError('রেজিস্টার্ড মোবাইল নম্বরটি মিলছে না।');return;}
     if(p1!==p2){dbgMemberSetError('দুইটি পাসওয়ার্ড একই হতে হবে।');return;}
     try{
-        const existing=await get(ref(firebaseDB,'dbg_member_auth/'+id)); if(existing.exists()){dbgMemberSetError('এই Member ID ইতিমধ্যে রেজিস্টার করা হয়েছে। Login করুন।');return;}
+        // IMPORTANT: Do not read protected Realtime Database paths before Firebase Auth.
+        // With standard rules, unauthenticated reads cause 'Permission denied'.
+        // Check/create the Firebase Auth account first; the signed-in user can then
+        // write the member mapping if the rules permit authenticated writes.
         const cred=await createUserWithEmailAndPassword(firebaseAuth,dbgMemberEmail(id),p1);
-        await set(ref(firebaseDB,'dbg_member_auth/'+id),{uid:cred.user.uid,memberId:id,createdAt:Date.now()});
-        await set(ref(firebaseDB,'dbg_users/'+cred.user.uid),{role:'member',memberId:id,createdAt:Date.now()});
+        try {
+            await set(ref(firebaseDB,'dbg_member_auth/'+id),{uid:cred.user.uid,memberId:id,createdAt:Date.now()});
+            await set(ref(firebaseDB,'dbg_users/'+cred.user.uid),{role:'member',memberId:id,createdAt:Date.now()});
+        } catch (dbErr) {
+            // If the Auth account was created but the database rules reject the mapping,
+            // sign out and give a precise setup message instead of reporting unknown-error.
+            console.error('Member mapping write failed:', dbErr);
+            await signOut(firebaseAuth);
+            throw new Error('Member registration database permission denied. Firebase Realtime Database Rules-এ authenticated member registration-এর জন্য প্রয়োজনীয় write permission নেই।');
+        }
         dbgMemberSetStatus('রেজিস্ট্রেশন সফল। এখন Member Login করুন।');
         document.getElementById('dbgMemberLoginId').value=id; document.getElementById('dbgMemberLoginPassword').value='';
         document.getElementById('dbgMemberLoginTab')?.click(); await signOut(firebaseAuth);
@@ -3476,8 +3487,11 @@ document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e
     e.preventDefault(); dbgMemberSetError(''); dbgMemberSetStatus('লগইন হচ্ছে...');
     const id=dbgMemberNormalizeId(document.getElementById('dbgMemberLoginId').value), pass=document.getElementById('dbgMemberLoginPassword').value;
     try{
-        const map=await get(ref(firebaseDB,'dbg_member_auth/'+id)); if(!map.exists()){dbgMemberSetError('এই Member ID রেজিস্টার করা হয়নি।');return;}
-        const cred=await signInWithEmailAndPassword(firebaseAuth,dbgMemberEmail(id),pass); const profile=await get(ref(firebaseDB,'dbg_users/'+cred.user.uid));
+        // Authenticate first. This avoids depending on an unauthenticated database read.
+        const cred=await signInWithEmailAndPassword(firebaseAuth,dbgMemberEmail(id),pass);
+        const map=await get(ref(firebaseDB,'dbg_member_auth/'+id));
+        if(!map.exists() || String(map.val().uid||'')!==String(cred.user.uid)){await signOut(firebaseAuth);dbgMemberSetError('Member account mapping যাচাই করা যায়নি। Admin-এর সাথে যোগাযোগ করুন।');return;}
+        const profile=await get(ref(firebaseDB,'dbg_users/'+cred.user.uid));
         if(!profile.exists() || String(profile.val().role||'').toLowerCase()!=='member'){await signOut(firebaseAuth);dbgMemberSetError('Member account যাচাই করা যায়নি।');return;}
     }catch(err){console.error(err);dbgMemberSetError(firebaseErrorMessage(err));}
 });
@@ -3495,7 +3509,8 @@ function firebaseErrorMessage(error) {
         'auth/network-request-failed': 'ইন্টারনেট সংযোগ বা Firebase নেটওয়ার্কে সমস্যা হয়েছে।',
         'auth/operation-not-allowed': 'Firebase Console-এ Email/Password Sign-in Method চালু করা হয়নি।',
         'auth/unauthorized-domain': 'এই GitHub Pages domain Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।',
-        'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।'
+        'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।',
+        'auth/configuration-not-found': 'Firebase Authentication configuration পাওয়া যায়নি। Firebase Console-এর Authentication সেটিংস পরীক্ষা করুন।'
     };
     return messages[code] || `Firebase Authentication error: ${code || 'unknown-error'}${error?.message ? ' — ' + error.message : ''}`;
 }
