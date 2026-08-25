@@ -3861,6 +3861,29 @@ function installMemberPortalStylesAndRoot() {
         <h1 class="text-2xl md:text-3xl font-extrabold text-indigo-950 tracking-tight">ড্রিমস বিজনেস গ্রুপ</h1>
         <p class="text-sm md:text-base font-semibold text-slate-600 mt-1">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>
       </div>
+      <style>
+        @keyframes dbgHotlineBlink {
+          0%, 100% { opacity: 1; transform: translateY(0) scale(1); box-shadow: 0 4px 18px rgba(5,150,105,.14); }
+          50% { opacity: .72; transform: translateY(-1px) scale(1.015); box-shadow: 0 6px 24px rgba(5,150,105,.30); }
+        }
+        .dbg-hotline-banner {
+          animation: dbgHotlineBlink 1.35s ease-in-out infinite;
+        }
+        .dbg-hotline-banner:hover {
+          animation-play-state: paused;
+        }
+      </style>
+      <div class="flex justify-end mb-3 md:mb-4">
+        <div class="dbg-hotline-banner inline-flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-emerald-700 font-extrabold shadow-sm">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <i data-lucide="phone-call" class="w-5 h-5"></i>
+          </span>
+          <span class="text-xs md:text-sm leading-tight">
+            <span class="block text-emerald-600">হটলাইন</span>
+            <span class="block text-base md:text-lg tracking-wide">09638586475</span>
+          </span>
+        </div>
+      </div>
       <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
       <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 md:p-7 flex flex-wrap justify-between items-center gap-4">
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
