@@ -152,13 +152,13 @@
 
             <div id="dbgMemberAuthPanel" class="hidden">
                 <div class="dbg-member-login-tabs mb-4">
-                    <button type="button" id="dbgMemberLoginTab" class="active">Member Login</button>
-                    <button type="button" id="dbgMemberRegisterTab">Register</button>
+                    <button type="button" id="dbgMemberLoginTab" class="active" onclick="window.dbgMemberSwitchTab('login')">Member Login</button>
+                    <button type="button" id="dbgMemberRegisterTab" onclick="window.dbgMemberSwitchTab('register')">Register</button>
                 </div>
                 <form id="dbgMemberLoginForm" class="space-y-4">
                     <div><label class="block text-sm font-semibold text-slate-700 mb-1">সদস্য আইডি</label><input id="dbgMemberLoginId" class="dbg-member-field" placeholder="যেমন: DBG-012" required></div>
                     <div><label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label><div class="dbg-member-password-wrap"><input id="dbgMemberLoginPassword" type="password" class="dbg-member-field pr-12" autocomplete="current-password" required><button type="button" class="dbg-eye" id="dbgMemberLoginEye"><i data-lucide="eye" class="w-4 h-4"></i></button></div></div>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Member Login</button>
+                    <button type="button" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl" onclick="window.dbgMemberSubmitLogin(event)">Member Login</button>
                 </form>
                 <form id="dbgMemberRegisterForm" class="space-y-4 hidden">
                     <div><label class="block text-sm font-semibold text-slate-700 mb-1">সদস্য আইডি</label><input id="dbgMemberRegId" class="dbg-member-field" placeholder="যেমন: DBG-012" required></div>
@@ -4015,25 +4015,31 @@ dbgRoleAdmin?.addEventListener('click', () => dbgSelectRole('admin'));
 dbgRoleAccountant?.addEventListener('click', () => dbgSelectRole('accountant'));
 dbgRoleMember?.addEventListener('click', () => dbgSelectRole('member'));
 
-dbgMemberLoginTab?.addEventListener('click', () => {
-    dbgMemberLoginTab.classList.add('active'); dbgMemberRegisterTab.classList.remove('active');
-    dbgMemberLoginForm?.classList.remove('hidden'); dbgMemberRegisterForm?.classList.add('hidden'); setAuthError('');
-});
-dbgMemberRegisterTab?.addEventListener('click', () => {
-    dbgMemberRegisterTab.classList.add('active'); dbgMemberLoginTab.classList.remove('active');
-    dbgMemberRegisterForm?.classList.remove('hidden'); dbgMemberLoginForm?.classList.add('hidden'); setAuthError('');
-});
+function dbgMemberSwitchTab(tab) {
+    const isRegister = tab === 'register';
+    dbgMemberRegisterTab?.classList.toggle('active', isRegister);
+    dbgMemberLoginTab?.classList.toggle('active', !isRegister);
+    dbgMemberRegisterForm?.classList.toggle('hidden', !isRegister);
+    dbgMemberLoginForm?.classList.toggle('hidden', isRegister);
+    setAuthError(''); setAuthStatus('');
+}
+window.dbgMemberSwitchTab = dbgMemberSwitchTab;
+dbgMemberLoginTab?.addEventListener('click', () => dbgMemberSwitchTab('login'));
+dbgMemberRegisterTab?.addEventListener('click', () => dbgMemberSwitchTab('register'));
 
 document.getElementById('dbgMemberLoginEye')?.addEventListener('click', () => dbgToggleField(dbgMemberLoginPassword, document.getElementById('dbgMemberLoginEye')));
 document.getElementById('dbgMemberRegEye')?.addEventListener('click', () => dbgToggleField(dbgMemberRegPassword, document.getElementById('dbgMemberRegEye')));
 document.getElementById('dbgMemberRegConfirmEye')?.addEventListener('click', () => dbgToggleField(dbgMemberRegConfirm, document.getElementById('dbgMemberRegConfirmEye')));
 
-dbgMemberRegisterForm?.addEventListener('submit', async (event) => {
-    event.preventDefault(); setAuthError(''); setAuthStatus('Member তথ্য যাচাই করছে...');
-    const memberId = dbgMemberNormalizeId(dbgMemberRegId.value);
-    const mobile = dbgMemberNormalizeMobile(dbgMemberRegMobile.value);
-    const password = dbgMemberRegPassword.value;
-    const confirm = dbgMemberRegConfirm.value;
+async function dbgMemberSubmitRegister(event) {
+    if (event?.preventDefault) event.preventDefault();
+    setAuthError(''); setAuthStatus('Member তথ্য যাচাই করছে...');
+    const memberId = dbgMemberNormalizeId(dbgMemberRegId?.value);
+    const mobile = dbgMemberNormalizeMobile(dbgMemberRegMobile?.value);
+    const password = dbgMemberRegPassword?.value || '';
+    const confirm = dbgMemberRegConfirm?.value || '';
+    if (!memberId) { dbgMemberShowError('Member ID দিন।'); return; }
+    if (!mobile) { dbgMemberShowError('Registered Mobile Number দিন।'); return; }
     if (password !== confirm) { dbgMemberShowError('Password এবং Confirm Password এক নয়।'); return; }
     if (password.length < 6) { dbgMemberShowError('Password কমপক্ষে ৬ অক্ষরের হতে হবে।'); return; }
     try {
@@ -4047,7 +4053,7 @@ dbgMemberRegisterForm?.addEventListener('submit', async (event) => {
             throw new Error(idExists ? 'Member ID ঠিক আছে, কিন্তু Registered Mobile Number মিলছে না।' : 'এই Member ID পাওয়া যায়নি। Admin-এর ERP Member list-এ আগে সদস্যটি থাকতে হবে।');
         }
         const email = dbgMemberAuthEmail(memberId);
-        const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+        await createUserWithEmailAndPassword(firebaseAuth, email, password);
         setAuthStatus('Registration সফল। Member Portal খুলছে...');
         await dbgOpenMemberPortal(member.code);
     } catch (error) {
@@ -4055,23 +4061,30 @@ dbgMemberRegisterForm?.addEventListener('submit', async (event) => {
         dbgMemberShowError(dbgMemberAuthError(error));
         try { if (firebaseAuth.currentUser) await signOut(firebaseAuth); } catch (_) {}
     }
-});
+}
+window.dbgMemberSubmitRegister = dbgMemberSubmitRegister;
+dbgMemberRegisterForm?.addEventListener('submit', dbgMemberSubmitRegister);
 
-dbgMemberLoginForm?.addEventListener('submit', async (event) => {
-    event.preventDefault(); setAuthError(''); setAuthStatus('Member যাচাই করছে...');
-    const memberId = dbgMemberNormalizeId(dbgMemberLoginId.value);
-    const password = dbgMemberLoginPassword.value;
+async function dbgMemberSubmitLogin(event) {
+    if (event?.preventDefault) event.preventDefault();
+    setAuthError(''); setAuthStatus('Member যাচাই করছে...');
+    const memberId = dbgMemberNormalizeId(dbgMemberLoginId?.value);
+    const password = dbgMemberLoginPassword?.value || '';
+    if (!memberId) { dbgMemberShowError('Member ID দিন।'); return; }
+    if (!password) { dbgMemberShowError('Password দিন।'); return; }
     try {
         const data = await dbgMemberLoadFromFirebase(memberId);
         if (!data) throw new Error('এই Member ID ERP-তে পাওয়া যায়নি।');
-        const credential = await signInWithEmailAndPassword(firebaseAuth, dbgMemberAuthEmail(memberId), password);
+        await signInWithEmailAndPassword(firebaseAuth, dbgMemberAuthEmail(memberId), password);
         await dbgOpenMemberPortal(data.member.code);
     } catch (error) {
         console.error('DBG Member Login Error:', error);
         dbgMemberShowError(dbgMemberAuthError(error));
         try { if (firebaseAuth.currentUser && !String(firebaseAuth.currentUser.email || '').startsWith('member.')) await signOut(firebaseAuth); } catch (_) {}
     }
-});
+}
+window.dbgMemberSubmitLogin = dbgMemberSubmitLogin;
+dbgMemberLoginForm?.addEventListener('submit', dbgMemberSubmitLogin);
 
 loginForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
