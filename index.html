@@ -3342,6 +3342,7 @@ const firebaseConfig = {
 
 
 /* ================= MEMBER AUTH + PORTAL (ADDITIVE, DOES NOT ALTER dbg_erp) ================= */
+// v11: restored Member helper functions used by Register/Login handlers.
 const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-6c9b9.firebaseapp.com';
 const firebaseApp = getApps().find(a => a.name === "DBG_ERP") || initializeApp(firebaseConfig, "DBG_ERP");
 const firebaseAuth = getAuth(firebaseApp);
@@ -3401,6 +3402,22 @@ function dbgSetAuthMode(role){
 }
 document.querySelectorAll('.dbg-role-card').forEach(c=>c.addEventListener('click',()=>dbgSetAuthMode(c.dataset.role)));
 dbgSetAuthMode('admin');
+const dbgMemberAuthError = document.getElementById('dbgMemberAuthError');
+const dbgMemberAuthStatus = document.getElementById('dbgMemberAuthStatus');
+function dbgMemberSetError(msg=''){
+    if(!dbgMemberAuthError) return;
+    dbgMemberAuthError.textContent = msg;
+    dbgMemberAuthError.classList.toggle('show', !!msg);
+}
+function dbgMemberSetStatus(msg=''){
+    if(dbgMemberAuthStatus) dbgMemberAuthStatus.textContent = msg;
+}
+function dbgMemberEmail(id){
+    return String(id||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'_') + '@' + DBG_MEMBER_AUTH_DOMAIN;
+}
+function dbgMemberNormalizeId(id){ return String(id||'').trim(); }
+function dbgMemberNormalizeMobile(v){ return String(v||'').replace(/[^0-9+]/g,'').replace(/^0088/,'+88'); }
+
 function dbgSetMemberTab(tab){
     const loginTab=document.getElementById('dbgMemberLoginTab'), regTab=document.getElementById('dbgMemberRegisterTab');
     const loginForm=document.getElementById('dbgMemberLoginForm'), regForm=document.getElementById('dbgMemberRegisterForm');
