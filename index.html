@@ -3342,7 +3342,7 @@ const firebaseConfig = {
 
 
 /* ================= MEMBER AUTH + PORTAL (ADDITIVE, DOES NOT ALTER dbg_erp) ================= */
-const DBG_MEMBER_AUTH_DOMAIN = 'member.dbgsoftware.local';
+const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-6c9b9.firebaseapp.com';
 const dbgMemberPanel = document.getElementById('dbgMemberAuthPanel');
 const dbgAdminPanel = document.getElementById('dbgAdminLoginPanel');
 const dbgMemberAuthError = document.getElementById('dbgMemberAuthError');
@@ -3497,7 +3497,7 @@ function firebaseErrorMessage(error) {
         'auth/unauthorized-domain': 'এই GitHub Pages domain Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।',
         'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।'
     };
-    return messages[code] || `লগইন ব্যর্থ হয়েছে (${code || 'unknown-error'})। Firebase Console-এর Authentication সেটিংস পরীক্ষা করুন।`;
+    return messages[code] || `Firebase Authentication error: ${code || 'unknown-error'}${error?.message ? ' — ' + error.message : ''}`;
 }
 
 function setLoggedInUI(user, role = '') {
