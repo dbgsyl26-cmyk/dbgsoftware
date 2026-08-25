@@ -3331,13 +3331,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyC8PJDBTj1w3ctIqj754n9P5nCGVhOHOIs",
-    authDomain: "dbgsoftware-fb58a.firebaseapp.com",
-    databaseURL: "https://dbgsoftware-fb58a-default-rtdb.firebaseio.com",
-    projectId: "dbgsoftware-fb58a",
-    storageBucket: "dbgsoftware-fb58a.firebasestorage.app",
-    messagingSenderId: "372375897652",
-    appId: "1:372375897652:web:330e3a1042e262061dac61"
+    apiKey: "AIzaSyBeD2SSyT2ihCVgklfw5im95LXIWlkszps",
+    authDomain: "dbgsoftware-6c9b9.firebaseapp.com",
+    databaseURL: "https://dbgsoftware-6c9b9-default-rtdb.firebaseio.com",
+    projectId: "dbgsoftware-6c9b9",
+    storageBucket: "dbgsoftware-6c9b9.firebasestorage.app",
+    messagingSenderId: "726215672769",
+    appId: "1:726215672769:web:f3b7dc52377cf1f387e540"
 };
 
 
@@ -3388,9 +3388,22 @@ async function dbgOpenMemberPortal(user, memberId){
     }catch(e){ status.textContent='Member data লোড করা যায়নি।'; console.error(e); }
 }
 
-const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const firebaseApp = getApps().find(a => a.name === "DBG_ERP") || initializeApp(firebaseConfig, "DBG_ERP");
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
+
+const dbgMemberFirebaseConfig = {
+    apiKey: "AIzaSyC8PJDBTj1w3ctIqj754n9P5nCGVhOH0Is",
+    authDomain: "dbgsoftware-fb58a.firebaseapp.com",
+    databaseURL: "https://dbgsoftware-fb58a-default-rtdb.firebaseio.com",
+    projectId: "dbgsoftware-fb58a",
+    storageBucket: "dbgsoftware-fb58a.firebasestorage.app",
+    messagingSenderId: "372375897652",
+    appId: "1:372375897652:web:330e3a1042e262061dac61"
+};
+const dbgMemberFirebaseApp = getApps().find(a => a.name === "DBG_MEMBER") || initializeApp(dbgMemberFirebaseConfig, "DBG_MEMBER");
+const dbgMemberFirebaseAuth = getAuth(dbgMemberFirebaseApp);
+const dbgMemberFirebaseDB = getDatabase(dbgMemberFirebaseApp);
 
 window.dbgFirebaseDiagnostics = async function () {
     const user = firebaseAuth.currentUser;
@@ -3456,7 +3469,7 @@ document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',asyn
     const id=dbgMemberNormalizeId(document.getElementById('dbgMemberRegId').value), mobile=dbgMemberNormalizeMobile(document.getElementById('dbgMemberRegMobile').value), p1=document.getElementById('dbgMemberRegPassword').value, p2=document.getElementById('dbgMemberRegPassword2').value;
     let member=(Array.isArray(db.members)?db.members:[]).find(m=>String(m.code||'').trim()===id);
     if(!member){
-        try { const ps=await get(ref(firebaseDB,'dbg_member_portal/'+id)); if(ps.exists()) member=(ps.val()||{}).member||null; } catch(_) {}
+        try { const ps=await get(ref(dbgMemberFirebaseDB,'dbg_member_portal/'+id)); if(ps.exists()) member=(ps.val()||{}).member||null; } catch(_) {}
     }
     if(!member){dbgMemberSetError('এই Member ID-এর Portal data পাওয়া যায়নি। Admin/Accountant-কে আগে একবার sync করতে বলুন।');return;}
     if(dbgMemberNormalizeMobile(member.phone)!==mobile){dbgMemberSetError('রেজিস্টার্ড মোবাইল নম্বরটি মিলছে না।');return;}
@@ -3466,20 +3479,20 @@ document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',asyn
         // With standard rules, unauthenticated reads cause 'Permission denied'.
         // Check/create the Firebase Auth account first; the signed-in user can then
         // write the member mapping if the rules permit authenticated writes.
-        const cred=await createUserWithEmailAndPassword(firebaseAuth,dbgMemberEmail(id),p1);
+        const cred=await createUserWithEmailAndPassword(dbgMemberFirebaseAuth,dbgMemberEmail(id),p1);
         try {
-            await set(ref(firebaseDB,'dbg_member_auth/'+id),{uid:cred.user.uid,memberId:id,createdAt:Date.now()});
-            await set(ref(firebaseDB,'dbg_users/'+cred.user.uid),{role:'member',memberId:id,createdAt:Date.now()});
+            await set(ref(dbgMemberFirebaseDB,'dbg_member_auth/'+id),{uid:cred.user.uid,memberId:id,createdAt:Date.now()});
+            await set(ref(dbgMemberFirebaseDB,'dbg_users/'+cred.user.uid),{role:'member',memberId:id,createdAt:Date.now()});
         } catch (dbErr) {
             // If the Auth account was created but the database rules reject the mapping,
             // sign out and give a precise setup message instead of reporting unknown-error.
             console.error('Member mapping write failed:', dbErr);
-            await signOut(firebaseAuth);
+            await signOut(dbgMemberFirebaseAuth);
             throw new Error('Member registration database permission denied. Firebase Realtime Database Rules-এ authenticated member registration-এর জন্য প্রয়োজনীয় write permission নেই।');
         }
         dbgMemberSetStatus('রেজিস্ট্রেশন সফল। এখন Member Login করুন।');
         document.getElementById('dbgMemberLoginId').value=id; document.getElementById('dbgMemberLoginPassword').value='';
-        document.getElementById('dbgMemberLoginTab')?.click(); await signOut(firebaseAuth);
+        document.getElementById('dbgMemberLoginTab')?.click(); await signOut(dbgMemberFirebaseAuth);
     }catch(err){console.error(err);dbgMemberSetError(firebaseErrorMessage(err));}
 });
 
@@ -3488,11 +3501,12 @@ document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e
     const id=dbgMemberNormalizeId(document.getElementById('dbgMemberLoginId').value), pass=document.getElementById('dbgMemberLoginPassword').value;
     try{
         // Authenticate first. This avoids depending on an unauthenticated database read.
-        const cred=await signInWithEmailAndPassword(firebaseAuth,dbgMemberEmail(id),pass);
-        const map=await get(ref(firebaseDB,'dbg_member_auth/'+id));
-        if(!map.exists() || String(map.val().uid||'')!==String(cred.user.uid)){await signOut(firebaseAuth);dbgMemberSetError('Member account mapping যাচাই করা যায়নি। Admin-এর সাথে যোগাযোগ করুন।');return;}
-        const profile=await get(ref(firebaseDB,'dbg_users/'+cred.user.uid));
-        if(!profile.exists() || String(profile.val().role||'').toLowerCase()!=='member'){await signOut(firebaseAuth);dbgMemberSetError('Member account যাচাই করা যায়নি।');return;}
+        const cred=await signInWithEmailAndPassword(dbgMemberFirebaseAuth,dbgMemberEmail(id),pass);
+        const map=await get(ref(dbgMemberFirebaseDB,'dbg_member_auth/'+id));
+        if(!map.exists() || String(map.val().uid||'')!==String(cred.user.uid)){await signOut(dbgMemberFirebaseAuth);dbgMemberSetError('Member account mapping যাচাই করা যায়নি। Admin-এর সাথে যোগাযোগ করুন।');return;}
+        const profile=await get(ref(dbgMemberFirebaseDB,'dbg_users/'+cred.user.uid));
+        if(!profile.exists() || String(profile.val().role||'').toLowerCase()!=='member'){await signOut(dbgMemberFirebaseAuth);dbgMemberSetError('Member account যাচাই করা যায়নি।');return;}
+        document.body.classList.add('dbg-member-mode','dbg-logged-out'); document.getElementById('dbg-auth-overlay')?.classList.add('hidden'); await dbgOpenMemberPortal(cred.user,id);
     }catch(err){console.error(err);dbgMemberSetError(firebaseErrorMessage(err));}
 });
 
@@ -3939,7 +3953,23 @@ onAuthStateChanged(firebaseAuth, async (user) => {
     }
 });
 
-document.getElementById('dbgMemberLogout')?.addEventListener('click',async()=>{try{await signOut(firebaseAuth);}catch(e){alert(firebaseErrorMessage(e));}});
+document.getElementById('dbgMemberLogout')?.addEventListener('click',async()=>{try{await signOut(dbgMemberFirebaseAuth);}catch(e){alert(firebaseErrorMessage(e));}});
+
+// Keep Member Portal session separate from the ERP Admin/Accountant session.
+try { await setPersistence(dbgMemberFirebaseAuth, browserLocalPersistence); } catch(e) { console.warn('Member Firebase persistence could not be enabled:', e); }
+onAuthStateChanged(dbgMemberFirebaseAuth, async (user) => {
+    if (!user) return;
+    try {
+        const snap = await get(ref(dbgMemberFirebaseDB, `dbg_users/${user.uid}`));
+        const p = snap.exists() ? (snap.val() || {}) : {};
+        const memberId = String(p.memberId || '');
+        if (String(p.role || '').toLowerCase() === 'member' && memberId) {
+            document.body.classList.add('dbg-member-mode','dbg-logged-out');
+            document.getElementById('dbg-auth-overlay')?.classList.add('hidden');
+            await dbgOpenMemberPortal(user, memberId);
+        }
+    } catch(e) { console.warn('Member session restore skipped:', e); }
+});
 </script>
 
 </body>
