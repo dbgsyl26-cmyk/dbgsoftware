@@ -3359,6 +3359,7 @@ import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    deleteUser,
     sendPasswordResetEmail,
     signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -4043,6 +4044,25 @@ async function dbgMemberSubmitRegister(event) {
     if (password !== confirm) { dbgMemberShowError('Password এবং Confirm Password এক নয়।'); return; }
     if (password.length < 6) { dbgMemberShowError('Password কমপক্ষে ৬ অক্ষরের হতে হবে।'); return; }
     try {
+        // IMPORTANT: create/authenticate the Member first. Some Firebase Rules
+        // require authentication before reading /dbg_erp. The previous flow
+        // tried to read /dbg_erp while signed out, which caused Permission denied.
+        const email = dbgMemberAuthEmail(memberId);
+        let credential;
+        let createErrorWasNewAccount = false;
+        try {
+            credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+            createErrorWasNewAccount = true;
+        } catch (createError) {
+            // If the account already exists, use the supplied password only to
+            // authenticate the existing Member account, then validate the ERP row.
+            if (createError?.code === 'auth/email-already-in-use') {
+                credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+            } else {
+                throw createError;
+            }
+        }
+
         const snap = await get(ref(firebaseDB, 'dbg_erp'));
         if (!snap.exists()) throw new Error('ERP data পাওয়া যায়নি। Admin আগে Firebase sync সম্পূর্ণ করুন।');
         const payload = snap.val() || {};
@@ -4050,10 +4070,11 @@ async function dbgMemberSubmitRegister(event) {
         if (!member) {
             const list = Array.isArray(payload.members) ? payload.members : [];
             const idExists = list.some(m => dbgMemberNormalizeId(m?.code) === memberId);
+            // If this was a newly-created auth account but the ERP identity is
+            // invalid, remove that temporary account so it cannot become orphaned.
+            if (credential?.user && createErrorWasNewAccount) { try { await deleteUser(credential.user); } catch (_) {} }
             throw new Error(idExists ? 'Member ID ঠিক আছে, কিন্তু Registered Mobile Number মিলছে না।' : 'এই Member ID পাওয়া যায়নি। Admin-এর ERP Member list-এ আগে সদস্যটি থাকতে হবে।');
         }
-        const email = dbgMemberAuthEmail(memberId);
-        await createUserWithEmailAndPassword(firebaseAuth, email, password);
         setAuthStatus('Registration সফল। Member Portal খুলছে...');
         await dbgOpenMemberPortal(member.code);
     } catch (error) {
@@ -4073,9 +4094,11 @@ async function dbgMemberSubmitLogin(event) {
     if (!memberId) { dbgMemberShowError('Member ID দিন।'); return; }
     if (!password) { dbgMemberShowError('Password দিন।'); return; }
     try {
+        // Authenticate first, then read ERP data. This avoids Permission denied
+        // when Firebase Rules require an authenticated user for database reads.
+        await signInWithEmailAndPassword(firebaseAuth, dbgMemberAuthEmail(memberId), password);
         const data = await dbgMemberLoadFromFirebase(memberId);
         if (!data) throw new Error('এই Member ID ERP-তে পাওয়া যায়নি।');
-        await signInWithEmailAndPassword(firebaseAuth, dbgMemberAuthEmail(memberId), password);
         await dbgOpenMemberPortal(data.member.code);
     } catch (error) {
         console.error('DBG Member Login Error:', error);
