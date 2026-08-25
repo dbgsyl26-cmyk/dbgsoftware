@@ -3395,12 +3395,47 @@ function setAuthStatus(message = '') {
 }
 
 
+let dbgActiveLoginRole = 'admin';
+window.dbgActiveLoginRole = dbgActiveLoginRole;
+
 function dbgSetAuthMode(role){
+    role = String(role || 'admin').toLowerCase();
+    dbgActiveLoginRole = role;
+    window.dbgActiveLoginRole = role;
     document.querySelectorAll('.dbg-role-card').forEach(c=>c.classList.toggle('active',c.dataset.role===role));
-    const member=role==='member'; if(dbgMemberPanel) dbgMemberPanel.classList.toggle('hidden',!member); if(dbgAdminPanel) dbgAdminPanel.classList.toggle('hidden',member);
-    if(!member){ setAuthError(''); setAuthStatus(''); }
+    const member=role==='member';
+    if(dbgMemberPanel) dbgMemberPanel.classList.toggle('hidden',!member);
+    if(dbgAdminPanel) dbgAdminPanel.classList.toggle('hidden',member);
+    if(member){
+        dbgSetMemberTab('login');
+        setAuthError('');
+        setAuthStatus('');
+    } else {
+        setAuthError('');
+        setAuthStatus('');
+    }
 }
-document.querySelectorAll('.dbg-role-card').forEach(c=>c.addEventListener('click',()=>dbgSetAuthMode(c.dataset.role)));
+
+document.querySelectorAll('.dbg-role-card').forEach(c=>c.addEventListener('click',async()=>{
+    const role=String(c.dataset.role||'admin').toLowerCase();
+    dbgSetAuthMode(role);
+    // The ERP and Member Portal intentionally share the same Firebase project.
+    // If an old session is active, clear it before switching roles so a Member
+    // click can never fall through into the Admin/Accountant panel.
+    const current=firebaseAuth.currentUser;
+    if(current){
+        try {
+            const currentRole=await loadFirebaseUserRole(current);
+            const cr=String(currentRole||'').toLowerCase();
+            if((role==='member' && cr!=='member') || (role!=='member' && cr==='member')){
+                await signOut(firebaseAuth);
+            }
+        } catch(e){
+            console.warn('Role switch session cleanup skipped:',e);
+        }
+    }
+}));
+
 dbgSetAuthMode('admin');
 const dbgMemberAuthError = document.getElementById('dbgMemberAuthError');
 const dbgMemberAuthStatus = document.getElementById('dbgMemberAuthStatus');
@@ -3432,7 +3467,8 @@ document.getElementById('dbgMemberRegPasswordToggle')?.addEventListener('click',
 document.getElementById('dbgMemberRegPassword2Toggle')?.addEventListener('click',()=>dbgToggleField('dbgMemberRegPassword2','dbgMemberRegPassword2Toggle'));
 
 document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',async e=>{
-    e.preventDefault(); dbgMemberSetError(''); dbgMemberSetStatus('রেজিস্ট্রেশন যাচাই হচ্ছে...');
+    e.preventDefault();
+    dbgActiveLoginRole='member'; window.dbgActiveLoginRole='member'; dbgMemberSetError(''); dbgMemberSetStatus('রেজিস্ট্রেশন যাচাই হচ্ছে...');
     const id=dbgMemberNormalizeId(document.getElementById('dbgMemberRegId').value), mobile=dbgMemberNormalizeMobile(document.getElementById('dbgMemberRegMobile').value), p1=document.getElementById('dbgMemberRegPassword').value, p2=document.getElementById('dbgMemberRegPassword2').value;
     let member=(Array.isArray(db.members)?db.members:[]).find(m=>String(m.code||'').trim()===id);
     if(!member){
@@ -3464,7 +3500,8 @@ document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',asyn
 });
 
 document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e=>{
-    e.preventDefault(); dbgMemberSetError(''); dbgMemberSetStatus('লগইন হচ্ছে...');
+    e.preventDefault();
+    dbgActiveLoginRole='member'; window.dbgActiveLoginRole='member'; dbgMemberSetError(''); dbgMemberSetStatus('লগইন হচ্ছে...');
     const id=dbgMemberNormalizeId(document.getElementById('dbgMemberLoginId').value), pass=document.getElementById('dbgMemberLoginPassword').value;
     try{
         // Authenticate first. This avoids depending on an unauthenticated database read.
@@ -3833,6 +3870,7 @@ if (togglePassword) {
 }
 
 loginForm?.addEventListener('submit', async (event) => {
+    dbgActiveLoginRole = document.querySelector('.dbg-role-card.active')?.dataset.role || 'admin'; window.dbgActiveLoginRole = dbgActiveLoginRole;
     event.preventDefault();
     setAuthError('');
     setAuthStatus('Firebase যাচাই করছে...');
@@ -3884,6 +3922,12 @@ try {
 
 onAuthStateChanged(firebaseAuth, async (user) => {
     if (user) {
+        // Critical guard: createUserWithEmailAndPassword() fires this listener
+        // immediately, before Member registration has finished writing dbg_users/{uid}.
+        // While Member is the selected flow, NEVER treat a role-less/loading user as Admin.
+        if (String(window.dbgActiveLoginRole || '').toLowerCase() === 'member') {
+            return;
+        }
         const role = await loadFirebaseUserRole(user);
         // Member accounts use the same Firebase project but must never enter ERP.
         if (String(role || '').toLowerCase() === 'member') {
