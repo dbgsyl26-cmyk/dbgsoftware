@@ -3780,22 +3780,139 @@ function installMemberPortalStylesAndRoot() {
     if(root) return root;
     root=document.createElement('div'); root.id='dbgMemberPortalRoot';
     root.className='fixed inset-0 z-[99990] bg-slate-50 overflow-y-auto';
-    root.innerHTML=`<div class="min-h-screen p-4 md:p-8"><div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+    root.innerHTML=`<div class="min-h-screen p-4 md:p-8"><div class="max-w-6xl mx-auto">
+      <div class="text-center py-3 md:py-5">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-indigo-950 tracking-tight">ড্রিমস বিজনেস গ্রুপ</h1>
+        <p class="text-sm md:text-base font-semibold text-slate-600 mt-1">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>
+      </div>
+      <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
       <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 md:p-7 flex flex-wrap justify-between items-center gap-4">
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
       <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
+      </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
     document.getElementById('dbgMemberLogout')?.addEventListener('click',()=>signOut(firebaseAuth));
     return root;
 }
 function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function downloadMemberPortal(member,deposits){
-    const rows=deposits.map(d=>`<tr><td>${escapeHtml(d.date||'')}</td><td>${escapeHtml(d.month||'')}</td><td>${escapeHtml(d.scheme||'')}</td><td>${escapeHtml(d.amount||0)}</td><td>${escapeHtml(d.expenseAmount||0)}</td><td>${escapeHtml(d.dreamProsperityAmount||0)}</td><td>${escapeHtml(d.dreamDevelopmentAmount||0)}</td><td>${escapeHtml(d.method||'ক্যাশ')}</td></tr>`).join('');
-    const html=`<!doctype html><html lang="bn"><meta charset="utf-8"><title>${escapeHtml(member.name||member.code)} - Member Profile</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}h1{margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #999;padding:7px}th{background:#eee}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style><h1>Dreams Business Group</h1><h2>Member Profile</h2><div class="grid">${Object.entries({ 'সদস্য আইডি':member.code,'নাম':member.name,'ইংরেজি নাম':member.nameEn,'মোবাইল':member.phone,'পিতার নাম':member.fatherName,'জন্মতারিখ':member.dob,'NID':member.nid,'রক্তের গ্রুপ':member.bloodGroup,'পেশা':member.occupation,'বর্তমান ঠিকানা':member.presentAddress,'স্থায়ী ঠিকানা':member.permanentAddress,'নমিনী':member.nomineeName,'নমিনীর সম্পর্ক':member.nomineeRelation,'নমিনীর মোবাইল':member.nomineePhone}).map(([k,v])=>`<div><b>${escapeHtml(k)}:</b> ${escapeHtml(v||'-')}</div>`).join('')}</div><h2>Deposit Updates</h2><table><thead><tr><th>Date</th><th>Month</th><th>Scheme</th><th>Deposit</th><th>Expense</th><th>Prosperity</th><th>Development</th><th>Method</th></tr></thead><tbody>${rows||'<tr><td colspan="8">কোনো Deposit পাওয়া যায়নি</td></tr>'}</tbody></table></html>`;
-    const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${member.code||'member'}_profile.html`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+async function loadDbgPdfLibraries(){
+    if(window.html2canvas && window.jspdf?.jsPDF) return;
+    const loadScript = src => new Promise((resolve,reject)=>{
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if(existing){
+            if((src.includes('html2canvas') && window.html2canvas) || (src.includes('jspdf') && window.jspdf?.jsPDF)){ resolve(); return; }
+            existing.addEventListener('load',resolve,{once:true});
+            existing.addEventListener('error',reject,{once:true});
+            return;
+        }
+        const script=document.createElement('script');
+        script.src=src; script.async=true;
+        script.onload=resolve;
+        script.onerror=()=>reject(new Error('PDF লাইব্রেরি লোড করা যায়নি।'));
+        document.head.appendChild(script);
+    });
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+
+async function downloadMemberPortal(member,deposits){
+    const source = document.getElementById('memberPortalProfileCard');
+    if(!source){ alert('Member Profile পাওয়া যায়নি।'); return; }
+    const button = document.getElementById('dbgMemberDownload');
+    const originalText = button?.innerHTML;
+    let pdfRoot = null;
+    try{
+        if(button){
+            button.disabled=true;
+            button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> PDF তৈরি হচ্ছে...';
+            try{lucide.createIcons();}catch(_){}
+        }
+        await loadDbgPdfLibraries();
+
+        pdfRoot=document.createElement('div');
+        pdfRoot.style.position='fixed';
+        pdfRoot.style.left='-100000px';
+        pdfRoot.style.top='0';
+        pdfRoot.style.width='1100px';
+        pdfRoot.style.background='#fff';
+        pdfRoot.style.padding='28px';
+        pdfRoot.style.boxSizing='border-box';
+        pdfRoot.style.zIndex='-1';
+
+        const companyHeader=document.createElement('div');
+        companyHeader.style.textAlign='center';
+        companyHeader.style.marginBottom='20px';
+        companyHeader.style.paddingBottom='12px';
+        companyHeader.style.borderBottom='1px solid #cbd5e1';
+        companyHeader.innerHTML='<h1 style="margin:0;color:#1e1b4b;font-size:30px;font-weight:800;line-height:1.2">ড্রিমস বিজনেস গ্রুপ</h1><p style="margin:6px 0 0;color:#475569;font-size:17px;font-weight:600">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+        pdfRoot.appendChild(companyHeader);
+
+        const clone=source.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
+        clone.style.boxShadow='none';
+        clone.style.width='100%';
+        clone.style.maxWidth='none';
+        clone.style.margin='0';
+        pdfRoot.appendChild(clone);
+        document.body.appendChild(pdfRoot);
+
+        const images=Array.from(pdfRoot.querySelectorAll('img'));
+        await Promise.all(images.map(img=>new Promise(resolve=>{
+            if(img.complete) return resolve();
+            img.onload=img.onerror=()=>resolve();
+        })));
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+        const canvas=await window.html2canvas(pdfRoot,{
+            scale:2,
+            useCORS:true,
+            allowTaint:false,
+            backgroundColor:'#ffffff',
+            logging:false,
+            imageTimeout:15000,
+            windowWidth:1100
+        });
+        const {jsPDF}=window.jspdf;
+        const pdf=new jsPDF('p','mm','a4');
+        const pageWidth=pdf.internal.pageSize.getWidth();
+        const pageHeight=pdf.internal.pageSize.getHeight();
+        const margin=8;
+        const usableWidth=pageWidth-margin*2;
+        const pxPerMm=canvas.width/usableWidth;
+        const pageCanvasHeight=Math.floor((pageHeight-margin*2)*pxPerMm);
+        let offsetY=0;
+        let page=0;
+        while(offsetY<canvas.height){
+            const sliceHeight=Math.min(pageCanvasHeight,canvas.height-offsetY);
+            const slice=document.createElement('canvas');
+            slice.width=canvas.width;
+            slice.height=sliceHeight;
+            const ctx=slice.getContext('2d');
+            ctx.fillStyle='#fff';
+            ctx.fillRect(0,0,slice.width,slice.height);
+            ctx.drawImage(canvas,0,offsetY,canvas.width,sliceHeight,0,0,canvas.width,sliceHeight);
+            if(page>0) pdf.addPage();
+            const renderedHeight=sliceHeight/pxPerMm;
+            pdf.addImage(slice.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,usableWidth,renderedHeight);
+            offsetY+=sliceHeight;
+            page++;
+        }
+        pdf.save(`${member.code||'member'}_profile.pdf`);
+    }catch(error){
+        console.error('DBG Member PDF Download Error:',error);
+        alert('PDF ডাউনলোড করা যায়নি। ইন্টারনেট সংযোগ ঠিক আছে কিনা দেখে আবার চেষ্টা করুন।');
+    }finally{
+        if(pdfRoot) pdfRoot.remove();
+        if(button){
+            button.disabled=false;
+            button.innerHTML=originalText || '<i data-lucide="download" class="w-4 h-4"></i> Profile Download';
+            try{lucide.createIcons();}catch(_){}
+        }
+    }
 }
 function buildMemberPortalProfileHtml(member, memberDeposits) {
     const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
