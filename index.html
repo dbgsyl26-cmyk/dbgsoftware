@@ -3342,68 +3342,16 @@ const firebaseConfig = {
 
 
 /* ================= MEMBER AUTH + PORTAL (ADDITIVE, DOES NOT ALTER dbg_erp) ================= */
-const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-fb58a.firebaseapp.com';
-const dbgMemberPanel = document.getElementById('dbgMemberAuthPanel');
-const dbgAdminPanel = document.getElementById('dbgAdminLoginPanel');
-const dbgMemberAuthError = document.getElementById('dbgMemberAuthError');
-const dbgMemberAuthStatus = document.getElementById('dbgMemberAuthStatus');
-function dbgMemberSetError(msg=''){ if(dbgMemberAuthError){dbgMemberAuthError.textContent=msg;dbgMemberAuthError.classList.toggle('show',!!msg);} }
-function dbgMemberSetStatus(msg=''){ if(dbgMemberAuthStatus) dbgMemberAuthStatus.textContent=msg; }
-function dbgMemberEmail(id){ return String(id||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'_')+'@'+DBG_MEMBER_AUTH_DOMAIN; }
-function dbgMemberNormalizeId(id){ return String(id||'').trim(); }
-function dbgMemberNormalizeMobile(v){ return String(v||'').replace(/[^0-9+]/g,'').replace(/^0088/,'+88'); }
-
-function dbgMemberBuildPortalPayload(memberId){
-    const member = (Array.isArray(db.members)?db.members:[]).find(m=>String(m.code||'').trim()===String(memberId).trim());
-    if(!member) return null;
-    const deposits=(Array.isArray(db.deposits)?db.deposits:[]).filter(d=>String(d.memberCode||'').trim()===String(memberId).trim());
-    return { member, deposits, updatedAt: Date.now() };
-}
-async function dbgPublishMemberPortal(){
-    try{
-        if(String(window.dbgFirebaseRole||'').trim().toLowerCase()!=='admin' && String(window.dbgFirebaseRole||'').trim().toLowerCase()!=='accountant') return;
-        const members=Array.isArray(db.members)?db.members:[];
-        const deposits=Array.isArray(db.deposits)?db.deposits:[];
-        const updates={};
-        members.forEach(m=>{
-            const id=String(m.code||'').trim(); if(!id) return;
-            updates['dbg_member_portal/'+id]=JSON.parse(JSON.stringify({member:m,deposits:deposits.filter(d=>String(d.memberCode||'').trim()===id),updatedAt:Date.now()}));
-        });
-        if(Object.keys(updates).length) await update(ref(firebaseDB), updates);
-    }catch(e){ console.warn('Member portal publish skipped:',e?.message||e); }
-}
-async function dbgOpenMemberPortal(user, memberId){
-    document.body.classList.add('dbg-member-mode','dbg-logged-out');
-    const content=document.getElementById('dbgMemberPortalContent');
-    const status=document.getElementById('dbgMemberPortalStatus');
-    status.textContent='আপনার তথ্য লোড হচ্ছে...'; content.innerHTML='';
-    try{
-        const snap=await get(ref(firebaseDB,'dbg_member_portal/'+memberId));
-        if(!snap.exists()){ status.textContent='আপনার Member Portal data এখনো প্রস্তুত হয়নি। Admin/Accountant-এর sync করার পর আবার চেষ্টা করুন।'; return; }
-        const payload=snap.val()||{}; const m=payload.member||{}; const ds=Array.isArray(payload.deposits)?payload.deposits:[];
-        const total=ds.reduce((a,d)=>a+(parseFloat(d.amount)||0)+(parseFloat(d.dreamProsperityAmount)||0)+(parseFloat(d.dreamDevelopmentAmount)||0),0);
-        const esc=v=>String(v??'-').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        content.innerHTML=`<div class="grid lg:grid-cols-3 gap-5"><div class="dbg-member-portal-card p-6 lg:col-span-1"><div class="flex items-center gap-4"><img src="${esc(m.photo||'https://via.placeholder.com/120')}" class="w-24 h-24 rounded-2xl object-cover border"><div><h2 class="text-xl font-bold">${esc(m.name)}</h2><p class="text-sm text-emerald-600 font-bold">${esc(m.code)}</p></div></div><div class="mt-5 space-y-2 text-sm"><p><b>মোবাইল:</b> ${esc(m.phone)}</p><p><b>বর্তমান দেশ:</b> ${esc(m.currentCountry||'বাংলাদেশ')}</p><p><b>পেশা:</b> ${esc(m.occupation)}</p><p><b>ঠিকানা:</b> ${esc(m.presentAddress)}</p></div></div><div class="lg:col-span-2 space-y-5"><div class="grid md:grid-cols-3 gap-4"><div class="dbg-member-portal-card p-5"><p class="text-sm text-slate-500">মোট ডিপোজিট</p><p class="text-2xl font-bold text-emerald-600">৳${total.toLocaleString()}</p></div><div class="dbg-member-portal-card p-5"><p class="text-sm text-slate-500">ডিপোজিট সংখ্যা</p><p class="text-2xl font-bold text-indigo-600">${ds.length}</p></div><div class="dbg-member-portal-card p-5"><p class="text-sm text-slate-500">শেষ আপডেট</p><p class="text-sm font-bold text-slate-700 mt-2">${new Date(payload.updatedAt||Date.now()).toLocaleString('bn-BD')}</p></div></div><div class="dbg-member-portal-card p-5 overflow-x-auto"><h3 class="text-xl font-bold mb-4">আমার ডিপোজিট আপডেট</h3><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-50"><th class="p-2 border text-center">তারিখ</th><th class="p-2 border text-center">মাস</th><th class="p-2 border text-right">ডিপোজিট</th><th class="p-2 border text-right">খরচ</th><th class="p-2 border text-right">Prosperity</th><th class="p-2 border text-right">Development</th><th class="p-2 border">পদ্ধতি</th></tr></thead><tbody>${ds.length?ds.map(d=>`<tr><td class="p-2 border text-center">${esc(d.date)}</td><td class="p-2 border text-center">${esc(d.month)}</td><td class="p-2 border text-right">৳${esc(d.amount||0)}</td><td class="p-2 border text-right">৳${esc(d.expenseAmount||0)}</td><td class="p-2 border text-right">৳${esc(d.dreamProsperityAmount||0)}</td><td class="p-2 border text-right">৳${esc(d.dreamDevelopmentAmount||0)}</td><td class="p-2 border text-center">${esc(d.method||'ক্যাশ')}</td></tr>`).join(''):'<tr><td colspan="7" class="p-6 text-center text-slate-500">কোনো ডিপোজিট পাওয়া যায়নি।</td></tr>'}</tbody></table></div></div></div>`;
-        status.textContent='আপনার তথ্য সফলভাবে লোড হয়েছে।';
-    }catch(e){ status.textContent='Member data লোড করা যায়নি।'; console.error(e); }
-}
-
+const DBG_MEMBER_AUTH_DOMAIN = 'dbgsoftware-6c9b9.firebaseapp.com';
 const firebaseApp = getApps().find(a => a.name === "DBG_ERP") || initializeApp(firebaseConfig, "DBG_ERP");
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
 
-const dbgMemberFirebaseConfig = {
-    apiKey: "AIzaSyC8PJDBTj1w3ctIqj754n9P5nCGVhOH0Is",
-    authDomain: "dbgsoftware-fb58a.firebaseapp.com",
-    databaseURL: "https://dbgsoftware-fb58a-default-rtdb.firebaseio.com",
-    projectId: "dbgsoftware-fb58a",
-    storageBucket: "dbgsoftware-fb58a.firebasestorage.app",
-    messagingSenderId: "372375897652",
-    appId: "1:372375897652:web:330e3a1042e262061dac61"
-};
-const dbgMemberFirebaseApp = getApps().find(a => a.name === "DBG_MEMBER") || initializeApp(dbgMemberFirebaseConfig, "DBG_MEMBER");
-const dbgMemberFirebaseAuth = getAuth(dbgMemberFirebaseApp);
-const dbgMemberFirebaseDB = getDatabase(dbgMemberFirebaseApp);
+// Member authentication intentionally uses the SAME Firebase project as the
+// existing ERP. This avoids a second API key/project and keeps all existing
+// Admin/Accountant users and ERP data in the original project.
+const dbgMemberFirebaseAuth = firebaseAuth;
+const dbgMemberFirebaseDB = firebaseDB;
 
 window.dbgFirebaseDiagnostics = async function () {
     const user = firebaseAuth.currentUser;
@@ -3918,6 +3866,10 @@ try {
 onAuthStateChanged(firebaseAuth, async (user) => {
     if (user) {
         const role = await loadFirebaseUserRole(user);
+        // Member accounts use the same Firebase project but must never enter ERP.
+        if (String(role || '').toLowerCase() === 'member') {
+            return;
+        }
         setLoggedInUI(user, role);
 
         // 🌟 এখানে অ্যাকাউন্ট্যান্টের জন্য মেনু হাইড করার কোড শুরু
