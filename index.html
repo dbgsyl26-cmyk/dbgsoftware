@@ -98,7 +98,13 @@
             /* Member profile: personal information on the left, address + nominee on the right. */
             body.dbg-printing #dbg-print-root #profileContainer .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
             body.dbg-printing #dbg-print-root th,
-            body.dbg-printing #dbg-print-root td { border: 1px solid #888 !important; padding: 5px 7px !important; }
+            body.dbg-printing #dbg-print-root td { border: 1px solid #888 !important; padding: 5px 7px !important; font-size: 14px !important; }
+            /* Member Profile print: slightly larger readable text, without changing the screen view. */
+            body.dbg-printing #dbg-print-root #memberPortalProfileCard p { font-size: 15px !important; line-height: 1.55 !important; }
+            body.dbg-printing #dbg-print-root #memberPortalProfileCard .text-xs { font-size: 14px !important; }
+            body.dbg-printing #dbg-print-root #memberPortalProfileCard .text-sm { font-size: 15px !important; }
+            body.dbg-printing #dbg-print-root #memberPortalProfileCard h2 { font-size: 26px !important; }
+            body.dbg-printing #dbg-print-root #memberPortalProfileCard h4 { font-size: 17px !important; }
         }
 
         /* ================= 3-ROLE LOGIN / MEMBER PORTAL ================= */
@@ -3852,7 +3858,19 @@ async function downloadMemberPortal(member,deposits){
 
         const clone=source.cloneNode(true);
         clone.removeAttribute('id');
+        clone.classList.add('dbg-pdf-large-text');
         clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
+        /* PDF-only typography: slightly larger body/table text while keeping the existing layout/data intact. */
+        const pdfTypography=document.createElement('style');
+        pdfTypography.textContent=`
+            .dbg-pdf-large-text p { font-size: 15px !important; line-height: 1.55 !important; }
+            .dbg-pdf-large-text .text-xs { font-size: 14px !important; }
+            .dbg-pdf-large-text .text-sm { font-size: 15px !important; }
+            .dbg-pdf-large-text h2 { font-size: 26px !important; }
+            .dbg-pdf-large-text h4 { font-size: 17px !important; }
+            .dbg-pdf-large-text th, .dbg-pdf-large-text td { font-size: 14px !important; line-height: 1.45 !important; }
+        `;
+        pdfRoot.appendChild(pdfTypography);
         clone.style.boxShadow='none';
         clone.style.width='100%';
         clone.style.maxWidth='none';
