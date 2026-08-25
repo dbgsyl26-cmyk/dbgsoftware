@@ -4321,8 +4321,10 @@ document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',asyn
         const memberObj=ms.exists()?Object.values(ms.val())[0]:null;
         if(!memberObj) throw new Error('এই Member ID মূল ERP-তে পাওয়া যায়নি।');
         if(normalizeMobile(memberObj.phone)!==mobile) throw new Error('Registered Mobile Number মূল ERP Member record-এর সঙ্গে মিলছে না।');
-        setMemberStatus('dbgMemberRegisterStatus','Registration সফল। আপনার Member Login চালু হয়েছে।');
-        setLoggedInUI(cred.user,'Member');
+        await signOut(firebaseAuth);
+        switchMemberAuthTab('login');
+        document.getElementById('dbgMemberLoginId').value=id;
+        setMemberStatus('dbgMemberLoginStatus','Registration সফল। এখন Member Login করুন।');
     }catch(error){ console.error('DBG Member Registration Error:',error); try{ const u=firebaseAuth.currentUser; if(u){ try{ await set(ref(firebaseDB,`dbg_users/${u.uid}`),null); }catch(_){ } try{ await deleteUser(u); }catch(_){ await signOut(firebaseAuth); } } }catch(_){ } setMemberMsg('dbgMemberRegisterError',error?.message||memberErrorText(error)); setMemberStatus('dbgMemberRegisterStatus',''); }
     finally{btn.disabled=false;}
 });
