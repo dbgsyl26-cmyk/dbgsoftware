@@ -3785,7 +3785,7 @@ function installMemberPortalStylesAndRoot() {
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
-      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalContent"></div></div>
+      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
     document.getElementById('dbgMemberLogout')?.addEventListener('click',()=>signOut(firebaseAuth));
@@ -3797,6 +3797,155 @@ function downloadMemberPortal(member,deposits){
     const html=`<!doctype html><html lang="bn"><meta charset="utf-8"><title>${escapeHtml(member.name||member.code)} - Member Profile</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}h1{margin-bottom:4px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #999;padding:7px}th{background:#eee}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style><h1>Dreams Business Group</h1><h2>Member Profile</h2><div class="grid">${Object.entries({ 'সদস্য আইডি':member.code,'নাম':member.name,'ইংরেজি নাম':member.nameEn,'মোবাইল':member.phone,'পিতার নাম':member.fatherName,'জন্মতারিখ':member.dob,'NID':member.nid,'রক্তের গ্রুপ':member.bloodGroup,'পেশা':member.occupation,'বর্তমান ঠিকানা':member.presentAddress,'স্থায়ী ঠিকানা':member.permanentAddress,'নমিনী':member.nomineeName,'নমিনীর সম্পর্ক':member.nomineeRelation,'নমিনীর মোবাইল':member.nomineePhone}).map(([k,v])=>`<div><b>${escapeHtml(k)}:</b> ${escapeHtml(v||'-')}</div>`).join('')}</div><h2>Deposit Updates</h2><table><thead><tr><th>Date</th><th>Month</th><th>Scheme</th><th>Deposit</th><th>Expense</th><th>Prosperity</th><th>Development</th><th>Method</th></tr></thead><tbody>${rows||'<tr><td colspan="8">কোনো Deposit পাওয়া যায়নি</td></tr>'}</tbody></table></html>`;
     const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${member.code||'member'}_profile.html`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
+function buildMemberPortalProfileHtml(member, memberDeposits) {
+    const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+    const totalDreamProsperityPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
+    const totalDreamDevelopmentPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
+    const totalDepPaidWithSpecialDeposits = totalDepPaid + totalDreamProsperityPaid + totalDreamDevelopmentPaid;
+    const totalExpensePaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthPaid = memberDeposits
+        .filter(d => d.month === currentMonth)
+        .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+    const outstanding = Math.max(0, (Number(member.units || 0) * 500) - currentMonthPaid);
+    const photoSrc = member.photo || '';
+
+    const banglaMonthNames = {
+        '01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল',
+        '05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট',
+        '09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'
+    };
+    const toBanglaDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+    const formatDepositMonthYear = monthKey => {
+        const m = String(monthKey || '').match(/^(\d{4})-(\d{2})$/);
+        if (!m) return monthKey || '-';
+        return `${banglaMonthNames[m[2]] || m[2]} ${toBanglaDigits(m[1])}`;
+    };
+
+    let depositSummaryRows = '';
+    memberDeposits.forEach(d => {
+        depositSummaryRows += `
+            <tr>
+                <td class="p-2 border text-center">${escapeHtml(formatDateDDMMYY(d.date))}</td>
+                <td class="p-2 border font-bold text-indigo-700 text-center">${escapeHtml(formatDepositMonthYear(d.month))} ${d.scheme ? '('+escapeHtml(d.scheme)+')' : ''}</td>
+                <td class="p-2 border text-right font-bold text-emerald-600">৳${escapeHtml(d.amount || 0)}</td>
+                <td class="p-2 border text-right font-bold text-purple-700">৳${escapeHtml(d.expenseAmount || 0)}</td>
+                <td class="p-2 border text-right font-bold text-emerald-700">৳${escapeHtml(d.dreamProsperityAmount || 0)}</td>
+                <td class="p-2 border text-right font-bold text-amber-700">৳${escapeHtml(d.dreamDevelopmentAmount || 0)}</td>
+                <td class="p-2 border text-center">${escapeHtml(d.method || 'ক্যাশ')}</td>
+            </tr>`;
+    });
+
+    return `
+        <div id="memberPortalProfileCard" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+            <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
+                <div class="flex items-center gap-4">
+                    ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-600 shadow-md" alt="Member Photo">` : `<div class="w-24 h-24 rounded-xl border-2 border-indigo-600 shadow-md bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">DBG</div>`}
+                    <div>
+                        <h2 class="text-2xl font-bold text-indigo-950">${escapeHtml(member.name || '-')}</h2>
+                        <p class="text-sm font-semibold text-indigo-600 font-mono">${escapeHtml(member.nameEn || '')}</p>
+                        <p class="text-xs text-gray-500 mt-1">সদস্য আইডি: <span class="font-bold text-gray-800">${escapeHtml(member.code || '-')}</span> | অবস্থান: <span class="font-bold text-emerald-700">${escapeHtml(member.currentCountry || 'বাংলাদেশ')}</span></p>
+                        <span class="inline-block mt-2 bg-indigo-100 text-indigo-900 font-bold text-xs px-3 py-1 rounded-full">
+                            ডিপোজিট সংখ্যা: ${escapeHtml(member.units || 0)}টি (মাসিক ৳${(Number(member.units || 0) * 500).toLocaleString()})
+                        </span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <div class="bg-indigo-50 p-3 rounded-lg text-center border border-indigo-100 min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট জমা ডিপোজিট</span>
+                        <span class="text-xl font-bold text-indigo-700">৳${totalDepPaidWithSpecialDeposits.toLocaleString()}</span>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট জমা খরচ</span>
+                        <span class="text-xl font-bold text-purple-700">৳${totalExpensePaid.toLocaleString()}</span>
+                    </div>
+                    <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
+                        <span class="text-xl font-bold text-rose-700">৳${outstanding.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm border-b pb-6">
+                <div class="space-y-3">
+                    <h4 class="font-bold text-indigo-900 border-b pb-1">ব্যক্তিগত তথ্য</h4>
+                    <p><strong>পিতার নাম:</strong> ${escapeHtml(member.fatherName || '-')}</p>
+                    <p><strong>জন্ম তারিখ:</strong> ${escapeHtml(formatDateDDMMYY(member.dob))}</p>
+                    <p><strong>NID / জন্ম নিবন্ধন:</strong> ${escapeHtml(member.nid || '-')}</p>
+                    <p><strong>পাসপোর্ট নম্বর:</strong> ${escapeHtml(member.passport || 'নাই')}</p>
+                    <p><strong>মোবাইল (WhatsApp):</strong> ${escapeHtml(member.phone || '-')}</p>
+                    <p><strong>রক্তের গ্রুপ:</strong> <span class="text-rose-600 font-bold">${escapeHtml(member.bloodGroup || '-')}</span></p>
+                    <p><strong>শিক্ষাগত যোগ্যতা:</strong> ${escapeHtml(member.education || '-')}</p>
+                    <p><strong>ধর্ম / জাতীয়তা:</strong> ${escapeHtml(member.religion || 'ইসলাম')} / ${escapeHtml(member.nationality || 'বাংলাদেশী')}</p>
+                    <p><strong>পেশা:</strong> ${escapeHtml(member.occupation || '-')}</p>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="font-bold text-indigo-900 border-b pb-1">ঠিকানা ও নমিনী তথ্য</h4>
+                    <p><strong>বর্তমান ঠিকানা:</strong> ${escapeHtml(member.presentAddress || '-')}</p>
+                    <p><strong>স্থায়ী ঠিকানা:</strong> ${escapeHtml(member.permanentAddress || '-')}</p>
+                    <hr class="my-2">
+                    <p><strong>নমিনীর নাম:</strong> ${escapeHtml(member.nomineeName || '-')}</p>
+                    <p><strong>সম্পর্ক:</strong> ${escapeHtml(member.nomineeRelation || '-')}</p>
+                    <p><strong>নমিনীর মোবাইল:</strong> ${escapeHtml(member.nomineePhone || '-')}</p>
+                    ${member.nidDoc ? `<div class="pt-2"><strong>NID এর ফটোকপি:</strong><br><img src="${escapeHtml(member.nidDoc)}" class="h-28 object-cover rounded border mt-1" alt="NID"></div>` : ''}
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="font-bold text-indigo-900 border-b pb-2 flex justify-between items-center">
+                    <span><i data-lucide="wallet" class="inline w-4 h-4 mr-1"></i> সদস্য ডিপোজিট সামারি (Deposit Summary)</span>
+                    <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
+                </h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border">
+                        <thead class="bg-indigo-900 text-white font-bold">
+                            <tr>
+                                <th class="p-2 border text-center">তারিখ</th>
+                                <th class="p-2 border text-center">জমার মাস / স্কিম</th>
+                                <th class="p-2 border text-right">মূল ডিপোজিট (৳)</th>
+                                <th class="p-2 border text-right">খরচ বাবদ জমা (৳)</th>
+                                <th class="p-2 border text-right">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
+                                <th class="p-2 border text-right">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
+                                <th class="p-2 border text-center">মেথড</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${depositSummaryRows || '<tr><td colspan="7" class="p-4 text-center text-gray-400">এখনো কোনো ডিপোজিট জমা হয়নি</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+}
+
+function printMemberPortalProfile() {
+    const source = document.getElementById('memberPortalProfileCard');
+    if (!source) {
+        alert('Member Profile পাওয়া যায়নি।');
+        return;
+    }
+    const printRoot = document.createElement('div');
+    printRoot.id = 'dbg-print-root';
+    printRoot.setAttribute('data-print-title', 'DBG Member Profile');
+    const clone = source.cloneNode(true);
+    clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+    const companyHeader = document.createElement('div');
+    companyHeader.className = 'dbg-print-company-header';
+    companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+    printRoot.appendChild(companyHeader);
+    printRoot.appendChild(clone);
+    document.body.appendChild(printRoot);
+    document.body.classList.add('dbg-printing');
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('dbg-printing');
+            printRoot.remove();
+        }, 300);
+    }, 50);
+}
+
 async function loadMemberPortalData(user) {
     const root=installMemberPortalStylesAndRoot();
     const status=document.getElementById('dbgMemberPortalStatus'), content=document.getElementById('dbgMemberPortalContent'), err=document.getElementById('dbgMemberPortalError');
@@ -3811,11 +3960,9 @@ async function loadMemberPortalData(user) {
         const membersObj=ms.exists()?ms.val():{}; const depositsObj=ds.exists()?ds.val():{};
         const member=Object.values(membersObj)[0]; const deposits=Object.values(depositsObj);
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
-        const total=deposits.reduce((s,d)=>s+Number(d.amount||0),0); const expense=deposits.reduce((s,d)=>s+Number(d.expenseAmount||0),0); const prosperity=deposits.reduce((s,d)=>s+Number(d.dreamProsperityAmount||0),0); const development=deposits.reduce((s,d)=>s+Number(d.dreamDevelopmentAmount||0),0);
-        const rows=deposits.map(d=>`<tr><td class="p-2 border">${escapeHtml(d.date||'-')}</td><td class="p-2 border">${escapeHtml(d.month||'-')}</td><td class="p-2 border">${escapeHtml(d.scheme||'-')}</td><td class="p-2 border text-right">৳${Number(d.amount||0).toLocaleString('en-IN')}</td><td class="p-2 border text-right">৳${Number(d.expenseAmount||0).toLocaleString('en-IN')}</td><td class="p-2 border text-right">৳${Number(d.dreamProsperityAmount||0).toLocaleString('en-IN')}</td><td class="p-2 border text-right">৳${Number(d.dreamDevelopmentAmount||0).toLocaleString('en-IN')}</td><td class="p-2 border">${escapeHtml(d.method||'ক্যাশ')}</td></tr>`).join('');
-        content.innerHTML=`<div class="grid md:grid-cols-2 gap-4 mb-6"><div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-100"><div class="text-sm text-emerald-700">সদস্য</div><div class="text-2xl font-bold text-slate-900">${escapeHtml(member.name||'-')}</div><div class="text-sm text-slate-600 mt-1">Member ID: <b>${escapeHtml(member.code)}</b></div></div><div class="p-5 rounded-2xl bg-slate-50 border"><div class="text-sm text-slate-500">মোবাইল</div><div class="text-xl font-bold">${escapeHtml(member.phone||'-')}</div><div class="text-sm text-slate-500 mt-1">পেশা: ${escapeHtml(member.occupation||'-')}</div></div></div><div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6"><div class="p-4 rounded-xl border bg-white"><div class="text-xs text-slate-500">মোট Deposit</div><div class="text-xl font-bold text-emerald-700">৳${total.toLocaleString('en-IN')}</div></div><div class="p-4 rounded-xl border bg-white"><div class="text-xs text-slate-500">Expense</div><div class="text-xl font-bold">৳${expense.toLocaleString('en-IN')}</div></div><div class="p-4 rounded-xl border bg-white"><div class="text-xs text-slate-500">Prosperity</div><div class="text-xl font-bold">৳${prosperity.toLocaleString('en-IN')}</div></div><div class="p-4 rounded-xl border bg-white"><div class="text-xs text-slate-500">Development</div><div class="text-xl font-bold">৳${development.toLocaleString('en-IN')}</div></div></div><div class="flex flex-wrap gap-2 mb-5"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div class="overflow-x-auto border rounded-2xl"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2 border text-left">Date</th><th class="p-2 border text-left">Month</th><th class="p-2 border text-left">Scheme</th><th class="p-2 border text-right">Deposit</th><th class="p-2 border text-right">Expense</th><th class="p-2 border text-right">Prosperity</th><th class="p-2 border text-right">Development</th><th class="p-2 border text-left">Method</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="p-6 text-center text-slate-500">কোনো Deposit পাওয়া যায়নি।</td></tr>'}</tbody></table></div>`;
+        content.innerHTML=buildMemberPortalProfileHtml(member,deposits);
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
-        document.getElementById('dbgMemberPrint')?.addEventListener('click',()=>window.print());
+        document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         try{lucide.createIcons();}catch(_){ }
         status.textContent=`✅ ${memberId} এর Profile ও Deposit আপডেট লোড হয়েছে।`; err.classList.remove('show');
     } catch(e) { console.error('DBG Member Portal Error:',e); err.textContent=e?.message||String(e); err.classList.add('show'); status.textContent='Member profile load ব্যর্থ হয়েছে।'; }
