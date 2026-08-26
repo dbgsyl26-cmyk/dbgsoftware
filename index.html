@@ -138,11 +138,18 @@
         @media(max-width:560px){ .dbg-role-grid{grid-template-columns:1fr;} .dbg-auth-card{padding:20px;} }
 
         /* ================= NOTICE BOARD ================= */
-        .dbg-notice-marquee { position: relative; overflow: hidden; white-space: nowrap; }
-        .dbg-notice-marquee-track { display: inline-flex; min-width: max-content; animation: dbgNoticeScroll 26s linear infinite; will-change: transform; }
+        .dbg-notice-marquee { position: relative; overflow: hidden; white-space: nowrap; 
+            background: #059669;
+            color: #ffffff;
+            font-weight: 700;
+
+        .dbg-notice-marquee-track { display: inline-flex; min-width: max-content; animation: dbgNoticeScroll 55s linear infinite; will-change: transform; }
         .dbg-notice-marquee:hover .dbg-notice-marquee-track { animation-play-state: paused; }
         @keyframes dbgNoticeScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        .dbg-notice-item { display: inline-flex; align-items: center; gap: .65rem; padding-right: 3rem; }
+        .dbg-notice-item { display: inline-flex; align-items: center; gap: .65rem; padding-right: 3rem; 
+            color: #ffffff;
+            font-weight: 700;
+
         .dbg-notice-separator { display: inline-block; margin: 0 1.5rem; opacity: .65; }
 
         /* Firebase role-based access control */
@@ -3729,7 +3736,7 @@ function initAdminNoticeBoard(){
 }
 function buildMemberNoticeBoardHtml(notices){
     const items=sortNotices(notices); if(!items.length)return `<div class="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3></div><div class="px-4 py-3 text-sm text-slate-400">বর্তমানে কোনো নোটিশ নেই।</div></div>`;
-    const content=items.map(n=>`<span class="dbg-notice-item"><strong class="text-amber-700">${escapeHtml(n.title||'নোটিশ')}:</strong><span class="text-slate-700">${escapeHtml(n.message||'')}</span><span class="dbg-notice-separator text-amber-500">✦</span></span>`).join('');
+    const content=items.map(n=>`<span class="dbg-notice-item"><strong class="text-amber-700">${escapeHtml(n.title||'নোটিশ')}:</strong><span class="text-slate-700">${escapeHtml(n.message||'')}</span><span class="dbg-notice-separator text-white">✦</span></span>`).join('');
     return `<div class="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3><span class="ml-auto text-[11px] text-amber-700 font-semibold">Admin Notice</span></div><div class="dbg-notice-marquee px-4 py-3"><div class="dbg-notice-marquee-track">${content}${content}</div></div></div>`;
 }
 
