@@ -4218,7 +4218,7 @@ async function loadDbgQrLibrary(){
         }
         const script=document.createElement('script');
         script.src=src; script.async=true;
-        script.onload=resolve;
+        script.onload=()=>window.QRCode?resolve():reject(new Error('QR লাইব্রেরি লোড হয়নি।'));
         script.onerror=()=>reject(new Error('QR লাইব্রেরি লোড করা যায়নি।'));
         document.head.appendChild(script);
     });
@@ -4241,7 +4241,13 @@ async function renderMemberIdQr(member){
         new QRCode(box,{text:qrText,width:94,height:94,colorDark:'#064e3b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
     }catch(e){
         console.warn('DBG QR generation unavailable:',e?.message||e);
-        box.innerHTML='<span class="text-[8px] text-slate-400 font-bold text-center">QR unavailable</span>';
+        box.innerHTML='';
+        const img=document.createElement('img');
+        img.width=94; img.height=94; img.alt='Member QR Code';
+        img.style.width='94px'; img.style.height='94px'; img.style.display='block';
+        img.src='https://quickchart.io/qr?size=94&margin=1&text='+encodeURIComponent(qrText);
+        img.onerror=()=>{ box.innerHTML='<span class="text-[8px] text-slate-400 font-bold text-center">QR unavailable</span>'; };
+        box.appendChild(img);
     }
 }
 
