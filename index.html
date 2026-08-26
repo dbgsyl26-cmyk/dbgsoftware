@@ -4207,71 +4207,40 @@ async function downloadMemberPortal(member,deposits){
 }
 async function loadDbgQrLibrary(){
     if(window.QRCode) return;
-    const sources=[
-        'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-        'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
-    ];
-    let lastError=null;
-    for(const src of sources){
-        try{
-            await new Promise((resolve,reject)=>{
-                const existing=document.querySelector(`script[src="${src}"]`);
-                if(existing){
-                    if(window.QRCode) return resolve();
-                    existing.addEventListener('load',resolve,{once:true});
-                    existing.addEventListener('error',()=>reject(new Error('QR library load failed')),{once:true});
-                    return;
-                }
-                const script=document.createElement('script');
-                script.src=src; script.async=true;
-                script.onload=resolve;
-                script.onerror=()=>reject(new Error('QR library load failed'));
-                document.head.appendChild(script);
-            });
-            if(window.QRCode) return;
-        }catch(e){ lastError=e; }
-    }
-    throw lastError || new Error('QR লাইব্রেরি লোড করা যায়নি।');
+    await new Promise((resolve,reject)=>{
+        const src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        const existing=document.querySelector(`script[src="${src}"]`);
+        if(existing){
+            if(window.QRCode) return resolve();
+            existing.addEventListener('load',resolve,{once:true});
+            existing.addEventListener('error',reject,{once:true});
+            return;
+        }
+        const script=document.createElement('script');
+        script.src=src; script.async=true;
+        script.onload=resolve;
+        script.onerror=()=>reject(new Error('QR লাইব্রেরি লোড করা যায়নি।'));
+        document.head.appendChild(script);
+    });
 }
 
 async function renderMemberIdQr(member){
     const box=document.getElementById('dbgMemberIdQr');
     if(!box) return;
-    const qrText=[
-        'DREAMS BUSINESS GROUP',
-        'DIGITAL MEMBER ID VERIFICATION',
-        `Member ID: ${member.code || '-'}`,
-        `Name: ${member.name || member.nameEn || '-'}`,
-        `Blood Group: ${member.bloodGroup || '-'}`,
-        `Mobile: ${member.phone || '-'}`
-    ].join('
-');
     try{
         await loadDbgQrLibrary();
-        if(!window.QRCode) throw new Error('QR library unavailable');
         box.innerHTML='';
-        new window.QRCode(box,{text:qrText,width:94,height:94,colorDark:'#064e3b',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M});
-        return;
+        const qrText=[
+            'DREAMS BUSINESS GROUP',
+            'DIGITAL MEMBER ID VERIFICATION',
+            `Member ID: ${member.code || '-'}`,
+            `Name: ${member.name || member.nameEn || '-'}`,
+            `Blood Group: ${member.bloodGroup || '-'}`,
+            `Mobile: ${member.phone || '-'}`
+        ].join('\n');
+        new QRCode(box,{text:qrText,width:94,height:94,colorDark:'#064e3b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
     }catch(e){
-        console.warn('DBG QR library unavailable; using image fallback:',e?.message||e);
-    }
-    try{
-        box.innerHTML='';
-        const img=document.createElement('img');
-        img.alt='QR Code';
-        img.width=94; img.height=94;
-        img.style.width='94px'; img.style.height='94px';
-        img.style.display='block';
-        img.crossOrigin='anonymous';
-        const fallbackUrl='https://quickchart.io/qr?text='+encodeURIComponent(qrText)+'&size=180&margin=2&ecLevel=M';
-        await new Promise((resolve,reject)=>{
-            img.onload=resolve;
-            img.onerror=()=>reject(new Error('QR image fallback failed'));
-            img.src=fallbackUrl;
-        });
-        box.appendChild(img);
-    }catch(e){
-        console.error('DBG QR generation failed:',e?.message||e);
+        console.warn('DBG QR generation unavailable:',e?.message||e);
         box.innerHTML='<span class="text-[8px] text-slate-400 font-bold text-center">QR unavailable</span>';
     }
 }
