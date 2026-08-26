@@ -3995,24 +3995,66 @@ function installMemberPortalStylesAndRoot() {
       </div>
       <style>
         @keyframes dbgHotlineBlink {
-          0%, 100% { opacity: 1; transform: translateY(0) scale(1); box-shadow: 0 4px 18px rgba(5,150,105,.14); }
-          50% { opacity: .72; transform: translateY(-1px) scale(1.015); box-shadow: 0 6px 24px rgba(5,150,105,.30); }
+          0%, 100% { opacity: 1; transform: translateY(0) scale(1); box-shadow: 0 4px 18px rgba(5,150,105,.18); }
+          50% { opacity: .72; transform: translateY(-1px) scale(1.018); box-shadow: 0 7px 28px rgba(5,150,105,.34); }
         }
         .dbg-hotline-banner {
-          animation: dbgHotlineBlink 1.35s ease-in-out infinite;
+          animation: dbgHotlineBlink 1.15s ease-in-out infinite;
+          background: linear-gradient(135deg,#059669,#0f766e) !important;
+          color: #ffffff !important;
+          border-color: #059669 !important;
         }
-        .dbg-hotline-banner:hover {
-          animation-play-state: paused;
+        .dbg-hotline-banner:hover { animation-play-state: paused; }
+        .dbg-member-welcome-wrap { flex: 1 1 0%; min-width: 280px; }
+        .dbg-id-card-wrap { width: 100%; display: flex; justify-content: center; }
+        .dbg-id-card {
+          width: min(100%, 856px);
+          aspect-ratio: 85.6 / 53.98;
+          min-height: 0;
+          position: relative;
+          overflow: hidden;
+          border-radius: 24px;
+          background: linear-gradient(135deg,#064e3b 0%,#047857 42%,#0f766e 100%);
+          color: #fff;
+          box-shadow: 0 18px 45px rgba(4,120,87,.24);
+          border: 1px solid rgba(255,255,255,.28);
+        }
+        .dbg-id-card::before { content:""; position:absolute; width:260px; height:260px; right:-90px; top:-120px; border-radius:50%; background:rgba(255,255,255,.08); }
+        .dbg-id-card::after { content:""; position:absolute; width:180px; height:180px; left:-80px; bottom:-100px; border-radius:50%; background:rgba(255,255,255,.06); }
+        .dbg-id-card-content { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; padding:24px; box-sizing:border-box; }
+        .dbg-id-card-main { flex:1; display:flex; align-items:center; gap:24px; min-height:0; }
+        .dbg-id-card-photo { width:132px; height:156px; flex:0 0 132px; border-radius:18px; object-fit:cover; border:4px solid rgba(255,255,255,.95); background:#fff; box-shadow:0 10px 25px rgba(0,0,0,.18); }
+        .dbg-id-card-info { flex:1; min-width:0; }
+        .dbg-id-card-name { font-size:30px; line-height:1.05; font-weight:800; margin:4px 0 3px; }
+        .dbg-id-card-name-en { font-size:13px; font-weight:600; color:#d1fae5; }
+        .dbg-id-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 20px; margin-top:14px; font-size:13px; }
+        .dbg-id-card-label { color:#a7f3d0; margin-right:4px; }
+        .dbg-id-card-value { font-weight:800; }
+        .dbg-id-card-qr { width:108px; height:108px; flex:0 0 108px; border-radius:14px; background:#fff; padding:7px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.16); }
+        .dbg-id-card-qr img,.dbg-id-card-qr canvas { width:100% !important; height:100% !important; display:block; }
+        .dbg-id-card-footer { border-top:1px solid rgba(255,255,255,.22); padding-top:12px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .dbg-id-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+        .dbg-id-card-download { border:0; cursor:pointer; background:#fff; color:#047857; border-radius:11px; padding:9px 13px; font-weight:800; display:inline-flex; align-items:center; gap:7px; box-shadow:0 5px 15px rgba(0,0,0,.12); }
+        .dbg-id-card-download:disabled { opacity:.65; cursor:wait; }
+        @media(max-width:700px){
+          .dbg-id-card-content{padding:16px;}
+          .dbg-id-card-main{gap:14px;}
+          .dbg-id-card-photo{width:92px;height:112px;flex-basis:92px;border-radius:14px;}
+          .dbg-id-card-name{font-size:22px;}
+          .dbg-id-card-grid{font-size:11px;gap:6px 10px;margin-top:9px;}
+          .dbg-id-card-qr{width:78px;height:78px;flex-basis:78px;}
+          .dbg-id-card-footer{font-size:10px;}
         }
       </style>
-      <div class="flex justify-end mb-3 md:mb-4">
-        <div class="dbg-hotline-banner inline-flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-emerald-700 font-extrabold shadow-sm">
-          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+      <div class="flex items-center justify-between gap-4 mb-3 md:mb-4 flex-wrap">
+        <div id="dbgMemberWelcome" class="dbg-member-welcome-wrap"></div>
+        <div class="dbg-hotline-banner inline-flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 font-extrabold shadow-sm">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white">
             <i data-lucide="phone-call" class="w-5 h-5"></i>
           </span>
           <span class="text-xs md:text-sm leading-tight">
-            <span class="block text-emerald-600">হটলাইন</span>
-            <span class="block text-base md:text-lg tracking-wide">09638586475</span>
+            <span class="block text-emerald-50">হটলাইন</span>
+            <span class="block text-base md:text-lg tracking-wide text-white">09638586475</span>
           </span>
         </div>
       </div>
@@ -4157,6 +4199,109 @@ async function downloadMemberPortal(member,deposits){
         }
     }
 }
+async function loadDbgQrLibrary(){
+    if(window.QRCode) return;
+    await new Promise((resolve,reject)=>{
+        const src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        const existing=document.querySelector(`script[src="${src}"]`);
+        if(existing){
+            if(window.QRCode) return resolve();
+            existing.addEventListener('load',resolve,{once:true});
+            existing.addEventListener('error',reject,{once:true});
+            return;
+        }
+        const script=document.createElement('script');
+        script.src=src; script.async=true;
+        script.onload=resolve;
+        script.onerror=()=>reject(new Error('QR লাইব্রেরি লোড করা যায়নি।'));
+        document.head.appendChild(script);
+    });
+}
+
+async function renderMemberIdQr(member){
+    const box=document.getElementById('dbgMemberIdQr');
+    if(!box) return;
+    try{
+        await loadDbgQrLibrary();
+        box.innerHTML='';
+        const qrText=[
+            'DREAMS BUSINESS GROUP',
+            `Member ID: ${member.code || '-'}`,
+            `Name: ${member.name || member.nameEn || '-'}`,
+            `Blood Group: ${member.bloodGroup || '-'}`,
+            `Mobile: ${member.phone || '-'}`
+        ].join('\n');
+        new QRCode(box,{text:qrText,width:94,height:94,colorDark:'#064e3b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){
+        console.warn('DBG QR generation unavailable:',e?.message||e);
+        box.innerHTML='<span class="text-[8px] text-slate-400 font-bold text-center">QR unavailable</span>';
+    }
+}
+
+async function downloadMemberIdCardJPEG(member){
+    const source=document.getElementById('dbgDigitalIdCard');
+    if(!source){ alert('Digital Member ID Card পাওয়া যায়নি।'); return; }
+    const button=document.getElementById('dbgMemberIdDownload');
+    const originalText=button?.innerHTML;
+    let exportRoot=null;
+    try{
+        if(button){
+            button.disabled=true;
+            button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> JPEG তৈরি হচ্ছে...';
+            try{lucide.createIcons();}catch(_){}
+        }
+        await loadDbgPdfLibraries();
+        await renderMemberIdQr(member);
+
+        exportRoot=document.createElement('div');
+        exportRoot.style.position='fixed';
+        exportRoot.style.left='-100000px';
+        exportRoot.style.top='0';
+        exportRoot.style.width='1011px';
+        exportRoot.style.height='638px';
+        exportRoot.style.background='transparent';
+        exportRoot.style.padding='0';
+        exportRoot.style.margin='0';
+        exportRoot.style.boxSizing='border-box';
+        exportRoot.style.zIndex='-1';
+
+        const clone=source.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.style.width='1011px';
+        clone.style.height='638px';
+        clone.style.aspectRatio='auto';
+        clone.style.borderRadius='28px';
+        clone.style.boxSizing='border-box';
+        clone.querySelectorAll('.no-print').forEach(el=>el.remove());
+        const qr=clone.querySelector('#dbgMemberIdQr');
+        if(qr) qr.removeAttribute('id');
+        exportRoot.appendChild(clone);
+        document.body.appendChild(exportRoot);
+
+        const images=Array.from(exportRoot.querySelectorAll('img'));
+        await Promise.all(images.map(img=>new Promise(resolve=>{ if(img.complete)return resolve(); img.onload=img.onerror=()=>resolve(); })));
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+        const canvas=await window.html2canvas(exportRoot,{scale:1,useCORS:true,allowTaint:false,backgroundColor:null,logging:false,imageTimeout:15000,width:1011,height:638,windowWidth:1011,windowHeight:638});
+        const link=document.createElement('a');
+        link.download=`${member.code||'member'}_ID_Card.jpg`;
+        link.href=canvas.toDataURL('image/jpeg',0.96);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }catch(error){
+        console.error('DBG Member ID Card JPEG Error:',error);
+        alert('ID Card JPEG ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।');
+    }finally{
+        if(exportRoot) exportRoot.remove();
+        if(button){
+            button.disabled=false;
+            button.innerHTML=originalText||'<i data-lucide="download" class="w-4 h-4"></i> ID Card JPEG';
+            try{lucide.createIcons();}catch(_){}
+        }
+    }
+}
+
 function buildMemberPortalProfileHtml(member, memberDeposits) {
     const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
     const totalDreamProsperityPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
@@ -4235,130 +4380,70 @@ if (outstanding > 0) {
     });
 
     return `
-    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 mb-5 shadow-lg">
-    <div class="flex items-center gap-3">
-        <i data-lucide="hand" class="w-7 h-7"></i>
-        <div>
-            <h3 class="text-xl font-bold">
-                স্বাগতম, ${escapeHtml(member.name || member.nameEn || 'সম্মানিত সদস্য')}!
-            </h3>
-            <p class="text-emerald-50 text-sm mt-1">
-                আপনার Member Profile-এ আপনাকে স্বাগতম।
-            </p>
-        </div>
-    </div>
-</div>
-        <div id="memberPortalProfileCard" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+    <div id="memberPortalProfileCard" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
         <!-- DIGITAL MEMBER ID CARD -->
-<div class="relative overflow-hidden rounded-2xl border-2 border-emerald-600 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-600 text-white shadow-xl">
+        <div class="dbg-id-card-wrap">
+          <div id="dbgDigitalIdCard" class="dbg-id-card">
+            <div class="dbg-id-card-content">
+              <div class="flex items-start justify-between gap-4 border-b border-white/20 pb-3">
+                <div>
+                  <div class="text-[11px] tracking-[.18em] font-bold text-emerald-100">DREAMS BUSINESS GROUP</div>
+                  <div class="text-xl md:text-2xl font-extrabold mt-1">ডিজিটাল মেম্বার আইডি কার্ড</div>
+                  <div class="text-[11px] text-emerald-100 mt-1">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="rounded-full bg-white/15 border border-white/20 px-3 py-1 text-[10px] font-extrabold tracking-wide">ACTIVE MEMBER</span>
+                  <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+                    <i data-lucide="badge-check" class="w-6 h-6 text-white"></i>
+                  </div>
+                </div>
+              </div>
 
-    <!-- Card Header -->
-    <div class="px-5 py-4 flex items-center justify-between border-b border-white/20">
-        <div>
-            <div class="text-xs font-semibold tracking-wider text-emerald-100">
-                DREAMS BUSINESS GROUP
+              <div class="dbg-id-card-main py-3">
+                <div>
+                  ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="dbg-id-card-photo" alt="Member Photo">` : `<div class="dbg-id-card-photo flex items-center justify-center text-emerald-700 font-extrabold">DBG</div>`}
+                </div>
+
+                <div class="dbg-id-card-info">
+                  <div class="text-[10px] uppercase tracking-wider text-emerald-100 font-semibold">Member Name</div>
+                  <div class="dbg-id-card-name">${escapeHtml(member.name || '-')}</div>
+                  ${member.nameEn ? `<div class="dbg-id-card-name-en">${escapeHtml(member.nameEn)}</div>` : ''}
+                  <div class="dbg-id-card-grid">
+                    <div><span class="dbg-id-card-label">Member ID:</span><span class="dbg-id-card-value">${escapeHtml(member.code || '-')}</span></div>
+                    <div><span class="dbg-id-card-label">Blood Group:</span><span class="dbg-id-card-value">${escapeHtml(member.bloodGroup || '-')}</span></div>
+                    <div><span class="dbg-id-card-label">Mobile:</span><span class="dbg-id-card-value">${escapeHtml(member.phone || '-')}</span></div>
+                    <div><span class="dbg-id-card-label">Country:</span><span class="dbg-id-card-value">${escapeHtml(member.currentCountry || 'বাংলাদেশ')}</span></div>
+                  </div>
+                  <div class="dbg-id-card-actions no-print">
+                    <button id="dbgMemberIdDownload" type="button" class="dbg-id-card-download">
+                      <i data-lucide="download" class="w-4 h-4"></i> ID Card JPEG
+                    </button>
+                  </div>
+                </div>
+
+                <div class="text-center">
+                  <div id="dbgMemberIdQr" class="dbg-id-card-qr">
+                    <span class="text-[9px] text-slate-400 font-bold">QR</span>
+                  </div>
+                  <div class="text-[9px] text-emerald-100 font-bold mt-2 tracking-wide">QR VERIFICATION</div>
+                </div>
+              </div>
+
+              <div class="dbg-id-card-footer">
+                <div>
+                  <div class="text-xs font-extrabold">ড্রিমস বিজনেস গ্রুপ (DBG)</div>
+                  <div class="text-[10px] text-emerald-100 mt-0.5">Unique Digital Member Identity</div>
+                </div>
+                <div class="text-right text-[10px] text-emerald-100">
+                  <div>Member ID: <strong class="text-white">${escapeHtml(member.code || '-')}</strong></div>
+                  <div class="mt-0.5">Keep this card safe</div>
+                </div>
+              </div>
             </div>
-            <h3 class="text-xl font-extrabold mt-1">
-                ডিজিটাল মেম্বার আইডি কার্ড
-            </h3>
+          </div>
         </div>
+        ${memberAlertHtml}
 
-        <div class="w-12 h-12 rounded-xl bg-white/15 border border-white/30 flex items-center justify-center">
-            <i data-lucide="badge-check" class="w-7 h-7 text-white"></i>
-        </div>
-    </div>
-
-    <!-- Card Body -->
-    <div class="p-5">
-        <div class="flex flex-wrap items-center gap-5">
-
-            <!-- Member Photo -->
-            <div class="flex-shrink-0">
-                ${
-                    photoSrc
-                    ? `<img src="${escapeHtml(photoSrc)}"
-                        class="w-28 h-32 rounded-xl object-cover border-4 border-white shadow-lg bg-white"
-                        alt="Member Photo">`
-                    : `<div class="w-28 h-32 rounded-xl border-4 border-white shadow-lg bg-white/20 flex items-center justify-center text-white font-bold">
-                        DBG
-                    </div>`
-                }
-            </div>
-
-            <!-- Member Information -->
-            <div class="flex-1 min-w-[220px]">
-                <div class="text-xs text-emerald-100 font-semibold">
-                    MEMBER NAME
-                </div>
-
-                <div class="text-2xl font-extrabold leading-tight mt-1">
-                    ${escapeHtml(member.name || '-')}
-                </div>
-
-                ${
-                    member.nameEn
-                    ? `<div class="text-sm font-semibold text-emerald-100 mt-1">
-                        ${escapeHtml(member.nameEn)}
-                    </div>`
-                    : ''
-                }
-
-                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-
-                    <div>
-                        <span class="text-emerald-100">Member ID:</span>
-                        <span class="font-extrabold">
-                            ${escapeHtml(member.code || '-')}
-                        </span>
-                    </div>
-
-                    <div>
-                        <span class="text-emerald-100">Blood Group:</span>
-                        <span class="font-extrabold">
-                            ${escapeHtml(member.bloodGroup || '-')}
-                        </span>
-                    </div>
-
-                    <div>
-                        <span class="text-emerald-100">Mobile:</span>
-                        <span class="font-bold">
-                            ${escapeHtml(member.phone || '-')}
-                        </span>
-                    </div>
-
-                    <div>
-                        <span class="text-emerald-100">Status:</span>
-                        <span class="inline-flex items-center gap-1 font-extrabold">
-                            <span class="w-2 h-2 rounded-full bg-white"></span>
-                            Active Member
-                        </span>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Card Footer -->
-        <div class="mt-5 pt-4 border-t border-white/20 flex flex-wrap items-center justify-between gap-3">
-
-            <div>
-                <div class="text-sm font-bold">
-                    ড্রিমস বিজনেস গ্রুপ (DBG)
-                </div>
-                <div class="text-xs text-emerald-100 mt-1">
-                    ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ
-                </div>
-            </div>
-
-            <div class="px-4 py-2 rounded-lg bg-white text-emerald-700 text-xs font-extrabold shadow">
-                VERIFIED MEMBER
-            </div>
-
-        </div>
-    </div>
-</div>
-${memberAlertHtml}
             <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
                 <div class="flex items-center gap-4">
                     ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-600 shadow-md" alt="Member Photo">` : `<div class="w-24 h-24 rounded-xl border-2 border-indigo-600 shadow-md bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">DBG</div>`}
@@ -4487,6 +4572,22 @@ async function loadMemberPortalData(user) {
         const deposits=Object.values(depositsObj);
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
 
+        const welcomeBox=document.getElementById('dbgMemberWelcome');
+        if(welcomeBox){
+            welcomeBox.innerHTML=`
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl px-5 py-3 shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+                            <i data-lucide="hand" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="text-lg md:text-xl font-extrabold">স্বাগতম, ${escapeHtml(member.name || member.nameEn || 'সম্মানিত সদস্য')}!</div>
+                            <div class="text-xs md:text-sm text-emerald-50 mt-0.5">আপনার Member Profile-এ আপনাকে স্বাগতম।</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
         // Notice Board is an optional read. If Firebase Rules do not yet allow
         // Member read access to /dbg_erp/notices, the profile still loads normally.
         let notices=[];
@@ -4500,7 +4601,9 @@ async function loadMemberPortalData(user) {
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
+        document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
         try{lucide.createIcons();}catch(_){ }
+        renderMemberIdQr(member);
         status.textContent=`✅ ${memberId} এর Profile ও Deposit আপডেট লোড হয়েছে।`; err.classList.remove('show');
     } catch(e) { console.error('DBG Member Portal Error:',e); err.textContent=e?.message||String(e); err.classList.add('show'); status.textContent='Member profile load ব্যর্থ হয়েছে।'; }
 }
