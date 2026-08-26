@@ -4303,11 +4303,26 @@ async function loadMemberPortalData(user) {
         if(!memberId) throw new Error('এই Firebase account-এর সঙ্গে Member ID যুক্ত নেই।');
         const memberQ=query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(memberId));
         const depQ=query(ref(firebaseDB,'dbg_erp/deposits'),orderByChild('memberCode'),equalTo(memberId));
-        const noticesQ=ref(firebaseDB,'dbg_erp/notices');
-        const [ms,ds,ns]=await Promise.all([get(memberQ),get(depQ),get(noticesQ)]);
-        const membersObj=ms.exists()?ms.val():{}; const depositsObj=ds.exists()?ds.val():{}; const noticesObj=ns.exists()?ns.val():[];
-        const member=Object.values(membersObj)[0]; const deposits=Object.values(depositsObj); const notices=normalizeNoticeList(noticesObj);
+
+        // IMPORTANT: Member Profile/Deposit must not fail just because the optional
+        // Notice Board read is unavailable. Load the original profile data first.
+        const [ms,ds]=await Promise.all([get(memberQ),get(depQ)]);
+        const membersObj=ms.exists()?ms.val():{};
+        const depositsObj=ds.exists()?ds.val():{};
+        const member=Object.values(membersObj)[0];
+        const deposits=Object.values(depositsObj);
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
+
+        // Notice Board is an optional read. If Firebase Rules do not yet allow
+        // Member read access to /dbg_erp/notices, the profile still loads normally.
+        let notices=[];
+        try {
+            const ns=await get(ref(firebaseDB,'dbg_erp/notices'));
+            notices=normalizeNoticeList(ns.exists()?ns.val():[]);
+        } catch(noticeError) {
+            console.warn('DBG Notice Board read unavailable for Member:', noticeError?.code || noticeError?.message || noticeError);
+        }
+
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
