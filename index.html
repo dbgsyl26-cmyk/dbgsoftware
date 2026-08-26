@@ -4014,23 +4014,29 @@ function installMemberPortalStylesAndRoot() {
           position: relative;
           overflow: hidden;
           border-radius: 24px;
-          background: linear-gradient(135deg,#064e3b 0%,#047857 42%,#0f766e 100%);
+          background:
+            radial-gradient(circle at 92% 8%, rgba(255,255,255,.18) 0 3%, transparent 3.4%),
+            radial-gradient(circle at 84% 18%, rgba(255,255,255,.08) 0 15%, transparent 15.5%),
+            linear-gradient(135deg,#032f2a 0%,#064e3b 28%,#047857 60%,#0f766e 100%);
           color: #fff;
-          box-shadow: 0 18px 45px rgba(4,120,87,.24);
-          border: 1px solid rgba(255,255,255,.28);
+          box-shadow: 0 20px 55px rgba(4,120,87,.30), inset 0 0 0 1px rgba(255,255,255,.22), inset 0 0 0 2px rgba(4,120,87,.55);
+          border: 1px solid rgba(255,255,255,.34);
         }
-        .dbg-id-card::before { content:""; position:absolute; width:260px; height:260px; right:-90px; top:-120px; border-radius:50%; background:rgba(255,255,255,.08); }
-        .dbg-id-card::after { content:""; position:absolute; width:180px; height:180px; left:-80px; bottom:-100px; border-radius:50%; background:rgba(255,255,255,.06); }
+        .dbg-id-card::before { content:""; position:absolute; width:360px; height:360px; right:-155px; top:-175px; border-radius:50%; border:1px solid rgba(255,255,255,.16); box-shadow:0 0 0 22px rgba(255,255,255,.025),0 0 0 44px rgba(255,255,255,.02); background:radial-gradient(circle,rgba(255,255,255,.12) 0 2%,transparent 2.5%); }
+        .dbg-id-card::after { content:""; position:absolute; width:320px; height:150px; left:-145px; bottom:-95px; border-radius:50%; background:rgba(255,255,255,.055); transform:rotate(-12deg); box-shadow:0 0 0 18px rgba(255,255,255,.018),0 0 0 36px rgba(255,255,255,.012); }
         .dbg-id-card-content { position:relative; z-index:2; height:100%; display:flex; flex-direction:column; padding:24px; box-sizing:border-box; }
+        .dbg-id-card-content::before { content:""; position:absolute; inset:10px; border:1px solid rgba(255,255,255,.12); border-radius:18px; pointer-events:none; }
+        .dbg-id-card-accent { position:absolute; left:0; top:0; width:100%; height:5px; background:linear-gradient(90deg,#fbbf24,#fde68a,#fbbf24); box-shadow:0 2px 10px rgba(251,191,36,.28); z-index:3; }
         .dbg-id-card-main { flex:1; display:flex; align-items:center; gap:24px; min-height:0; }
-        .dbg-id-card-photo { width:132px; height:156px; flex:0 0 132px; border-radius:18px; object-fit:cover; border:4px solid rgba(255,255,255,.95); background:#fff; box-shadow:0 10px 25px rgba(0,0,0,.18); }
+        .dbg-id-card-photo { width:132px; height:156px; flex:0 0 132px; border-radius:18px; object-fit:cover; border:4px solid rgba(255,255,255,.98); background:#fff; box-shadow:0 0 0 3px rgba(251,191,36,.55), 0 12px 28px rgba(0,0,0,.24); }
         .dbg-id-card-info { flex:1; min-width:0; }
         .dbg-id-card-name { font-size:30px; line-height:1.05; font-weight:800; margin:4px 0 3px; }
         .dbg-id-card-name-en { font-size:13px; font-weight:600; color:#d1fae5; }
         .dbg-id-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 20px; margin-top:14px; font-size:13px; }
         .dbg-id-card-label { color:#a7f3d0; margin-right:4px; }
         .dbg-id-card-value { font-weight:800; }
-        .dbg-id-card-qr { width:108px; height:108px; flex:0 0 108px; border-radius:14px; background:#fff; padding:7px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.16); }
+        .dbg-id-card-qr { width:116px; height:116px; flex:0 0 116px; border-radius:16px; background:#fff; padding:8px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(251,191,36,.55), 0 10px 24px rgba(0,0,0,.22); border:2px solid rgba(255,255,255,.9); }
+        .dbg-id-card-qr::after { content:""; }
         .dbg-id-card-qr img,.dbg-id-card-qr canvas { width:100% !important; height:100% !important; display:block; }
         .dbg-id-card-footer { border-top:1px solid rgba(255,255,255,.22); padding-top:12px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
         .dbg-id-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
@@ -4042,7 +4048,7 @@ function installMemberPortalStylesAndRoot() {
           .dbg-id-card-photo{width:92px;height:112px;flex-basis:92px;border-radius:14px;}
           .dbg-id-card-name{font-size:22px;}
           .dbg-id-card-grid{font-size:11px;gap:6px 10px;margin-top:9px;}
-          .dbg-id-card-qr{width:78px;height:78px;flex-basis:78px;}
+          .dbg-id-card-qr{width:84px;height:84px;flex-basis:84px;}
           .dbg-id-card-footer{font-size:10px;}
         }
       </style>
@@ -4226,6 +4232,7 @@ async function renderMemberIdQr(member){
         box.innerHTML='';
         const qrText=[
             'DREAMS BUSINESS GROUP',
+            'DIGITAL MEMBER ID VERIFICATION',
             `Member ID: ${member.code || '-'}`,
             `Name: ${member.name || member.nameEn || '-'}`,
             `Blood Group: ${member.bloodGroup || '-'}`,
@@ -4384,6 +4391,7 @@ if (outstanding > 0) {
         <!-- DIGITAL MEMBER ID CARD -->
         <div class="dbg-id-card-wrap">
           <div id="dbgDigitalIdCard" class="dbg-id-card">
+            <div class="dbg-id-card-accent"></div>
             <div class="dbg-id-card-content">
               <div class="flex items-start justify-between gap-4 border-b border-white/20 pb-3">
                 <div>
@@ -4425,7 +4433,8 @@ if (outstanding > 0) {
                   <div id="dbgMemberIdQr" class="dbg-id-card-qr">
                     <span class="text-[9px] text-slate-400 font-bold">QR</span>
                   </div>
-                  <div class="text-[9px] text-emerald-100 font-bold mt-2 tracking-wide">QR VERIFICATION</div>
+                  <div class="text-[9px] text-emerald-50 font-extrabold mt-2 tracking-[.12em]">SCAN TO VERIFY</div>
+                  <div class="text-[8px] text-emerald-100 mt-0.5 tracking-wide">QR VERIFICATION</div>
                 </div>
               </div>
 
