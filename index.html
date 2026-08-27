@@ -230,6 +230,114 @@
         body.dbg-accountant-mode .dbg-admin-only { display: none !important; }
         body.dbg-accountant-mode #tab-deposits,
         body.dbg-accountant-mode #tab-accounts { display: flex !important; }
+
+        /* ================= FINAL MOBILE RESPONSIVE PATCH ================= */
+        @media (max-width: 767px) {
+            html, body { width:100%; min-width:0 !important; }
+            body { margin:0 !important; }
+
+            /* Login screen */
+            #dbg-auth-overlay {
+                padding:10px !important;
+                align-items:center !important;
+                justify-content:center !important;
+                box-sizing:border-box !important;
+            }
+            .dbg-auth-card {
+                width:100% !important;
+                max-width:430px !important;
+                max-height:calc(100dvh - 20px) !important;
+                margin:0 auto !important;
+                padding:15px !important;
+                border-radius:18px !important;
+                box-sizing:border-box !important;
+            }
+            .dbg-auth-card .text-2xl { font-size:1.35rem !important; }
+            .dbg-auth-card input,
+            .dbg-auth-card select,
+            .dbg-auth-card button {
+                min-height:44px;
+                box-sizing:border-box;
+            }
+            .dbg-role-grid { width:100% !important; }
+            .dbg-role-btn { min-width:0 !important; overflow:hidden !important; }
+
+            /* Admin / accountant dashboard */
+            aside.w-64 {
+                box-sizing:border-box !important;
+                padding:8px !important;
+                overflow:visible !important;
+            }
+            aside.w-64 > div:first-child > div:first-child {
+                align-items:center !important;
+                gap:10px !important;
+            }
+            aside.w-64 > div:first-child > div:first-child > div:last-child {
+                min-width:0 !important;
+            }
+            aside.w-64 > div:first-child > div:first-child h1 {
+                font-size:15px !important;
+            }
+            aside.w-64 nav {
+                width:100% !important;
+                box-sizing:border-box !important;
+                scrollbar-width:none !important;
+            }
+            aside.w-64 nav::-webkit-scrollbar { display:none; }
+            aside.w-64 nav .nav-tab {
+                min-height:42px !important;
+            }
+            aside.w-64 .border-t {
+                display:none !important;
+            }
+            .main-content {
+                box-sizing:border-box !important;
+                min-width:0 !important;
+                padding:10px !important;
+            }
+            .main-content * { max-width:100%; }
+            .main-content .overflow-x-auto {
+                max-width:100% !important;
+                -webkit-overflow-scrolling:touch;
+            }
+            .main-content table {
+                min-width:max-content;
+            }
+            .main-content .grid {
+                min-width:0 !important;
+            }
+            .main-content .flex {
+                min-width:0;
+            }
+            .main-content input,
+            .main-content select,
+            .main-content textarea {
+                min-width:0 !important;
+                box-sizing:border-box !important;
+            }
+            .main-content .flex-wrap > * {
+                min-width:0;
+            }
+
+            /* Compact cards and headers on small screens */
+            .main-content section.space-y-6 > * {
+                min-width:0;
+            }
+            .main-content .p-6 { padding:14px !important; }
+            .main-content .p-5 { padding:14px !important; }
+            .main-content .p-4 { padding:12px !important; }
+            .main-content h1 { line-height:1.25; }
+            .main-content h2 { line-height:1.3; }
+            .main-content h3 { line-height:1.35; }
+        }
+
+        @media (max-width: 420px) {
+            .dbg-auth-card { padding:12px !important; border-radius:16px !important; }
+            .dbg-role-grid { gap:5px !important; }
+            .dbg-role-btn { padding:8px 3px !important; border-radius:13px !important; }
+            .dbg-role-icon { width:32px !important; height:32px !important; margin-bottom:4px !important; }
+            .main-content { padding:8px !important; }
+        }
 </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
@@ -4119,7 +4227,282 @@ function installMemberPortalStylesAndRoot() {
           .dbg-id-card-qr{width:84px;height:84px;flex-basis:84px;}
           .dbg-id-card-footer{font-size:10px;}
         }
-      </style>
+      
+        /* ================= MEMBER PORTAL MOBILE RESPONSIVE PATCH ================= */
+        #dbgMemberPortalRoot {
+          width:100vw !important;
+          max-width:100vw !important;
+          min-width:0 !important;
+          box-sizing:border-box !important;
+          overflow-x:hidden !important;
+          -webkit-overflow-scrolling:touch;
+        }
+        #dbgMemberPortalRoot > div {
+          width:100% !important;
+          max-width:100% !important;
+          min-width:0 !important;
+          box-sizing:border-box !important;
+        }
+        #dbgMemberPortalRoot .max-w-6xl {
+          width:100% !important;
+          max-width:1152px;
+          min-width:0 !important;
+          box-sizing:border-box !important;
+        }
+        #memberPortalProfileCard {
+          width:100% !important;
+          max-width:100% !important;
+          min-width:0 !important;
+          box-sizing:border-box !important;
+        }
+        @media(max-width:700px){
+          #dbgMemberPortalRoot > div {
+            padding:8px !important;
+          }
+          #dbgMemberPortalRoot .max-w-6xl {
+            width:100% !important;
+          }
+          #dbgMemberPortalRoot > div > .text-center {
+            padding:7px 4px 10px !important;
+          }
+          #dbgMemberPortalRoot > div > .text-center h1 {
+            font-size:1.35rem !important;
+          }
+          #dbgMemberPortalRoot > div > .text-center p {
+            font-size:.8rem !important;
+          }
+
+          /* Welcome + hotline stack cleanly */
+          #dbgMemberPortalRoot .dbg-member-welcome-wrap {
+            min-width:0 !important;
+            width:100% !important;
+            flex:1 1 100% !important;
+          }
+          #dbgMemberPortalRoot .dbg-hotline-banner {
+            width:100% !important;
+            justify-content:center !important;
+            box-sizing:border-box !important;
+          }
+
+          /* Profile card */
+          #memberPortalProfileCard {
+            padding:10px !important;
+            border-radius:18px !important;
+            gap:14px !important;
+          }
+
+          /* Digital ID card: turn the desktop horizontal card into a readable mobile card */
+          #dbgDigitalIdCard {
+            width:100% !important;
+            aspect-ratio:auto !important;
+            min-height:0 !important;
+            height:auto !important;
+            border-radius:18px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content {
+            height:auto !important;
+            min-height:0 !important;
+            padding:14px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content::before {
+            inset:7px !important;
+            border-radius:14px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between {
+            align-items:flex-start !important;
+            gap:8px !important;
+            padding-bottom:9px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between > div:first-child {
+            min-width:0 !important;
+            flex:1 1 auto !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between > div:first-child > div:nth-child(2) {
+            font-size:16px !important;
+            line-height:1.25 !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between > div:last-child {
+            flex:0 0 auto !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between > div:last-child span {
+            font-size:8px !important;
+            padding:4px 7px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-content > .flex.items-start.justify-between > div:last-child .w-10 {
+            width:32px !important;
+            height:32px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-main {
+            display:grid !important;
+            grid-template-columns:78px minmax(0,1fr) !important;
+            gap:10px !important;
+            align-items:start !important;
+            padding-top:10px !important;
+            padding-bottom:10px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-main > div:nth-child(1) {
+            grid-row:1 / span 2 !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-photo {
+            width:78px !important;
+            height:96px !important;
+            flex:none !important;
+            border-width:3px !important;
+            border-radius:12px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-info {
+            min-width:0 !important;
+            width:100% !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-name {
+            font-size:18px !important;
+            line-height:1.15 !important;
+            overflow-wrap:anywhere !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-name-en {
+            font-size:10px !important;
+            overflow-wrap:anywhere !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-grid {
+            grid-template-columns:1fr !important;
+            gap:4px !important;
+            margin-top:7px !important;
+            font-size:10px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-grid > div {
+            min-width:0 !important;
+            overflow-wrap:anywhere !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-label {
+            margin-right:3px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-actions {
+            margin-top:8px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-download {
+            padding:7px 9px !important;
+            font-size:10px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-main > div:last-child {
+            grid-column:2 !important;
+            grid-row:2 !important;
+            justify-self:end !important;
+            margin-top:2px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-qr {
+            width:70px !important;
+            height:70px !important;
+            flex:none !important;
+            border-radius:11px !important;
+            padding:6px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-main > div:last-child > div:nth-child(2),
+          #dbgDigitalIdCard .dbg-id-card-main > div:last-child > div:nth-child(3) {
+            font-size:7px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-footer {
+            padding-top:8px !important;
+            gap:7px !important;
+            font-size:9px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-footer > div {
+            min-width:0 !important;
+            overflow-wrap:anywhere !important;
+          }
+
+          /* Member information header */
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start {
+            gap:10px !important;
+            padding-bottom:12px !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.items-center {
+            width:100% !important;
+            min-width:0 !important;
+            gap:10px !important;
+            align-items:center !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.items-center img,
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.items-center > div:first-child {
+            width:70px !important;
+            height:70px !important;
+            flex:0 0 70px !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.items-center > div:last-child {
+            min-width:0 !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start h2 {
+            font-size:19px !important;
+            overflow-wrap:anywhere !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start p {
+            overflow-wrap:anywhere !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.flex-wrap {
+            width:100% !important;
+            gap:7px !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.flex-wrap > div {
+            flex:1 1 30% !important;
+            min-width:90px !important;
+            padding:8px !important;
+          }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.flex-wrap .text-xl {
+            font-size:16px !important;
+          }
+
+          /* Personal/address sections */
+          #memberPortalProfileCard > .grid.grid-cols-1.md\:grid-cols-2 {
+            grid-template-columns:1fr !important;
+            gap:12px !important;
+          }
+          #memberPortalProfileCard > .grid.grid-cols-1.md\:grid-cols-2 > div {
+            min-width:0 !important;
+            overflow-wrap:anywhere !important;
+          }
+          #memberPortalProfileCard p {
+            overflow-wrap:anywhere !important;
+            word-break:break-word !important;
+            line-height:1.55 !important;
+          }
+
+          /* Deposit table remains fully usable via horizontal swipe */
+          #memberPortalProfileCard .overflow-x-auto {
+            width:100% !important;
+            max-width:100% !important;
+            overflow-x:auto !important;
+            overflow-y:hidden !important;
+            -webkit-overflow-scrolling:touch !important;
+          }
+          #memberPortalProfileCard .overflow-x-auto table {
+            width:max-content !important;
+            min-width:760px !important;
+            max-width:none !important;
+          }
+          #memberPortalProfileCard .overflow-x-auto th,
+          #memberPortalProfileCard .overflow-x-auto td {
+            white-space:nowrap !important;
+          }
+        }
+        @media(max-width:380px){
+          #dbgMemberPortalRoot > div { padding:6px !important; }
+          #memberPortalProfileCard { padding:8px !important; }
+          #dbgDigitalIdCard .dbg-id-card-content { padding:11px !important; }
+          #dbgDigitalIdCard .dbg-id-card-main {
+            grid-template-columns:70px minmax(0,1fr) !important;
+            gap:8px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-photo {
+            width:70px !important;
+            height:86px !important;
+          }
+          #dbgDigitalIdCard .dbg-id-card-name { font-size:16px !important; }
+          #dbgDigitalIdCard .dbg-id-card-grid { font-size:9px !important; }
+          #dbgDigitalIdCard .dbg-id-card-qr { width:62px !important; height:62px !important; }
+          #memberPortalProfileCard > .flex.flex-wrap.justify-between.items-start > .flex.flex-wrap > div {
+            min-width:82px !important;
+          }
+        }
+</style>
       <div class="flex items-center justify-between gap-4 mb-3 md:mb-4 flex-wrap">
         <div id="dbgMemberWelcome" class="dbg-member-welcome-wrap"></div>
         <div class="dbg-hotline-banner inline-flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 font-extrabold shadow-sm">
