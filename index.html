@@ -129,13 +129,81 @@
         .dbg-member-password-wrap input { padding-right:44px; }
         .dbg-member-eye { position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:8px;color:#64748b;cursor:pointer; }
         /* Member Register button: keep it comfortably visible within the auth card. */
-        #dbgMemberRegisterButton { margin-top:-8px; }
+        #dbgMemberRegisterButton { margin-top:0; }
         .dbg-member-recovery { display:none; margin-top:12px; padding:14px; border:1px solid #dbeafe; background:#eff6ff; border-radius:14px; }
         .dbg-member-recovery.show { display:block; }
         .dbg-member-recovery-step { display:none; }
         .dbg-member-recovery-step.active { display:block; }
         #dbgMemberRecoveryRecaptcha { min-height:78px; margin-top:8px; }
-        @media(max-width:560px){ .dbg-role-grid{grid-template-columns:1fr;} .dbg-auth-card{padding:20px;} }
+
+        /* ================= RESPONSIVE / MOBILE UI FIXES ================= */
+        /* Keep the authentication card fully reachable on short desktop/mobile screens. */
+        #dbg-auth-overlay { overflow-y:auto; align-items:flex-start; }
+        .dbg-auth-card { max-height:calc(100vh - 40px); overflow-y:auto; margin:auto; }
+
+        @media(max-width:767px){
+            /* Mobile: make the navigation a compact, horizontally scrollable header. */
+            body { display:block !important; overflow-x:hidden; }
+            aside.w-64 {
+                position:relative !important;
+                width:100% !important;
+                min-height:auto !important;
+                height:auto !important;
+                max-height:none !important;
+                padding:10px !important;
+            }
+            aside.w-64 > div:first-child > div:first-child {
+                margin-bottom:10px !important;
+                padding-bottom:10px !important;
+            }
+            aside.w-64 nav {
+                display:flex !important;
+                gap:6px !important;
+                overflow-x:auto !important;
+                overflow-y:hidden !important;
+                padding-bottom:4px !important;
+                -webkit-overflow-scrolling:touch;
+                scrollbar-width:thin;
+            }
+            aside.w-64 nav .nav-tab {
+                flex:0 0 auto !important;
+                width:auto !important;
+                white-space:nowrap !important;
+                padding:9px 12px !important;
+                font-size:13px !important;
+            }
+            aside.w-64 .border-t {
+                margin-top:8px !important;
+                padding-top:8px !important;
+            }
+            .main-content {
+                margin-left:0 !important;
+                width:100% !important;
+                padding:12px !important;
+                overflow-x:hidden !important;
+            }
+            /* Prevent form controls and cards from overflowing narrow screens. */
+            input, select, textarea, button { max-width:100%; }
+            .dbg-auth-card {
+                width:calc(100% - 24px);
+                max-height:calc(100vh - 24px);
+                padding:16px;
+                margin:12px auto;
+            }
+            .dbg-role-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+            .dbg-role-btn { padding:10px 5px; }
+            .dbg-role-icon { width:36px; height:36px; }
+            .dbg-auth-card .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top:0.7rem; }
+            #dbgMemberRegisterForm, #dbgMemberLoginForm { width:100%; }
+            .dbg-member-tabs { position:sticky; top:0; z-index:2; }
+        }
+
+        @media(max-width:380px){
+            .dbg-auth-card { padding:13px; }
+            .dbg-role-btn { font-size:12px; }
+            .dbg-role-icon { width:32px; height:32px; }
+            .dbg-auth-card h2 { font-size:1.25rem; }
+        }
 
         /* ================= NOTICE BOARD ================= */
          .dbg-notice-marquee { position: relative; overflow: hidden; white-space: nowrap;
@@ -4060,7 +4128,7 @@ function installMemberPortalStylesAndRoot() {
           </span>
           <span class="text-xs md:text-sm leading-tight">
             <span class="block text-emerald-50">হটলাইন</span>
-            <span class="block text-base md:text-lg tracking-wide text-white">09638586475</span>
+            <span class="block text-base md:text-lg tracking-wide text-white">096 3858 6475</span>
           </span>
         </div>
       </div>
