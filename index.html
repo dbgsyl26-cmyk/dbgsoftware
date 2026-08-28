@@ -32,18 +32,6 @@
     
         .dbg-print-company-header { display: none; }
 
-        /* ================= MEMBER PROFILE / DEPOSIT EXPORT FIX ================= */
-        .dbg-profile-action { border:1px solid rgba(255,255,255,.18); box-shadow:0 8px 18px rgba(15,23,42,.12); }
-        .dbg-profile-action:hover { transform:translateY(-1px); }
-        .dbg-member-alert.no-profile-export { }
-        @media print {
-          body.dbg-printing > *:not(#dbg-print-root){display:none !important;}
-          body.dbg-printing #dbg-print-root{display:block !important;width:100% !important;background:#fff !important;}
-          body.dbg-printing #dbg-print-root .dbg-deposit-history-section .dbg-print-hide{display:none !important;}
-          body.dbg-printing #dbg-print-root .dbg-member-alert{display:none !important;}
-          body.dbg-printing #dbg-print-root table{width:100% !important;border-collapse:collapse !important;}
-        }
-
         /* ================= FIREBASE AUTHENTICATION GATE ================= */
         body.dbg-logged-out > *:not(#dbg-auth-overlay) {
             visibility: hidden !important;
@@ -843,7 +831,7 @@
                     <select id="profileSelect" onchange="renderIndividualProfile()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-medium">
                     </select>
                 </div>
-                <button onclick="printReport()" class="dbg-print-hide "bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2 text-sm">
+                <button onclick="printReport()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2 text-sm">
                     <i data-lucide="printer" class="w-4 h-4"></i> প্রোফাইল প্রিন্ট করুন
                 </button>
             </div>
@@ -4729,29 +4717,6 @@ function installMemberPortalStylesAndRoot() {
             min-width:82px !important;
           }
         }
-
-        /* ================= PROFILE / DEPOSIT PRINT-DOWNLOAD SCOPE ================= */
-        @media print {
-          body.dbg-print-profile-only #dbgMemberPortalRoot > * { display:none !important; }
-          body.dbg-print-profile-only #dbgMemberPortalRoot #memberPortalProfileCard {
-            display:block !important; visibility:visible !important; position:static !important;
-            width:100% !important; max-width:none !important; margin:0 !important;
-            padding:16px !important; border:0 !important; box-shadow:none !important; background:#fff !important;
-          }
-          body.dbg-print-profile-only #memberPortalProfileCard .dbg-print-hide,
-          body.dbg-print-profile-only #memberPortalProfileCard .dbg-deposit-history-section { display:none !important; }
-          body.dbg-print-deposits-only #dbgMemberPortalRoot > * { display:none !important; }
-          body.dbg-print-deposits-only #dbgMemberPortalRoot #memberPortalProfileCard {
-            display:block !important; visibility:visible !important; position:static !important;
-            width:100% !important; max-width:none !important; margin:0 !important;
-            padding:16px !important; border:0 !important; box-shadow:none !important; background:#fff !important;
-          }
-          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-print-hide,
-          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-profile-print-area { display:none !important; }
-          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-deposit-history-section { display:block !important; }
-          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-deposit-history-section table { width:100% !important; }
-        }
-
 </style>
       <div class="flex items-center justify-between gap-4 mb-3 md:mb-4 flex-wrap">
         <div id="dbgMemberWelcome" class="dbg-member-welcome-wrap"></div>
@@ -4770,7 +4735,7 @@ function installMemberPortalStylesAndRoot() {
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
-      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="dbg-profile-action dbg-print-hide px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition"><i data-lucide="download" class="w-4 h-4"></i> প্রোফাইল ডাউনলোড</button><button id="dbgMemberPrint" class="dbg-profile-action dbg-print-hide px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-slate-800 hover:from-indigo-700 hover:to-slate-900 text-white font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition"><i data-lucide="printer" class="w-4 h-4"></i> প্রোফাইল প্রিন্ট</button></div><div id="dbgMemberPortalContent"></div></div>
+      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -4798,9 +4763,9 @@ async function loadDbgPdfLibraries(){
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 }
 
-async async function downloadMemberPortal(member,deposits){
-    const clone=buildMemberPrintClone('profile');
-    if(!clone){ alert('Member Profile পাওয়া যায়নি।'); return; }
+async function downloadMemberPortal(member,deposits){
+    const source = document.getElementById('memberPortalProfileCard');
+    if(!source){ alert('Member Profile পাওয়া যায়নি।'); return; }
     const button = document.getElementById('dbgMemberDownload');
     const originalText = button?.innerHTML;
     let pdfRoot = null;
@@ -4830,7 +4795,10 @@ async async function downloadMemberPortal(member,deposits){
         companyHeader.innerHTML='<h1 style="margin:0;color:#1e1b4b;font-size:30px;font-weight:800;line-height:1.2">ড্রিমস বিজনেস গ্রুপ</h1><p style="margin:6px 0 0;color:#475569;font-size:17px;font-weight:600">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
         pdfRoot.appendChild(companyHeader);
 
+        const clone=source.cloneNode(true);
+        clone.removeAttribute('id');
         clone.classList.add('dbg-pdf-large-text');
+        clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
         /* PDF-only typography: slightly larger body/table text while keeping the existing layout/data intact. */
         const pdfTypography=document.createElement('style');
         pdfTypography.textContent=`
@@ -5126,7 +5094,6 @@ if (outstanding > 0) {
 
     return `
     <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-<div class="dbg-profile-print-area">
         <!-- DIGITAL MEMBER ID CARD -->
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
@@ -5194,7 +5161,7 @@ if (outstanding > 0) {
             </div>
           </div>
         </div>
-        <div class="dbg-member-alert no-profile-export">${memberAlertHtml}</div>
+        ${memberAlertHtml}
 
         <!-- UNIQUE MEMBER DASHBOARD -->
         <div class="dbg-profile-section-title">
@@ -5280,17 +5247,7 @@ if (outstanding > 0) {
                 </div>
             </div>
 
-            </div>
-<div class="dbg-deposit-history-section">
-                <div class="flex flex-wrap justify-end gap-2 mb-3 dbg-print-hide">
-                  <button type="button" id="dbgMemberDepositDownload" class="dbg-print-hide px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-extrabold transition flex items-center gap-2 shadow-md hover:shadow-lg">
-                    <i data-lucide="download" class="w-4 h-4"></i> ডিপোজিট ডাউনলোড
-                  </button>
-                  <button type="button" id="dbgMemberDepositPrint" class="dbg-print-hide px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-slate-800 hover:from-indigo-700 hover:to-slate-900 text-white text-xs font-extrabold transition flex items-center gap-2 shadow-md hover:shadow-lg">
-                    <i data-lucide="printer" class="w-4 h-4"></i> ডিপোজিট প্রিন্ট
-                  </button>
-                </div>
-<div class="dbg-profile-section-title">
+            <div class="dbg-profile-section-title">
                 <span class="dbg-profile-section-icon"><i data-lucide="wallet-cards" class="w-4 h-4"></i></span>
                 <span>সঞ্চয় ও ডিপোজিট ইতিহাস</span>
             </div>
@@ -5319,66 +5276,34 @@ if (outstanding > 0) {
                 </div>
             </div>
             </div>
-        </div>
-</div>`;
+        </div>`;
 }
 
-function buildMemberPrintClone(mode){
-    const source=document.getElementById('memberPortalProfileCard');
-    if(!source) return null;
-    const clone=source.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el=>el.remove());
-    if(mode==='profile'){
-        clone.querySelectorAll('.dbg-deposit-history-section,.no-profile-export').forEach(el=>el.remove());
-        clone.querySelectorAll('.dbg-id-card-wrap').forEach(el=>{ const title=el.previousElementSibling; el.remove(); if(title?.classList?.contains('dbg-profile-section-title')) title.remove(); });
-    }else{
-        const dep=clone.querySelector('.dbg-deposit-history-section');
-        if(!dep) return null;
-        clone.innerHTML=dep.outerHTML;
-        clone.querySelectorAll('.dbg-print-hide,.no-print,button').forEach(el=>el.remove());
+function printMemberPortalProfile() {
+    const source = document.getElementById('memberPortalProfileCard');
+    if (!source) {
+        alert('Member Profile পাওয়া যায়নি।');
+        return;
     }
-    clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
-    clone.style.boxShadow='none'; clone.style.width='100%'; clone.style.maxWidth='none'; clone.style.margin='0';
-    return clone;
-}
-function createMemberPrintRoot(mode){
-    const clone=buildMemberPrintClone(mode); if(!clone) return null;
-    const root=document.createElement('div'); root.id='dbg-print-root';
-    const header=document.createElement('div'); header.className='dbg-print-company-header';
-    header.innerHTML=mode==='deposits' ? '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>সঞ্চয় ও ডিপোজিট ইতিহাস</p>' : '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
-    root.appendChild(header); root.appendChild(clone); return root;
-}
-function printMemberPortalProfile(){
-    const root=createMemberPrintRoot('profile'); if(!root){alert('Member Profile পাওয়া যায়নি।');return;}
-    document.body.appendChild(root); document.body.classList.add('dbg-printing');
-    const cleanup=()=>{document.body.classList.remove('dbg-printing');root.remove();window.removeEventListener('afterprint',cleanup)};
-    window.addEventListener('afterprint',cleanup); setTimeout(()=>window.print(),80);
-}
-function printMemberDepositHistory(){
-    const root=createMemberPrintRoot('deposits'); if(!root){alert('সঞ্চয় ও ডিপোজিট ইতিহাস পাওয়া যায়নি।');return;}
-    document.body.appendChild(root); document.body.classList.add('dbg-printing');
-    const cleanup=()=>{document.body.classList.remove('dbg-printing');root.remove();window.removeEventListener('afterprint',cleanup)};
-    window.addEventListener('afterprint',cleanup); setTimeout(()=>window.print(),80);
-}
-async function downloadMemberDepositHistory(member){
-    const clone=buildMemberPrintClone('deposits'); if(!clone){alert('সঞ্চয় ও ডিপোজিট ইতিহাস পাওয়া যায়নি।');return;}
-    const button=document.getElementById('dbgMemberDepositDownload'); const originalText=button?.innerHTML; let pdfRoot=null;
-    try{
-        if(button){button.disabled=true;button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> PDF তৈরি হচ্ছে...';try{lucide.createIcons()}catch(_) {}}
-        await loadDbgPdfLibraries();
-        pdfRoot=document.createElement('div'); Object.assign(pdfRoot.style,{position:'fixed',left:'-100000px',top:'0',width:'1100px',background:'#fff',padding:'28px',boxSizing:'border-box',zIndex:'-1'});
-        const header=document.createElement('div'); header.style.textAlign='center';header.style.marginBottom='20px';header.style.paddingBottom='12px';header.style.borderBottom='1px solid #cbd5e1';
-        header.innerHTML='<h1 style="margin:0;color:#1e1b4b;font-size:30px;font-weight:800;line-height:1.2">ড্রিমস বিজনেস গ্রুপ</h1><p style="margin:6px 0 0;color:#475569;font-size:17px;font-weight:600">সঞ্চয় ও ডিপোজিট ইতিহাস</p>';
-        pdfRoot.appendChild(header);
-        const style=document.createElement('style'); style.textContent='.dbg-pdf-deposit-export th,.dbg-pdf-deposit-export td{font-size:14px!important;line-height:1.45!important;padding:6px 7px!important;border:1px solid #888!important}.dbg-pdf-deposit-export table{width:100%!important;border-collapse:collapse!important}.dbg-pdf-deposit-export p{font-size:15px!important;line-height:1.55!important}'; pdfRoot.appendChild(style);
-        clone.classList.add('dbg-pdf-deposit-export'); pdfRoot.appendChild(clone); document.body.appendChild(pdfRoot);
-        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-        const canvas=await window.html2canvas(pdfRoot,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,imageTimeout:15000,windowWidth:1100});
-        const {jsPDF}=window.jspdf,pdf=new jsPDF('p','mm','a4'); const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),margin=8,uw=pw-margin*2,pxmm=canvas.width/uw,pageH=Math.floor((ph-margin*2)*pxmm);
-        let y=0,page=0; while(y<canvas.height){const h=Math.min(pageH,canvas.height-y),slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;const ctx=slice.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);if(page++)pdf.addPage();pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,uw,h/pxmm);y+=h;}
-        pdf.save(`${member?.code||'member'}_deposit_history.pdf`);
-    }catch(error){console.error(error);alert('ডিপোজিট PDF ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।')}finally{if(pdfRoot)pdfRoot.remove();if(button){button.disabled=false;button.innerHTML=originalText||'<i data-lucide="download" class="w-4 h-4"></i> ডিপোজিট ডাউনলোড';try{lucide.createIcons()}catch(_) {}}}
+    const printRoot = document.createElement('div');
+    printRoot.id = 'dbg-print-root';
+    printRoot.setAttribute('data-print-title', 'DBG Member Profile');
+    const clone = source.cloneNode(true);
+    clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+    const companyHeader = document.createElement('div');
+    companyHeader.className = 'dbg-print-company-header';
+    companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+    printRoot.appendChild(companyHeader);
+    printRoot.appendChild(clone);
+    document.body.appendChild(printRoot);
+    document.body.classList.add('dbg-printing');
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('dbg-printing');
+            printRoot.remove();
+        }, 300);
+    }, 50);
 }
 
 async function loadMemberPortalData(user) {
@@ -5428,8 +5353,8 @@ async function loadMemberPortalData(user) {
         }
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
-        const renderedProfile=document.getElementById('memberPortalProfileCard');
-        if(renderedProfile){ renderedProfile.__dbgMemberData=member; renderedProfile.__dbgDepositData=deposits; }
+        document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
+        document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
         try{lucide.createIcons();}catch(_){ }
         renderMemberIdQr(member);
@@ -5640,19 +5565,6 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         setLoggedOutUI();
     }
 });
-
-
-/* ================= SCOPED MEMBER PROFILE / DEPOSIT ACTIONS ================= */
-document.addEventListener('click',(e)=>{
-  const btn=e.target.closest('#dbgMemberDownload,#dbgMemberPrint,#dbgMemberDepositDownload,#dbgMemberDepositPrint');
-  if(!btn) return; e.preventDefault(); e.stopPropagation();
-  if(btn.id==='dbgMemberDownload'){
-    const card=document.getElementById('memberPortalProfileCard'); const member=card?.__dbgMemberData; const deposits=card?.__dbgDepositData||[];
-    if(member) downloadMemberPortal(member,deposits); else alert('Member Profile পাওয়া যায়নি।');
-  }else if(btn.id==='dbgMemberPrint') printMemberPortalProfile();
-  else if(btn.id==='dbgMemberDepositPrint') printMemberDepositHistory();
-  else { const card=document.getElementById('memberPortalProfileCard'); downloadMemberDepositHistory(card?.__dbgMemberData||{}); }
-},true);
 </script>
 
 </body>
