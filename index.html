@@ -2353,13 +2353,6 @@ function changeMemPage(direction) {
 
             container.innerHTML = `
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-                    <!-- Individual Profile Live Date / Time Header -->
-                    <div class="dbg-profile-topbar">
-                        <div id="dbgIndividualProfileDate" class="dbg-profile-topbar-date"></div>
-                        <div class="dbg-profile-topbar-title">ড্রিমস বিজনেস গ্রুপ</div>
-                        <div id="dbgIndividualProfileTime" class="dbg-profile-topbar-time"></div>
-                    </div>
-
                     <!-- Top Profile Header -->
                     <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
                         <div class="flex items-center gap-4">
@@ -2443,7 +2436,10 @@ function changeMemPage(direction) {
                     </div>
                 </div>
             `;
-            startIndividualProfileClock();
+            if (dbgIndividualProfileClockTimer) {
+                clearInterval(dbgIndividualProfileClockTimer);
+                dbgIndividualProfileClockTimer = null;
+            }
             lucide.createIcons();
         }
 
@@ -5088,6 +5084,36 @@ async function downloadMemberIdCardJPEG(member){
     }
 }
 
+let dbgMemberPortalClockTimer = null;
+
+function updateMemberPortalDateTime() {
+    const dateEl = document.getElementById('dbgMemberPortalDate');
+    const timeEl = document.getElementById('dbgMemberPortalTime');
+    if (!dateEl || !timeEl) return;
+
+    const now = new Date();
+    const weekdays = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+    const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+    const toBanglaDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+
+    const weekday = weekdays[now.getDay()];
+    const day = toBanglaDigits(String(now.getDate()).padStart(2, '0'));
+    const month = months[now.getMonth()];
+    const year = toBanglaDigits(now.getFullYear());
+    const hours = toBanglaDigits(String(now.getHours()).padStart(2, '0'));
+    const minutes = toBanglaDigits(String(now.getMinutes()).padStart(2, '0'));
+    const seconds = toBanglaDigits(String(now.getSeconds()).padStart(2, '0'));
+
+    dateEl.textContent = `${weekday}, ${day} ${month} ${year}`;
+    timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+function startMemberPortalClock() {
+    if (dbgMemberPortalClockTimer) clearInterval(dbgMemberPortalClockTimer);
+    updateMemberPortalDateTime();
+    dbgMemberPortalClockTimer = setInterval(updateMemberPortalDateTime, 1000);
+}
+
 function buildMemberPortalProfileHtml(member, memberDeposits) {
     const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
     const totalDreamProsperityPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
@@ -5172,6 +5198,13 @@ if (outstanding > 0) {
 
     return `
     <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+        <!-- MEMBER PORTAL LIVE DATE / TIME HEADER -->
+        <div class="dbg-profile-topbar">
+            <div id="dbgMemberPortalDate" class="dbg-profile-topbar-date"></div>
+            <div class="dbg-profile-topbar-title">ড্রিমস বিজনেস গ্রুপ</div>
+            <div id="dbgMemberPortalTime" class="dbg-profile-topbar-time"></div>
+        </div>
+
         <!-- DIGITAL MEMBER ID CARD -->
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
@@ -5431,6 +5464,7 @@ async function loadMemberPortalData(user) {
         }
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
+        startMemberPortalClock();
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
