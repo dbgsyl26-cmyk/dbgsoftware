@@ -411,7 +411,53 @@
                         <p class="text-xs text-slate-600 mb-3">Member ID ও রেজিস্টার্ড মোবাইল যাচাই করে OTP পাঠানো হবে।</p>
                         <div class="space-y-3">
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1">সদস্য আইডি</label><input id="dbgMemberRecoveryId" type="text" placeholder="যেমন: DBG-012" autocomplete="username"></div>
-                            <div><label class="block text-sm font-semibold text-slate-700 mb-1">রেজিস্টার্ড মোবাইল</label><input id="dbgMemberRecoveryMobile" type="tel" placeholder="01XXXXXXXXX" autocomplete="tel"></div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">রেজিস্টার্ড মোবাইল</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-[minmax(145px,0.42fr)_1fr] gap-2">
+                                    <select id="dbgMemberRecoveryCountry" class="w-full" aria-label="Country code">
+                                        <option value="+880" selected>🇧🇩 Bangladesh (+880)</option>
+                                        <option value="+966">🇸🇦 Saudi Arabia (+966)</option>
+                                        <option value="+971">🇦🇪 United Arab Emirates (+971)</option>
+                                        <option value="+30">🇬🇷 Greece (+30)</option>
+                                        <option value="+974">🇶🇦 Qatar (+974)</option>
+                                        <option value="+33">🇫🇷 France (+33)</option>
+                                        <option value="+44">🇬🇧 United Kingdom (+44)</option>
+                                        <option value="+1">🇺🇸 United States / Canada (+1)</option>
+                                        <option value="+61">🇦🇺 Australia (+61)</option>
+                                        <option value="+39">🇮🇹 Italy (+39)</option>
+                                        <option value="+49">🇩🇪 Germany (+49)</option>
+                                        <option value="+34">🇪🇸 Spain (+34)</option>
+                                        <option value="+31">🇳🇱 Netherlands (+31)</option>
+                                        <option value="+32">🇧🇪 Belgium (+32)</option>
+                                        <option value="+41">🇨🇭 Switzerland (+41)</option>
+                                        <option value="+43">🇦🇹 Austria (+43)</option>
+                                        <option value="+45">🇩🇰 Denmark (+45)</option>
+                                        <option value="+46">🇸🇪 Sweden (+46)</option>
+                                        <option value="+47">🇳🇴 Norway (+47)</option>
+                                        <option value="+48">🇵🇱 Poland (+48)</option>
+                                        <option value="+90">🇹🇷 Turkey (+90)</option>
+                                        <option value="+91">🇮🇳 India (+91)</option>
+                                        <option value="+92">🇵🇰 Pakistan (+92)</option>
+                                        <option value="+93">🇦🇫 Afghanistan (+93)</option>
+                                        <option value="+98">🇮🇷 Iran (+98)</option>
+                                        <option value="+60">🇲🇾 Malaysia (+60)</option>
+                                        <option value="+65">🇸🇬 Singapore (+65)</option>
+                                        <option value="+66">🇹🇭 Thailand (+66)</option>
+                                        <option value="+81">🇯🇵 Japan (+81)</option>
+                                        <option value="+82">🇰🇷 South Korea (+82)</option>
+                                        <option value="+86">🇨🇳 China (+86)</option>
+                                        <option value="+64">🇳🇿 New Zealand (+64)</option>
+                                        <option value="+27">🇿🇦 South Africa (+27)</option>
+                                        <option value="+7">🇷🇺 Russia / Kazakhstan (+7)</option>
+                                        <option value="+353">🇮🇪 Ireland (+353)</option>
+                                        <option value="+351">🇵🇹 Portugal (+351)</option>
+                                        <option value="+52">🇲🇽 Mexico (+52)</option>
+                                        <option value="+55">🇧🇷 Brazil (+55)</option>
+                                    </select>
+                                    <input id="dbgMemberRecoveryMobile" type="tel" inputmode="tel" placeholder="মোবাইল নম্বর লিখুন" autocomplete="tel">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">দেশের কোড বেছে নিয়ে স্থানীয় নম্বর লিখুন। চাইলে +দেশকোডসহ পূর্ণ নম্বরও লিখতে পারবেন।</p>
+                            </div>
                             <div id="dbgMemberRecoveryRecaptcha"></div>
                             <div id="dbgMemberRecoveryError" class="dbg-member-error"></div>
                             <div id="dbgMemberRecoveryStatus" class="dbg-member-status"></div>
@@ -4154,10 +4200,37 @@ function ensureMemberRecoveryRecaptcha(){
     return dbgMemberRecoveryRecaptcha;
 }
 
-function memberRecoveryPhone(v){
-    const n=normalizeMobile(v);
-    if(!/^01\d{9}$/.test(n)) throw new Error('সঠিক Registered Mobile Number দিন।');
-    return `+88${n}`;
+function memberRecoveryE164(v, countryCode){
+    let raw=String(v || '').trim();
+    const digits=raw.replace(/\D/g,'');
+    if(!digits) throw new Error('সঠিক Registered Mobile Number দিন।');
+    if(/^\s*\+/.test(raw)) return `+${digits}`;
+    if(/^00\d+/.test(raw)) return `+${digits.slice(2)}`;
+    const cc=String(countryCode || '+880').replace(/\D/g,'');
+    let local=digits;
+    if(local.startsWith(cc)) return `+${local}`;
+    if(local.startsWith('0')) local=local.slice(1);
+    return `+${cc}${local}`;
+}
+function recoveryPhoneVariants(v, countryCode){
+    const raw=String(v || '').trim();
+    const digits=raw.replace(/\D/g,'');
+    const cc=String(countryCode || '+880').replace(/\D/g,'');
+    const variants=new Set();
+    try{ variants.add(memberRecoveryE164(raw,countryCode)); }catch(_){ }
+    if(digits){
+        if(digits.startsWith('880')) variants.add(`+${digits}`);
+        if(digits.startsWith(cc)) variants.add(`+${digits}`);
+        if(digits.startsWith('0')) variants.add(`+${cc}${digits.slice(1)}`);
+        else variants.add(`+${cc}${digits}`);
+    }
+    return [...variants];
+}
+function memberRecoveryPhone(v, countryCode){
+    const phone=memberRecoveryE164(v,countryCode);
+    const totalDigits=phone.replace(/\D/g,'');
+    if(totalDigits.length<8 || totalDigits.length>15) throw new Error('সঠিক Registered Mobile Number দিন।');
+    return phone;
 }
 function installMemberPortalStylesAndRoot() {
     let root=document.getElementById('dbgMemberPortalRoot');
@@ -4228,6 +4301,27 @@ function installMemberPortalStylesAndRoot() {
           .dbg-id-card-footer{font-size:10px;}
         }
       
+
+        /* ================= UNIQUE MEMBER PROFILE DASHBOARD ================= */
+        .dbg-member-unique-dashboard{display:flex;flex-direction:column;gap:14px;margin-bottom:4px}
+        .dbg-member-hero-strip{display:flex;align-items:center;gap:14px;padding:15px 17px;border-radius:18px;background:linear-gradient(135deg,#ecfdf5,#f0fdfa 48%,#eef2ff);border:1px solid #d1fae5;box-shadow:0 10px 30px rgba(15,23,42,.07)}
+        .dbg-member-hero-avatar{width:58px;height:58px;flex:0 0 58px;border-radius:17px;overflow:hidden;background:#064e3b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;border:3px solid #fff;box-shadow:0 4px 14px rgba(4,120,87,.18)}
+        .dbg-member-hero-avatar img{width:100%;height:100%;object-fit:cover}
+        .dbg-member-hero-copy{min-width:0;flex:1}
+        .dbg-member-hero-kicker{font-size:9px;letter-spacing:.16em;font-weight:900;color:#047857}
+        .dbg-member-hero-name{font-size:20px;line-height:1.2;font-weight:900;color:#0f172a;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dbg-member-hero-meta{font-size:11px;color:#64748b;margin-top:4px}.dbg-member-hero-meta span{margin:0 5px;color:#94a3b8}
+        .dbg-member-hero-badge{flex:0 0 auto;text-align:center;border-radius:13px;padding:8px 11px;background:#047857;color:#fff;font-size:10px;font-weight:900;line-height:1.2;box-shadow:0 5px 14px rgba(4,120,87,.18)}
+        .dbg-member-hero-badge small{display:block;margin-top:4px;font-size:9px;color:#d1fae5;font-weight:700}
+        .dbg-member-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+        .dbg-member-stat-card{min-width:0;display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:15px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 7px 20px rgba(15,23,42,.05)}
+        .dbg-member-stat-icon{width:36px;height:36px;flex:0 0 36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px}.dbg-member-stat-card span{display:block;font-size:10px;color:#64748b;font-weight:700}.dbg-member-stat-card strong{display:block;font-size:16px;line-height:1.2;margin-top:3px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .stat-green .dbg-member-stat-icon{background:#dcfce7;color:#047857}.stat-indigo .dbg-member-stat-icon{background:#e0e7ff;color:#4338ca}.stat-amber .dbg-member-stat-icon{background:#fef3c7;color:#b45309}.stat-red .dbg-member-stat-icon{background:#fee2e2;color:#dc2626}.stat-teal .dbg-member-stat-icon{background:#ccfbf1;color:#0f766e}
+        .dbg-member-progress-card{padding:13px 15px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.dbg-member-progress-head{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#334155}.dbg-member-progress-head strong{color:#047857}.dbg-member-progress-track{height:9px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}.dbg-member-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#059669,#14b8a6,#f59e0b);transition:width .5s ease}.dbg-member-progress-foot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:9px;color:#94a3b8}
+        @media(max-width:900px){.dbg-member-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:520px){.dbg-member-hero-strip{padding:12px;gap:10px}.dbg-member-hero-avatar{width:50px;height:50px;flex-basis:50px;border-radius:14px}.dbg-member-hero-name{font-size:17px}.dbg-member-hero-badge{padding:7px 8px;font-size:9px}.dbg-member-hero-badge small{font-size:8px}.dbg-member-stat-card{padding:11px 9px;gap:8px}.dbg-member-stat-icon{width:32px;height:32px;flex-basis:32px;font-size:15px}.dbg-member-stat-card span{font-size:9px}.dbg-member-stat-card strong{font-size:14px}.dbg-member-progress-card{padding:11px 12px}}
+        @media(max-width:380px){.dbg-member-hero-meta{font-size:9px}.dbg-member-hero-badge{display:none}.dbg-member-stat-grid{gap:7px}.dbg-member-stat-card strong{font-size:13px}}
+
         /* ================= MEMBER PORTAL MOBILE RESPONSIVE PATCH ================= */
         #dbgMemberPortalRoot {
           width:100vw !important;
@@ -4807,6 +4901,11 @@ function buildMemberPortalProfileHtml(member, memberDeposits) {
         .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
     const outstanding = Math.max(0, (Number(member.units || 0) * 500) - currentMonthPaid);
     const photoSrc = member.photo || ''; const memberWelcomeName = member.name || member.nameEn || 'সম্মানিত সদস্য';
+    const monthlyTarget = Number(member.units || 0) * 500;
+    const monthlyProgress = monthlyTarget > 0 ? Math.min(100, Math.round((currentMonthPaid / monthlyTarget) * 100)) : 0;
+    const memberSinceRaw = member.joinDate || member.registrationDate || member.createdAt || member.date || '';
+    const memberSince = memberSinceRaw ? formatDateDDMMYY(memberSinceRaw) : 'সদস্য';
+    const achievementLabel = memberDeposits.length >= 12 ? '🏆 দীর্ঘমেয়াদি সদস্য' : memberDeposits.length >= 6 ? '⭐ নিয়মিত সঞ্চয়কারী' : '🌱 নতুন সঞ্চয়কারী';
     let memberAlertHtml = '';
 
 if (outstanding > 0) {
@@ -4938,6 +5037,32 @@ if (outstanding > 0) {
           </div>
         </div>
         ${memberAlertHtml}
+
+        <!-- UNIQUE MEMBER DASHBOARD -->
+        <div class="dbg-member-unique-dashboard">
+            <div class="dbg-member-hero-strip">
+                <div class="dbg-member-hero-avatar">${photoSrc ? `<img src="${escapeHtml(photoSrc)}" alt="Member Photo">` : `<span>DBG</span>`}</div>
+                <div class="dbg-member-hero-copy">
+                    <div class="dbg-member-hero-kicker">DIGITAL MEMBER PROFILE</div>
+                    <div class="dbg-member-hero-name">${escapeHtml(memberWelcomeName)}</div>
+                    <div class="dbg-member-hero-meta">Member ID: <strong>${escapeHtml(member.code || '-')}</strong> <span>•</span> ${escapeHtml(memberSince)}</div>
+                </div>
+                <div class="dbg-member-hero-badge">✓ ACTIVE<br><small>${escapeHtml(achievementLabel)}</small></div>
+            </div>
+
+            <div class="dbg-member-stat-grid">
+                <div class="dbg-member-stat-card stat-green"><div class="dbg-member-stat-icon">৳</div><div><span>মোট জমা</span><strong>৳${totalDepPaidWithSpecialDeposits.toLocaleString()}</strong></div></div>
+                <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
+                <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
+                <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'এই মাসের বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
+            </div>
+
+            <div class="dbg-member-progress-card">
+                <div class="dbg-member-progress-head"><span>📈 এই মাসের সঞ্চয় অগ্রগতি</span><strong>${monthlyProgress}%</strong></div>
+                <div class="dbg-member-progress-track"><div class="dbg-member-progress-fill" style="width:${monthlyProgress}%"></div></div>
+                <div class="dbg-member-progress-foot"><span>লক্ষ্য: ৳${monthlyTarget.toLocaleString()}</span><span>জমা: ৳${currentMonthPaid.toLocaleString()}</span></div>
+            </div>
+        </div>
 
             <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
                 <div class="flex items-center gap-4">
@@ -5184,16 +5309,18 @@ document.getElementById('dbgMemberSendOtp')?.addEventListener('click',async()=>{
     setMemberMsg('dbgMemberRecoveryError',''); setMemberStatus('dbgMemberRecoveryStatus','Member তথ্য যাচাই হচ্ছে...'); btn.disabled=true;
     try{
         const id=document.getElementById('dbgMemberRecoveryId').value.trim().toUpperCase();
-        const mobile=normalizeMobile(document.getElementById('dbgMemberRecoveryMobile').value);
+        const mobileInput=document.getElementById('dbgMemberRecoveryMobile').value;
+        const countryCode=document.getElementById('dbgMemberRecoveryCountry')?.value || '+880';
         if(!/^DBG-[A-Z0-9_-]+$/i.test(id)) throw new Error('সঠিক Member ID দিন। যেমন DBG-012');
-        if(!/^01\d{9}$/.test(mobile)) throw new Error('সঠিক Registered Mobile Number দিন।');
+        const recoveryPhone=memberRecoveryPhone(mobileInput,countryCode);
         const ms=await get(query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(id)));
         const memberObj=ms.exists()?Object.values(ms.val())[0]:null;
         if(!memberObj) throw new Error('এই Member ID মূল ERP-তে পাওয়া যায়নি।');
-        if(normalizeMobile(memberObj.phone)!==mobile) throw new Error('Registered Mobile Number মূল ERP Member record-এর সঙ্গে মিলছে না।');
+        const memberPhoneVariants=recoveryPhoneVariants(memberObj.phone,countryCode);
+        if(!memberPhoneVariants.includes(recoveryPhone)) throw new Error('Registered Mobile Number মূল ERP Member record-এর সঙ্গে মিলছে না। দেশ/কান্ট্রি কোড ও নম্বরটি ঠিক আছে কি না দেখুন।');
         dbgOtpRecoveryInProgress=true;
         const verifier=ensureMemberRecoveryRecaptcha();
-        dbgMemberRecoveryConfirmation=await signInWithPhoneNumber(firebaseAuth,memberRecoveryPhone(mobile),verifier);
+        dbgMemberRecoveryConfirmation=await signInWithPhoneNumber(firebaseAuth,recoveryPhone,verifier);
         document.getElementById('dbgMemberRecoveryStep1')?.classList.remove('active');
         document.getElementById('dbgMemberRecoveryStep2')?.classList.add('active');
         setMemberStatus('dbgMemberRecoveryStatus2','OTP পাঠানো হয়েছে।');
