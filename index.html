@@ -32,6 +32,45 @@
     
         .dbg-print-company-header { display: none; }
 
+        /* ================= INDIVIDUAL MEMBER PROFILE LIVE DATE/TIME ================= */
+        .dbg-profile-topbar {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 18px 0;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .dbg-profile-topbar-date,
+        .dbg-profile-topbar-time {
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            white-space: nowrap;
+        }
+        .dbg-profile-topbar-date { text-align: left; }
+        .dbg-profile-topbar-time { text-align: right; }
+        .dbg-profile-topbar-title {
+            text-align: center;
+            font-size: 19px;
+            font-weight: 800;
+            color: #312e81;
+            white-space: nowrap;
+        }
+        @media(max-width:767px){
+            .dbg-profile-topbar {
+                grid-template-columns: 1fr;
+                gap: 4px;
+                text-align: center;
+            }
+            .dbg-profile-topbar-date,
+            .dbg-profile-topbar-time { text-align: center; }
+            .dbg-profile-topbar-title { order: -1; font-size: 17px; }
+        }
+
         /* ================= FIREBASE AUTHENTICATION GATE ================= */
         body.dbg-logged-out > *:not(#dbg-auth-overlay) {
             visibility: hidden !important;
@@ -2229,6 +2268,37 @@ function changeMemPage(direction) {
         }
 
         // FULL MEMBER PROFILE WITH DEPOSIT SUMMARY
+        let dbgIndividualProfileClockTimer = null;
+
+        function updateIndividualProfileDateTime() {
+            const dateEl = document.getElementById('dbgIndividualProfileDate');
+            const timeEl = document.getElementById('dbgIndividualProfileTime');
+            if (!dateEl || !timeEl) return;
+
+            const now = new Date();
+            const weekdays = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+            const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+            const toBanglaDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+
+            const weekday = weekdays[now.getDay()];
+            const day = toBanglaDigits(String(now.getDate()).padStart(2, '0'));
+            const month = months[now.getMonth()];
+            const year = toBanglaDigits(now.getFullYear());
+
+            const hours = toBanglaDigits(String(now.getHours()).padStart(2, '0'));
+            const minutes = toBanglaDigits(String(now.getMinutes()).padStart(2, '0'));
+            const seconds = toBanglaDigits(String(now.getSeconds()).padStart(2, '0'));
+
+            dateEl.textContent = `${weekday}, ${day} ${month} ${year}`;
+            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function startIndividualProfileClock() {
+            if (dbgIndividualProfileClockTimer) clearInterval(dbgIndividualProfileClockTimer);
+            updateIndividualProfileDateTime();
+            dbgIndividualProfileClockTimer = setInterval(updateIndividualProfileDateTime, 1000);
+        }
+
         function renderIndividualProfile() {
             const code = document.getElementById('profileSelect').value;
             const container = document.getElementById('profileContainer');
@@ -2283,13 +2353,20 @@ function changeMemPage(direction) {
 
             container.innerHTML = `
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                    <!-- Individual Profile Live Date / Time Header -->
+                    <div class="dbg-profile-topbar">
+                        <div id="dbgIndividualProfileDate" class="dbg-profile-topbar-date"></div>
+                        <div class="dbg-profile-topbar-title">ড্রিমস বিজনেস গ্রুপ</div>
+                        <div id="dbgIndividualProfileTime" class="dbg-profile-topbar-time"></div>
+                    </div>
+
                     <!-- Top Profile Header -->
                     <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
                         <div class="flex items-center gap-4">
                             <img src="${photoSrc}" class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-600 shadow-md">
                             <div>
                                 <h2 class="text-2xl font-bold text-indigo-950">${member.name}</h2>
-                                <p class="text-sm font-semibold text-indigo-600 font-mono">${member.nameEn || ''}</p>
+                                <p class="text-sm font-semibold text-indigo-600 font-mono">${String(member.nameEn || '').toUpperCase()}</p>
                                 <p class="text-xs text-gray-500 mt-1">সদস্য আইডি: <span class="font-bold text-gray-800">${member.code}</span> | অবস্থান: <span class="font-bold text-emerald-700">${member.currentCountry || 'বাংলাদেশ'}</span></p>
                                 <span class="inline-block mt-2 bg-indigo-100 text-indigo-900 font-bold text-xs px-3 py-1 rounded-full">
                                     ডিপোজিট সংখ্যা: ${member.units}টি (মাসিক ৳${member.units * 500})
@@ -2366,6 +2443,7 @@ function changeMemPage(direction) {
                     </div>
                 </div>
             `;
+            startIndividualProfileClock();
             lucide.createIcons();
         }
 
