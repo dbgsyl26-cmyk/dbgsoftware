@@ -4724,7 +4724,10 @@ function installMemberPortalStylesAndRoot() {
         /* ================= UNIQUE MEMBER LOGIN DATE/TIME HEADER ================= */
         .dbg-member-login-topbar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
         .dbg-member-login-date,.dbg-member-login-time { font-size:13px; line-height:1.35; font-weight:800; color:#475569; white-space:nowrap; }
-        .dbg-member-login-date { text-align:left; } .dbg-member-login-time { text-align:right; }
+        .dbg-member-login-date { text-align:left; } .dbg-member-login-time {
+    text-align: right;
+    justify-self: end;
+}
         .dbg-member-login-title { text-align:center; font-size:18px; line-height:1.35; font-weight:900; color:#312e81; white-space:nowrap; letter-spacing:.01em; }
         @media(max-width:767px){ .dbg-member-login-topbar { grid-template-columns:1fr; gap:3px; padding:8px 10px; } .dbg-member-login-date,.dbg-member-login-time { text-align:center; } .dbg-member-login-title { order:-1; font-size:17px; } }
 </style>
