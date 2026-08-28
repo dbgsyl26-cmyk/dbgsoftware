@@ -831,7 +831,7 @@
                     <select id="profileSelect" onchange="renderIndividualProfile()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-medium">
                     </select>
                 </div>
-                <button onclick="printReport()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2 text-sm">
+                <button onclick="printReport()" class="dbg-print-hide "bg-slate-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-2 text-sm">
                     <i data-lucide="printer" class="w-4 h-4"></i> প্রোফাইল প্রিন্ট করুন
                 </button>
             </div>
@@ -4717,6 +4717,29 @@ function installMemberPortalStylesAndRoot() {
             min-width:82px !important;
           }
         }
+
+        /* ================= PROFILE / DEPOSIT PRINT-DOWNLOAD SCOPE ================= */
+        @media print {
+          body.dbg-print-profile-only #dbgMemberPortalRoot > * { display:none !important; }
+          body.dbg-print-profile-only #dbgMemberPortalRoot #memberPortalProfileCard {
+            display:block !important; visibility:visible !important; position:static !important;
+            width:100% !important; max-width:none !important; margin:0 !important;
+            padding:16px !important; border:0 !important; box-shadow:none !important; background:#fff !important;
+          }
+          body.dbg-print-profile-only #memberPortalProfileCard .dbg-print-hide,
+          body.dbg-print-profile-only #memberPortalProfileCard .dbg-deposit-history-section { display:none !important; }
+          body.dbg-print-deposits-only #dbgMemberPortalRoot > * { display:none !important; }
+          body.dbg-print-deposits-only #dbgMemberPortalRoot #memberPortalProfileCard {
+            display:block !important; visibility:visible !important; position:static !important;
+            width:100% !important; max-width:none !important; margin:0 !important;
+            padding:16px !important; border:0 !important; box-shadow:none !important; background:#fff !important;
+          }
+          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-print-hide,
+          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-profile-print-area { display:none !important; }
+          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-deposit-history-section { display:block !important; }
+          body.dbg-print-deposits-only #memberPortalProfileCard .dbg-deposit-history-section table { width:100% !important; }
+        }
+
 </style>
       <div class="flex items-center justify-between gap-4 mb-3 md:mb-4 flex-wrap">
         <div id="dbgMemberWelcome" class="dbg-member-welcome-wrap"></div>
@@ -4735,7 +4758,7 @@ function installMemberPortalStylesAndRoot() {
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
-      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
+      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="dbg-print-hide "px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -5094,6 +5117,7 @@ if (outstanding > 0) {
 
     return `
     <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+<div class="dbg-profile-print-area">
         <!-- DIGITAL MEMBER ID CARD -->
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
@@ -5247,7 +5271,17 @@ if (outstanding > 0) {
                 </div>
             </div>
 
-            <div class="dbg-profile-section-title">
+            </div>
+<div class="dbg-deposit-history-section">
+                <div class="flex flex-wrap justify-end gap-2 mb-3 dbg-print-hide">
+                  <button type="button" id="dbgMemberDepositDownload" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> ডিপোজিট ডাউনলোড
+                  </button>
+                  <button type="button" id="dbgMemberDepositPrint" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> ডিপোজিট প্রিন্ট
+                  </button>
+                </div>
+<div class="dbg-profile-section-title">
                 <span class="dbg-profile-section-icon"><i data-lucide="wallet-cards" class="w-4 h-4"></i></span>
                 <span>সঞ্চয় ও ডিপোজিট ইতিহাস</span>
             </div>
@@ -5276,7 +5310,8 @@ if (outstanding > 0) {
                 </div>
             </div>
             </div>
-        </div>`;
+        </div>
+</div>`;
 }
 
 function printMemberPortalProfile() {
@@ -5565,6 +5600,27 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         setLoggedOutUI();
     }
 });
+
+function dbgPrintScopedMemberProfile(mode){
+  const cls = mode === 'deposits' ? 'dbg-print-deposits-only' : 'dbg-print-profile-only';
+  document.body.classList.add(cls);
+  const cleanup = () => {
+    document.body.classList.remove('dbg-print-profile-only','dbg-print-deposits-only');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(() => window.print(), 80);
+}
+function dbgDownloadScopedMemberArea(mode){
+  dbgPrintScopedMemberProfile(mode);
+}
+
+document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopImmediatePropagation(); dbgPrintScopedMemberProfile('deposits');
+}, true);
+document.getElementById('dbgMemberDepositDownload')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopImmediatePropagation(); dbgDownloadScopedMemberArea('deposits');
+}, true);
 </script>
 
 </body>
