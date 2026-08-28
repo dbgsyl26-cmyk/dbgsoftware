@@ -32,45 +32,6 @@
     
         .dbg-print-company-header { display: none; }
 
-        /* ================= INDIVIDUAL MEMBER PROFILE LIVE DATE/TIME ================= */
-        .dbg-profile-topbar {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            gap: 12px;
-            margin: 0 0 18px 0;
-            padding: 10px 12px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-            border-radius: 12px;
-        }
-        .dbg-profile-topbar-date,
-        .dbg-profile-topbar-time {
-            font-size: 13px;
-            font-weight: 700;
-            color: #475569;
-            white-space: nowrap;
-        }
-        .dbg-profile-topbar-date { text-align: left; }
-        .dbg-profile-topbar-time { text-align: right; }
-        .dbg-profile-topbar-title {
-            text-align: center;
-            font-size: 19px;
-            font-weight: 800;
-            color: #312e81;
-            white-space: nowrap;
-        }
-        @media(max-width:767px){
-            .dbg-profile-topbar {
-                grid-template-columns: 1fr;
-                gap: 4px;
-                text-align: center;
-            }
-            .dbg-profile-topbar-date,
-            .dbg-profile-topbar-time { text-align: center; }
-            .dbg-profile-topbar-title { order: -1; font-size: 17px; }
-        }
-
         /* ================= FIREBASE AUTHENTICATION GATE ================= */
         body.dbg-logged-out > *:not(#dbg-auth-overlay) {
             visibility: hidden !important;
@@ -2266,39 +2227,7 @@ function changeMemPage(direction) {
 
             if (currentProf) profSelect.value = currentProf;
         }
-
         // FULL MEMBER PROFILE WITH DEPOSIT SUMMARY
-        let dbgIndividualProfileClockTimer = null;
-
-        function updateIndividualProfileDateTime() {
-            const dateEl = document.getElementById('dbgIndividualProfileDate');
-            const timeEl = document.getElementById('dbgIndividualProfileTime');
-            if (!dateEl || !timeEl) return;
-
-            const now = new Date();
-            const weekdays = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
-            const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
-            const toBanglaDigits = value => String(value).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
-
-            const weekday = weekdays[now.getDay()];
-            const day = toBanglaDigits(String(now.getDate()).padStart(2, '0'));
-            const month = months[now.getMonth()];
-            const year = toBanglaDigits(now.getFullYear());
-
-            const hours = toBanglaDigits(String(now.getHours()).padStart(2, '0'));
-            const minutes = toBanglaDigits(String(now.getMinutes()).padStart(2, '0'));
-            const seconds = toBanglaDigits(String(now.getSeconds()).padStart(2, '0'));
-
-            dateEl.textContent = `${weekday}, ${day} ${month} ${year}`;
-            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
-        }
-
-        function startIndividualProfileClock() {
-            if (dbgIndividualProfileClockTimer) clearInterval(dbgIndividualProfileClockTimer);
-            updateIndividualProfileDateTime();
-            dbgIndividualProfileClockTimer = setInterval(updateIndividualProfileDateTime, 1000);
-        }
-
         function renderIndividualProfile() {
             const code = document.getElementById('profileSelect').value;
             const container = document.getElementById('profileContainer');
@@ -4791,7 +4720,20 @@ function installMemberPortalStylesAndRoot() {
             min-width:82px !important;
           }
         }
+
+        /* ================= UNIQUE MEMBER LOGIN DATE/TIME HEADER ================= */
+        .dbg-member-login-topbar { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
+        .dbg-member-login-date,.dbg-member-login-time { font-size:13px; line-height:1.35; font-weight:800; color:#475569; white-space:nowrap; }
+        .dbg-member-login-date { text-align:left; } .dbg-member-login-time { text-align:right; }
+        .dbg-member-login-title { text-align:center; font-size:18px; line-height:1.35; font-weight:900; color:#312e81; white-space:nowrap; letter-spacing:.01em; }
+        @media(max-width:767px){ .dbg-member-login-topbar { grid-template-columns:1fr; gap:3px; padding:8px 10px; } .dbg-member-login-date,.dbg-member-login-time { text-align:center; } .dbg-member-login-title { order:-1; font-size:17px; } }
 </style>
+      <!-- UNIQUE MEMBER LOGIN DATE / TIME HEADER: above Welcome + Hotline -->
+      <div class="dbg-member-login-topbar" aria-label="Member profile date and time">
+        <div id="dbgMemberPortalDate" class="dbg-member-login-date"></div>
+        <div class="dbg-member-login-title">ড্রিমস বিজনেস গ্রুপ</div>
+        <div id="dbgMemberPortalTime" class="dbg-member-login-time"></div>
+      </div>
       <div class="flex items-center justify-between gap-4 mb-3 md:mb-4 flex-wrap">
         <div id="dbgMemberWelcome" class="dbg-member-welcome-wrap"></div>
         <div class="dbg-hotline-banner inline-flex items-center gap-2.5 rounded-2xl border px-4 py-2.5 font-extrabold shadow-sm">
@@ -5100,12 +5042,15 @@ function updateMemberPortalDateTime() {
     const day = toBanglaDigits(String(now.getDate()).padStart(2, '0'));
     const month = months[now.getMonth()];
     const year = toBanglaDigits(now.getFullYear());
-    const hours = toBanglaDigits(String(now.getHours()).padStart(2, '0'));
+    const hour24 = now.getHours();
+    const hour12 = hour24 % 12 || 12;
+    const hours = toBanglaDigits(String(hour12).padStart(2, '0'));
     const minutes = toBanglaDigits(String(now.getMinutes()).padStart(2, '0'));
     const seconds = toBanglaDigits(String(now.getSeconds()).padStart(2, '0'));
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
 
     dateEl.textContent = `${weekday}, ${day} ${month} ${year}`;
-    timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+    timeEl.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
 }
 
 function startMemberPortalClock() {
@@ -5198,13 +5143,6 @@ if (outstanding > 0) {
 
     return `
     <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
-        <!-- MEMBER PORTAL LIVE DATE / TIME HEADER -->
-        <div class="dbg-profile-topbar">
-            <div id="dbgMemberPortalDate" class="dbg-profile-topbar-date"></div>
-            <div class="dbg-profile-topbar-title">ড্রিমস বিজনেস গ্রুপ</div>
-            <div id="dbgMemberPortalTime" class="dbg-profile-topbar-time"></div>
-        </div>
-
         <!-- DIGITAL MEMBER ID CARD -->
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
