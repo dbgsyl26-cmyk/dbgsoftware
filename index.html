@@ -4758,7 +4758,7 @@ function installMemberPortalStylesAndRoot() {
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
-      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="dbg-print-hide "px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
+      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="dbg-print-hide px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"><i data-lucide="download" class="w-4 h-4"></i> <span>প্রোফাইল ডাউনলোড</span></button><button id="dbgMemberPrint" class="dbg-print-hide px-4 py-2.5 rounded-xl bg-gradient-to-r from-slate-800 to-indigo-900 hover:from-slate-900 hover:to-indigo-950 text-white font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"><i data-lucide="printer" class="w-4 h-4"></i> <span>প্রোফাইল প্রিন্ট</span></button></div><div id="dbgMemberPortalContent"></div></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -4795,7 +4795,7 @@ async function downloadMemberPortal(member,deposits){
     try{
         if(button){
             button.disabled=true;
-            button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> PDF তৈরি হচ্ছে...';
+            button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span>PDF তৈরি হচ্ছে...</span>';
             try{lucide.createIcons();}catch(_){}
         }
         await loadDbgPdfLibraries();
@@ -4821,8 +4821,12 @@ async function downloadMemberPortal(member,deposits){
         const clone=source.cloneNode(true);
         clone.removeAttribute('id');
         clone.classList.add('dbg-pdf-large-text');
-        clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
-        /* PDF-only typography: slightly larger body/table text while keeping the existing layout/data intact. */
+
+        // Profile PDF = dashboard + profile/personal/address/nominee only.
+        // Deposit history is deliberately removed.
+        clone.querySelectorAll('.dbg-deposit-history-section').forEach(el=>el.remove());
+        clone.querySelectorAll('.no-print, .dbg-print-hide, button, input[type="button"], input[type="submit"]').forEach(el=>el.remove());
+
         const pdfTypography=document.createElement('style');
         pdfTypography.textContent=`
             .dbg-pdf-large-text p { font-size: 15px !important; line-height: 1.55 !important; }
@@ -4848,52 +4852,115 @@ async function downloadMemberPortal(member,deposits){
         await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 
         const canvas=await window.html2canvas(pdfRoot,{
-            scale:2,
-            useCORS:true,
-            allowTaint:false,
-            backgroundColor:'#ffffff',
-            logging:false,
-            imageTimeout:15000,
-            windowWidth:1100
+            scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',
+            logging:false,imageTimeout:15000,windowWidth:1100
         });
         const {jsPDF}=window.jspdf;
         const pdf=new jsPDF('p','mm','a4');
         const pageWidth=pdf.internal.pageSize.getWidth();
         const pageHeight=pdf.internal.pageSize.getHeight();
-        const margin=8;
-        const usableWidth=pageWidth-margin*2;
-        const pxPerMm=canvas.width/usableWidth;
+        const margin=8, usableWidth=pageWidth-margin*2, pxPerMm=canvas.width/usableWidth;
         const pageCanvasHeight=Math.floor((pageHeight-margin*2)*pxPerMm);
-        let offsetY=0;
-        let page=0;
+        let offsetY=0, page=0;
         while(offsetY<canvas.height){
             const sliceHeight=Math.min(pageCanvasHeight,canvas.height-offsetY);
             const slice=document.createElement('canvas');
-            slice.width=canvas.width;
-            slice.height=sliceHeight;
+            slice.width=canvas.width; slice.height=sliceHeight;
             const ctx=slice.getContext('2d');
-            ctx.fillStyle='#fff';
-            ctx.fillRect(0,0,slice.width,slice.height);
+            ctx.fillStyle='#fff'; ctx.fillRect(0,0,slice.width,slice.height);
             ctx.drawImage(canvas,0,offsetY,canvas.width,sliceHeight,0,0,canvas.width,sliceHeight);
             if(page>0) pdf.addPage();
-            const renderedHeight=sliceHeight/pxPerMm;
-            pdf.addImage(slice.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,usableWidth,renderedHeight);
-            offsetY+=sliceHeight;
-            page++;
+            pdf.addImage(slice.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,usableWidth,sliceHeight/pxPerMm);
+            offsetY+=sliceHeight; page++;
         }
         pdf.save(`${member.code||'member'}_profile.pdf`);
     }catch(error){
         console.error('DBG Member PDF Download Error:',error);
-        alert('PDF ডাউনলোড করা যায়নি। ইন্টারনেট সংযোগ ঠিক আছে কিনা দেখে আবার চেষ্টা করুন।');
+        alert('প্রোফাইল PDF ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।');
     }finally{
         if(pdfRoot) pdfRoot.remove();
         if(button){
             button.disabled=false;
-            button.innerHTML=originalText || '<i data-lucide="download" class="w-4 h-4"></i> Profile Download';
+            button.innerHTML=originalText || '<i data-lucide="download" class="w-4 h-4"></i><span>প্রোফাইল ডাউনলোড</span>';
             try{lucide.createIcons();}catch(_){}
         }
     }
 }
+
+async function downloadMemberDeposits(member){
+    const source = document.querySelector('#memberPortalProfileCard .dbg-deposit-history-section');
+    if(!source){ alert('ডিপোজিট ইতিহাস পাওয়া যায়নি।'); return; }
+    const button=document.getElementById('dbgMemberDepositDownload');
+    const originalText=button?.innerHTML;
+    let pdfRoot=null;
+    try{
+        if(button){
+            button.disabled=true;
+            button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span>PDF তৈরি হচ্ছে...</span>';
+            try{lucide.createIcons();}catch(_){}
+        }
+        await loadDbgPdfLibraries();
+
+        pdfRoot=document.createElement('div');
+        Object.assign(pdfRoot.style,{
+            position:'fixed',left:'-100000px',top:'0',width:'1100px',
+            background:'#fff',padding:'28px',boxSizing:'border-box',zIndex:'-1'
+        });
+
+        const header=document.createElement('div');
+        header.style.cssText='text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #cbd5e1;';
+        header.innerHTML='<h1 style="margin:0;color:#1e1b4b;font-size:30px;font-weight:800">ড্রিমস বিজনেস গ্রুপ</h1><p style="margin:6px 0 0;color:#475569;font-size:17px;font-weight:600">সঞ্চয় ও ডিপোজিট ইতিহাস</p>';
+        pdfRoot.appendChild(header);
+
+        const clone=source.cloneNode(true);
+        clone.classList.add('dbg-pdf-large-text');
+        clone.querySelectorAll('.dbg-print-hide,.no-print,button').forEach(el=>el.remove());
+        clone.style.boxShadow='none';
+        clone.style.width='100%';
+        clone.style.maxWidth='none';
+        clone.style.margin='0';
+
+        const style=document.createElement('style');
+        style.textContent='.dbg-pdf-large-text th,.dbg-pdf-large-text td{font-size:14px!important;line-height:1.45!important;padding:7px!important}.dbg-pdf-large-text h4{font-size:18px!important}';
+        pdfRoot.appendChild(style);
+        pdfRoot.appendChild(clone);
+        document.body.appendChild(pdfRoot);
+
+        await Promise.all(Array.from(pdfRoot.querySelectorAll('img')).map(img=>new Promise(resolve=>{
+            if(img.complete) return resolve(); img.onload=img.onerror=()=>resolve();
+        })));
+        await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+        const canvas=await window.html2canvas(pdfRoot,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,imageTimeout:15000,windowWidth:1100});
+        const {jsPDF}=window.jspdf;
+        const pdf=new jsPDF('p','mm','a4');
+        const pageWidth=pdf.internal.pageSize.getWidth(), pageHeight=pdf.internal.pageSize.getHeight(), margin=8;
+        const usableWidth=pageWidth-margin*2, pxPerMm=canvas.width/usableWidth;
+        const pageCanvasHeight=Math.floor((pageHeight-margin*2)*pxPerMm);
+        let offsetY=0,page=0;
+        while(offsetY<canvas.height){
+            const sliceHeight=Math.min(pageCanvasHeight,canvas.height-offsetY);
+            const slice=document.createElement('canvas'); slice.width=canvas.width; slice.height=sliceHeight;
+            const ctx=slice.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,slice.width,slice.height);
+            ctx.drawImage(canvas,0,offsetY,canvas.width,sliceHeight,0,0,canvas.width,sliceHeight);
+            if(page>0) pdf.addPage();
+            pdf.addImage(slice.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,usableWidth,sliceHeight/pxPerMm);
+            offsetY+=sliceHeight; page++;
+        }
+        pdf.save(`${member.code||'member'}_deposit_history.pdf`);
+    }catch(error){
+        console.error('DBG Deposit PDF Download Error:',error);
+        alert('ডিপোজিট PDF ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।');
+    }finally{
+        if(pdfRoot) pdfRoot.remove();
+        if(button){
+            button.disabled=false;
+            button.innerHTML=originalText || '<i data-lucide="download" class="w-4 h-4"></i><span>ডিপোজিট ডাউনলোড</span>';
+            try{lucide.createIcons();}catch(_){}
+        }
+    }
+}
+
 async function loadDbgQrLibrary(){
     if(window.QRCode) return;
     await new Promise((resolve,reject)=>{
@@ -5316,29 +5383,61 @@ if (outstanding > 0) {
 
 function printMemberPortalProfile() {
     const source = document.getElementById('memberPortalProfileCard');
-    if (!source) {
-        alert('Member Profile পাওয়া যায়নি।');
-        return;
-    }
+    if (!source) { alert('Member Profile পাওয়া যায়নি।'); return; }
+
     const printRoot = document.createElement('div');
     printRoot.id = 'dbg-print-root';
-    printRoot.setAttribute('data-print-title', 'DBG Member Profile');
-    const clone = source.cloneNode(true);
-    clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+
     const companyHeader = document.createElement('div');
     companyHeader.className = 'dbg-print-company-header';
     companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
     printRoot.appendChild(companyHeader);
+
+    const clone = source.cloneNode(true);
+    clone.removeAttribute('id');
+
+    // Print only Member Dashboard/Profile/Personal/Address-Nominee.
+    clone.querySelectorAll('.dbg-deposit-history-section').forEach(el=>el.remove());
+    clone.querySelectorAll('.no-print, .dbg-print-hide, button, input[type="button"], input[type="submit"]').forEach(el=>el.remove());
+
     printRoot.appendChild(clone);
     document.body.appendChild(printRoot);
     document.body.classList.add('dbg-printing');
-    setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-            document.body.classList.remove('dbg-printing');
-            printRoot.remove();
-        }, 300);
-    }, 50);
+
+    const cleanup=()=>{
+        document.body.classList.remove('dbg-printing');
+        printRoot.remove();
+        window.removeEventListener('afterprint',cleanup);
+    };
+    window.addEventListener('afterprint',cleanup);
+    setTimeout(()=>window.print(),100);
+}
+
+function printMemberPortalDeposits() {
+    const source = document.querySelector('#memberPortalProfileCard .dbg-deposit-history-section');
+    if (!source) { alert('ডিপোজিট ইতিহাস পাওয়া যায়নি।'); return; }
+
+    const printRoot=document.createElement('div');
+    printRoot.id='dbg-print-root';
+
+    const companyHeader=document.createElement('div');
+    companyHeader.className='dbg-print-company-header';
+    companyHeader.innerHTML='<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>সঞ্চয় ও ডিপোজিট ইতিহাস</p>';
+    printRoot.appendChild(companyHeader);
+
+    const clone=source.cloneNode(true);
+    clone.querySelectorAll('.dbg-print-hide,.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
+    printRoot.appendChild(clone);
+    document.body.appendChild(printRoot);
+    document.body.classList.add('dbg-printing');
+
+    const cleanup=()=>{
+        document.body.classList.remove('dbg-printing');
+        printRoot.remove();
+        window.removeEventListener('afterprint',cleanup);
+    };
+    window.addEventListener('afterprint',cleanup);
+    setTimeout(()=>window.print(),100);
 }
 
 async function loadMemberPortalData(user) {
@@ -5388,239 +5487,13 @@ async function loadMemberPortalData(user) {
         }
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
+
+        // Attach ALL dynamically-created Member Profile action buttons after the profile HTML exists.
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
-        try{lucide.createIcons();}catch(_){ }
-        renderMemberIdQr(member);
-        status.textContent=`✅ ${memberId} এর Profile ও Deposit আপডেট লোড হয়েছে।`; err.classList.remove('show');
-    } catch(e) { console.error('DBG Member Portal Error:',e); err.textContent=e?.message||String(e); err.classList.add('show'); status.textContent='Member profile load ব্যর্থ হয়েছে।'; }
-}
-function showMemberPortal(user){ loadMemberPortalData(user); }
-
-if (togglePassword) {
-    togglePassword.addEventListener('click', () => {
-        const show = passwordInput.type === 'password';
-        passwordInput.type = show ? 'text' : 'password';
-        togglePassword.innerHTML = `<i data-lucide="${show ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>`;
-        try { lucide.createIcons(); } catch (_) {}
-    });
-}
-
-loginForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    setAuthError('');
-    setAuthStatus('Firebase যাচাই করছে...');
-    loginButton.disabled = true;
-    loginButton.textContent = 'লগইন হচ্ছে...';
-
-    try {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
-        const role = await loadFirebaseUserRole(credential.user);
-        setLoggedInUI(credential.user, role);
-    } catch (error) {
-        console.error('DBG Firebase Login Error:', error);
-        setAuthError(firebaseErrorMessage(error));
-        setAuthStatus('লগইন হয়নি।');
-    } finally {
-        loginButton.disabled = false;
-        loginButton.textContent = 'লগইন করুন';
-    }
-});
-
-resetButton?.addEventListener('click', async () => {
-    setAuthError('');
-    const email = emailInput.value.trim();
-    if (!email) {
-        setAuthError('পাসওয়ার্ড রিসেট করতে আগে আপনার ইমেইল লিখুন।');
-        emailInput.focus();
-        return;
-    }
-    try {
-        await sendPasswordResetEmail(firebaseAuth, email);
-        setAuthStatus('পাসওয়ার্ড রিসেট করার লিংক আপনার ইমেইলে পাঠানো হয়েছে।');
-    } catch (error) {
-        console.error('DBG Firebase Password Reset Error:', error);
-        setAuthError(firebaseErrorMessage(error));
-    }
-});
-
-
-/* Member role selector + registration/login handlers */
-let dbgSelectedRole='admin';
-document.querySelectorAll('[data-role-choice]').forEach(btn=>btn.addEventListener('click',()=>{
-    dbgSelectedRole=btn.dataset.roleChoice;
-    document.querySelectorAll('[data-role-choice]').forEach(b=>b.classList.remove('active-admin','active-accountant','active-member'));
-    btn.classList.add(`active-${dbgSelectedRole}`);
-    const staff=document.getElementById('dbgStaffPanel'), member=document.getElementById('dbgMemberPanel');
-    if(dbgSelectedRole==='member'){ staff?.classList.add('hidden-panel'); member?.classList.add('active'); switchMemberAuthTab('login'); }
-    else { member?.classList.remove('active'); staff?.classList.remove('hidden-panel'); }
-    setAuthError(''); setAuthStatus('');
-}));
-document.getElementById('dbgMemberLoginTab')?.addEventListener('click',()=>switchMemberAuthTab('login'));
-document.getElementById('dbgMemberRegisterTab')?.addEventListener('click',()=>switchMemberAuthTab('register'));
-document.querySelectorAll('.dbg-member-eye').forEach(btn=>btn.addEventListener('click',()=>{
-    const input=document.getElementById(btn.dataset.passwordTarget); if(!input)return; const show=input.type==='password'; input.type=show?'text':'password'; btn.innerHTML=`<i data-lucide="${show?'eye-off':'eye'}" class="w-4 h-4"></i>`; try{lucide.createIcons();}catch(_){ }
-}));
-document.getElementById('dbgMemberForgotPassword')?.addEventListener('click',()=>{
-    document.getElementById('dbgMemberRecoveryPanel')?.classList.add('show');
-    resetMemberRecoveryUI();
-    const id=document.getElementById('dbgMemberLoginId')?.value?.trim(); const mobile='';
-    if(id) document.getElementById('dbgMemberRecoveryId').value=id.toUpperCase();
-    if(mobile) document.getElementById('dbgMemberRecoveryMobile').value=mobile;
-    try{lucide.createIcons();}catch(_){ }
-});
-document.getElementById('dbgMemberRecoveryClose')?.addEventListener('click',()=>{ document.getElementById('dbgMemberRecoveryPanel')?.classList.remove('show'); resetMemberRecoveryUI(); });
-document.getElementById('dbgMemberSendOtp')?.addEventListener('click',async()=>{
-    const btn=document.getElementById('dbgMemberSendOtp');
-    setMemberMsg('dbgMemberRecoveryError',''); setMemberStatus('dbgMemberRecoveryStatus','Member তথ্য যাচাই হচ্ছে...'); btn.disabled=true;
-    try{
-        const id=document.getElementById('dbgMemberRecoveryId').value.trim().toUpperCase();
-        const mobileInput=document.getElementById('dbgMemberRecoveryMobile').value;
-        const countryCode=document.getElementById('dbgMemberRecoveryCountry')?.value || '+880';
-        if(!/^DBG-[A-Z0-9_-]+$/i.test(id)) throw new Error('সঠিক Member ID দিন। যেমন DBG-012');
-        const recoveryPhone=memberRecoveryPhone(mobileInput,countryCode);
-        const ms=await get(query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(id)));
-        const memberObj=ms.exists()?Object.values(ms.val())[0]:null;
-        if(!memberObj) throw new Error('এই Member ID মূল ERP-তে পাওয়া যায়নি।');
-        const memberPhoneVariants=recoveryPhoneVariants(memberObj.phone,countryCode);
-        if(!memberPhoneVariants.includes(recoveryPhone)) throw new Error('Registered Mobile Number মূল ERP Member record-এর সঙ্গে মিলছে না। দেশ/কান্ট্রি কোড ও নম্বরটি ঠিক আছে কি না দেখুন।');
-        dbgOtpRecoveryInProgress=true;
-        const verifier=ensureMemberRecoveryRecaptcha();
-        dbgMemberRecoveryConfirmation=await signInWithPhoneNumber(firebaseAuth,recoveryPhone,verifier);
-        document.getElementById('dbgMemberRecoveryStep1')?.classList.remove('active');
-        document.getElementById('dbgMemberRecoveryStep2')?.classList.add('active');
-        setMemberStatus('dbgMemberRecoveryStatus2','OTP পাঠানো হয়েছে।');
-        setMemberStatus('dbgMemberRecoveryStatus','');
-    }catch(error){
-        dbgOtpRecoveryInProgress=false; console.error('DBG Member OTP Error:',error);
-        setMemberMsg('dbgMemberRecoveryError',memberErrorText(error)); setMemberStatus('dbgMemberRecoveryStatus','');
-        if(dbgMemberRecoveryRecaptcha){ try{dbgMemberRecoveryRecaptcha.clear();}catch(_){ } dbgMemberRecoveryRecaptcha=null; const rc=document.getElementById('dbgMemberRecoveryRecaptcha'); if(rc) rc.innerHTML=''; }
-    }finally{btn.disabled=false;}
-});
-document.getElementById('dbgMemberResetPassword')?.addEventListener('click',async()=>{
-    const btn=document.getElementById('dbgMemberResetPassword');
-    setMemberMsg('dbgMemberRecoveryError2',''); setMemberStatus('dbgMemberRecoveryStatus2','পাসওয়ার্ড আপডেট হচ্ছে...'); btn.disabled=true;
-    try{
-        if(!dbgMemberRecoveryConfirmation) throw new Error('OTP session পাওয়া যায়নি। আবার OTP পাঠান।');
-        const id=document.getElementById('dbgMemberRecoveryId').value.trim().toUpperCase();
-        const otp=document.getElementById('dbgMemberRecoveryOtp').value.trim();
-        const pw=document.getElementById('dbgMemberRecoveryPassword').value; const cpw=document.getElementById('dbgMemberRecoveryConfirm').value;
-        if(!/^\d{6}$/.test(otp)) throw new Error('৬ সংখ্যার OTP দিন।');
-        if(pw.length<6) throw new Error('Password কমপক্ষে ৬ অক্ষরের হতে হবে।');
-        if(pw!==cpw) throw new Error('Password ও Confirm Password মিলছে না।');
-        const cred=await dbgMemberRecoveryConfirmation.confirm(otp);
-        const idToken=await cred.user.getIdToken(true);
-        await memberResetPasswordFunction({memberId:id,newPassword:pw,idToken});
-        await signOut(firebaseAuth);
-        document.getElementById('dbgMemberRecoveryPanel')?.classList.remove('show');
-        resetMemberRecoveryUI();
-        switchMemberAuthTab('login');
-        document.getElementById('dbgMemberLoginId').value=id;
-        setMemberStatus('dbgMemberLoginStatus','Password সফলভাবে পরিবর্তন হয়েছে। এখন নতুন Password দিয়ে Login করুন।');
-    }catch(error){
-        console.error('DBG Member Password Recovery Error:',error);
-        setMemberMsg('dbgMemberRecoveryError2',error?.message||memberErrorText(error)); setMemberStatus('dbgMemberRecoveryStatus2','');
-    }finally{btn.disabled=false; dbgOtpRecoveryInProgress=false;}
-});
-document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e=>{
-    e.preventDefault(); setMemberMsg('dbgMemberLoginError',''); setMemberStatus('dbgMemberLoginStatus','লগইন হচ্ছে...');
-    const id=document.getElementById('dbgMemberLoginId').value.trim().toUpperCase(); const pw=document.getElementById('dbgMemberLoginPassword').value; const btn=document.getElementById('dbgMemberLoginButton'); btn.disabled=true;
-    try{ const cred=await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw); const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`)); if(!map.exists()||!['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase())||String(map.val()?.memberId||'').toUpperCase()!==id) throw new Error('Member account mapping সঠিক নয়।'); setMemberStatus('dbgMemberLoginStatus','সফল হয়েছে...'); }
-    catch(error){ console.error('DBG Member Login Error:',error); setMemberMsg('dbgMemberLoginError',memberErrorText(error)); setMemberStatus('dbgMemberLoginStatus',''); }
-    finally{btn.disabled=false;}
-});
-document.getElementById('dbgMemberRegisterForm')?.addEventListener('submit',async e=>{
-    e.preventDefault(); setMemberMsg('dbgMemberRegisterError',''); setMemberStatus('dbgMemberRegisterStatus','Register হচ্ছে...');
-    const id=document.getElementById('dbgMemberRegisterId').value.trim().toUpperCase(); const mobile=normalizeMobile(document.getElementById('dbgMemberRegisterMobile').value); const pw=document.getElementById('dbgMemberRegisterPassword').value; const cpw=document.getElementById('dbgMemberRegisterConfirm').value; const btn=document.getElementById('dbgMemberRegisterButton'); btn.disabled=true;
-    try{
-        if(!/^DBG-[A-Z0-9_-]+$/i.test(id)) throw new Error('সঠিক Member ID দিন। যেমন DBG-012');
-        if(mobile.length<10) throw new Error('সঠিক Registered Mobile Number দিন।');
-        if(pw.length<6) throw new Error('Password কমপক্ষে ৬ অক্ষরের হতে হবে।');
-        if(pw!==cpw) throw new Error('Password ও Confirm Password মিলছে না।');
-        const cred=await createUserWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw);
-        await set(ref(firebaseDB,`dbg_users/${cred.user.uid}`),{role:'Member',memberId:id,mobile:mobile,createdAt:Date.now()});
-        // Verify the entered registered mobile against the existing ERP member record.
-        const ms=await get(query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(id)));
-        const memberObj=ms.exists()?Object.values(ms.val())[0]:null;
-        if(!memberObj) throw new Error('এই Member ID মূল ERP-তে পাওয়া যায়নি।');
-        if(normalizeMobile(memberObj.phone)!==mobile) throw new Error('Registered Mobile Number মূল ERP Member record-এর সঙ্গে মিলছে না।');
-        await signOut(firebaseAuth);
-        switchMemberAuthTab('login');
-        document.getElementById('dbgMemberLoginId').value=id;
-        setMemberStatus('dbgMemberLoginStatus','Registration সফল। এখন Member Login করুন।');
-    }catch(error){ console.error('DBG Member Registration Error:',error); try{ const u=firebaseAuth.currentUser; if(u){ try{ await set(ref(firebaseDB,`dbg_users/${u.uid}`),null); }catch(_){ } try{ await deleteUser(u); }catch(_){ await signOut(firebaseAuth); } } }catch(_){ } setMemberMsg('dbgMemberRegisterError',error?.message||memberErrorText(error)); setMemberStatus('dbgMemberRegisterStatus',''); }
-    finally{btn.disabled=false;}
-});
-
-try {
-    await setPersistence(firebaseAuth, browserLocalPersistence);
-} catch (e) {
-    console.warn('Firebase persistence could not be enabled:', e);
-}
-
-onAuthStateChanged(firebaseAuth, async (user) => {
-    if (dbgOtpRecoveryInProgress) return;
-    if (user) {
-        const role = await loadFirebaseUserRole(user);
-        setLoggedInUI(user, role);
-        if (['member','সদস্য'].includes(String(role||'').trim().toLowerCase())) return;
-
-        // 🌟 এখানে অ্যাকাউন্ট্যান্টের জন্য মেনু হাইড করার কোড শুরু
-        if (role === 'accountant' || role === 'Accountant') {
-            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'none';
-            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'none';
-            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'none';
-            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'none';
-            
-            const memberCard = document.getElementById('dashTotalMembers')?.closest('.bg-white');
-            if (memberCard) memberCard.style.display = 'none';
-
-            const driveSection = document.querySelector('.border-t.border-indigo-800');
-            if (driveSection) driveSection.style.display = 'none';
-
-            if (typeof switchTab === "function") {
-                switchTab('accounts'); // লগইন করার পর সরাসরি আয়-ব্যয় পেজে নিয়ে যাবে
-            }
-        } else {
-            // অ্যাডমিন বা অন্যদের জন্য সব মেনু স্বাভাবিকভাবে দেখাবে
-            if(document.getElementById('tab-members')) document.getElementById('tab-members').style.display = 'flex';
-            if(document.getElementById('tab-profile')) document.getElementById('tab-profile').style.display = 'flex';
-            if(document.getElementById('tab-investor-profile')) document.getElementById('tab-investor-profile').style.display = 'flex';
-            if(document.getElementById('tab-investments')) document.getElementById('tab-investments').style.display = 'flex';
-            
-            const driveSection = document.querySelector('.border-t.border-indigo-800');
-            if (driveSection) driveSection.style.display = 'block';
-        }
-        // 🌟 কোড শেষ
-
-    } else {
-        setLoggedOutUI();
-    }
-});
-
-function dbgPrintScopedMemberProfile(mode){
-  const cls = mode === 'deposits' ? 'dbg-print-deposits-only' : 'dbg-print-profile-only';
-  document.body.classList.add(cls);
-  const cleanup = () => {
-    document.body.classList.remove('dbg-print-profile-only','dbg-print-deposits-only');
-    window.removeEventListener('afterprint', cleanup);
-  };
-  window.addEventListener('afterprint', cleanup);
-  setTimeout(() => window.print(), 80);
-}
-function dbgDownloadScopedMemberArea(mode){
-  dbgPrintScopedMemberProfile(mode);
-}
-
-document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',(e)=>{
-  e.preventDefault(); e.stopImmediatePropagation(); dbgPrintScopedMemberProfile('deposits');
-}, true);
-document.getElementById('dbgMemberDepositDownload')?.addEventListener('click',(e)=>{
-  e.preventDefault(); e.stopImmediatePropagation(); dbgDownloadScopedMemberArea('deposits');
-}, true);
+        document.getElementById('dbgMemberDepositDownload')?.addEventListener('click',()=>downloadMemberDeposits(member));
+        
 </script>
 
 </body>
