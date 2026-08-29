@@ -2823,8 +2823,45 @@ closeMemberModal();
                 return false;
             }
 
-            const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
-            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${deposit.month} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
+            // SMS text only: show optional items only when the member actually paid them.
+            const monthNumber = String(deposit.month || '').split('-')[1];
+            const monthNames = {
+                '01':'January','02':'February','03':'March','04':'April',
+                '05':'May','06':'June','07':'July','08':'August',
+                '09':'September','10':'October','11':'November','12':'December'
+            };
+            const monthName = monthNames[monthNumber] || String(deposit.month || '');
+
+            const expenseAmount = parseFloat(deposit.expenseAmount || 0) || 0;
+            const halfYearlyAmount = parseFloat(deposit.dreamProsperityAmount || 0) || 0;
+            const yearlyAmount = parseFloat(deposit.dreamDevelopmentAmount || 0) || 0;
+
+            const receivedItems = ['deposit'];
+            if (expenseAmount > 0) receivedItems.push('expense');
+            if (halfYearlyAmount > 0 || yearlyAmount > 0) receivedItems.push('special deposit');
+
+            const itemText = receivedItems.length === 1
+                ? receivedItems[0]
+                : receivedItems.length === 2
+                    ? `${receivedItems[0]} and ${receivedItems[1]}`
+                    : `${receivedItems.slice(0, -1).join(', ')} and ${receivedItems[receivedItems.length - 1]}`;
+
+            // Current Balance = the member profile's “মোট জমা ডিপোজিট”.
+            // It includes normal deposit + both special deposits, but excludes expense.
+            const memberDeposits = (db.deposits || []).filter(d => d.memberCode === deposit.memberCode);
+            const currentBalance = memberDeposits.reduce((sum, d) => {
+                return sum
+                    + (parseFloat(d.amount || 0) || 0)
+                    + (parseFloat(d.dreamProsperityAmount || 0) || 0)
+                    + (parseFloat(d.dreamDevelopmentAmount || 0) || 0);
+            }, 0);
+
+            const memberName = String(member.name || member.nameEn || 'Member').trim() || 'Member';
+            const formattedBalance = currentBalance.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+            const smsText = `Dear ${memberName}, your ${monthName} ${itemText} ${receivedItems.length === 1 ? 'has' : 'have'} been received successfully. Your current balance is Tk. ${formattedBalance}. Thank you for choosing Dreams Business Group.`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
@@ -4722,10 +4759,12 @@ function installMemberPortalStylesAndRoot() {
         }
 
         /* ================= UNIQUE MEMBER LOGIN DATE/TIME HEADER ================= */
-        .dbg-member-login-topbar { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
+        .dbg-member-login-topbar { display:grid; grid-template-columns:1fr 0 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
         .dbg-member-login-date,.dbg-member-login-time { font-size:13px; line-height:1.35; font-weight:800; color:#475569; white-space:nowrap; }
-        .dbg-member-login-date { text-align:left; justify-self:start; }
-        .dbg-member-login-time { text-align:right; justify-self:end; }
+        .dbg-member-login-date { text-align:left; } .dbg-member-login-time {
+    text-align: right;
+    justify-self: end;
+}
         .dbg-member-login-title { text-align:center; font-size:18px; line-height:1.35; font-weight:900; color:#312e81; white-space:nowrap; letter-spacing:.01em; }
         @media(max-width:767px){ .dbg-member-login-topbar { grid-template-columns:1fr; gap:3px; padding:8px 10px; } .dbg-member-login-date,.dbg-member-login-time { text-align:center; } .dbg-member-login-title { order:-1; font-size:17px; } }
 </style>
