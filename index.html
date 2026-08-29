@@ -2880,37 +2880,114 @@ closeMemberModal();
 
         async function saveDeposit(e) {
             e.preventDefault();
-            const memberCode = document.getElementById('depMemberSelect').value;
-            const selectedMonth = document.getElementById('depMonthSelect').value;
-            const selectedYear = document.getElementById('depYearSelect').value;
-            const month = `${selectedYear}-${selectedMonth}`;
-            const scheme = document.getElementById('depScheme').value;
-            const dateInput = document.getElementById('depDate').value;
-            const date = parseDepositDate(dateInput);
-            if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
-            const amount = parseFloat(document.getElementById('depAmount').value);
-            const expenseAmount = parseFloat(document.getElementById('depExpenseAmount').value || 0);
-            const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
-            const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
-            const method = document.getElementById('depMethod').value;
 
-            const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
-            db.deposits.push(newDeposit);
-            saveData();
-                        // ড্যাশবোর্ড, মেম্বার প্রোফাইল ও ইতিহাস রিয়েল-টাইমে আপডেট করার কোড
-            if (typeof renderAll === 'function') renderAll();
-            if (typeof renderDeposits === 'function') renderDeposits();
-            if (typeof renderDashboard === 'function') renderDashboard();
-
-            showReceipt(newDeposit);
-            
-            // Ask & Trigger SMS
-            if (confirm("জমা সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
-                await sendDepositSMS(newDeposit);
+            // Prevent double-submit while the deposit is being committed.
+            const form = document.getElementById('depositForm');
+            const submitButton = form?.querySelector('button[type="submit"]');
+            if (submitButton?.dataset.saving === '1') return;
+            if (submitButton) {
+                submitButton.dataset.saving = '1';
+                submitButton.disabled = true;
             }
 
-            document.getElementById('depositForm').reset();
-            document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+            try {
+                const memberCode = document.getElementById('depMemberSelect').value;
+                const selectedMonth = document.getElementById('depMonthSelect').value;
+                const selectedYear = document.getElementById('depYearSelect').value;
+                const month = `${selectedYear}-${selectedMonth}`;
+                const scheme = document.getElementById('depScheme').value;
+                const dateInput = document.getElementById('depDate').value;
+                const date = parseDepositDate(dateInput);
+
+                if (!date) {
+                    alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।');
+                    document.getElementById('depDate').focus();
+                    return;
+                }
+
+                const amount = parseFloat(document.getElementById('depAmount').value);
+                const expenseAmount = parseFloat(document.getElementById('depExpenseAmount').value || 0);
+                const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
+                const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
+                const method = document.getElementById('depMethod').value;
+
+                if (!memberCode || !Number.isFinite(amount)) {
+                    alert('সদস্য এবং ডিপোজিটের পরিমাণ সঠিকভাবে নির্বাচন করুন।');
+                    return;
+                }
+
+                const newDeposit = {
+                    id: Date.now(),
+                    memberCode,
+                    month,
+                    scheme,
+                    date,
+                    amount,
+                    expenseAmount,
+                    dreamProsperityAmount,
+                    dreamDevelopmentAmount,
+                    method
+                };
+
+                // Update local state first so the UI/receipt can use the exact
+                // record that was entered.
+                db.deposits.push(newDeposit);
+                saveLocalData();
+                renderAll();
+
+                // IMPORTANT: commit the deposit directly to Firebase and wait for
+                // the write to finish. The previous code used saveData()'s delayed
+                // 250ms whole-array sync, allowing an older realtime snapshot to
+                // overwrite the new deposit and later write the old array back.
+                const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
+                if (dbgFirebaseSyncReady && isAdminRole(role)) {
+                    dbgFirebaseWriteInProgress = true;
+                    try {
+                        await update(ref(firebaseDB, 'dbg_erp'), {
+                            deposits: Array.isArray(db.deposits) ? db.deposits : [],
+                            updatedAt: Date.now()
+                        });
+                        console.info('DBG Firebase: deposit committed successfully.', newDeposit);
+                    } catch (firebaseError) {
+                        console.error('DBG Firebase deposit write failed:', firebaseError);
+                        alert(`ডিপোজিট Firebase-এ সেভ হয়নি।\nকারণ: ${firebaseError?.code || firebaseError?.message || firebaseError}`);
+                        // Keep the local record visible, but clearly tell the user
+                        // that cloud synchronization failed.
+                        return;
+                    } finally {
+                        dbgFirebaseWriteInProgress = false;
+                    }
+                } else if (typeof window.dbgSyncToFirebase === 'function') {
+                    // Accountant/other permitted role: use the normal role-aware
+                    // sync path. Admin was handled above with an awaited write.
+                    window.dbgSyncToFirebase();
+                }
+
+                // Show the receipt only after the deposit has been committed.
+                // This prevents a receipt from being shown for a record that was
+                // immediately lost during a Firebase sync race.
+                showReceipt(newDeposit);
+
+                // SMS is independent of the database save. Even if the gateway
+                // rejects the SMS, the deposit and receipt remain saved.
+                if (confirm("জমা সফলভাবে সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
+                    await sendDepositSMS(newDeposit);
+                }
+
+                form?.reset();
+                document.getElementById('depDate').value =
+                    formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+                renderAll();
+
+            } catch (error) {
+                console.error('DBG saveDeposit error:', error);
+                alert(`ডিপোজিট সেভ করতে সমস্যা হয়েছে।\nকারণ: ${error?.message || error}`);
+            } finally {
+                if (submitButton) {
+                    submitButton.dataset.saving = '0';
+                    submitButton.disabled = false;
+                }
+            }
         }
     let currentDepPage = 1;
     const depPageSize = 10;
@@ -3875,6 +3952,7 @@ async function loadFirebaseUserRole(user) {
 let dbgFirebaseSyncReady = false;
 window.dbgFirebaseSyncReady = false;
 let dbgFirebaseApplyingRemote = false;
+let dbgFirebaseWriteInProgress = false;
 let dbgFirebasePendingSync = false;
 let dbgFirebaseSyncTimer = null;
 let dbgFirebaseUnsubscribe = null;
@@ -3985,7 +4063,7 @@ function buildFirebasePayload() {
 }
 
 async function writeFirebaseDataNow() {
-    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote) return;
+    if (!dbgFirebaseSyncReady || dbgFirebaseApplyingRemote || dbgFirebaseWriteInProgress) return;
     const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
     if (!role) return;
     try {
@@ -4125,6 +4203,9 @@ async function initializeFirebaseERPData(role) {
             }
 
             dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
+                // Do not let an older realtime snapshot overwrite a just-saved
+                // local deposit while the Firebase write is still in progress.
+                if (dbgFirebaseWriteInProgress) return;
                 if (snapshot.exists()) {
                     await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
                 }
