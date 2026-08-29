@@ -4313,10 +4313,11 @@ async function initializeFirebaseERPData(role) {
             window.dbgFirebaseSyncReady = true;
             setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Accountant Deposit ready');
 
-            if (dbgFirebasePendingSync) {
-                dbgFirebasePendingSync = false;
-                try { window.dbgSyncToFirebase(); } catch (_) {}
-            }
+            // Do NOT flush a queued whole-collection sync for Accountant here.
+            // Accountant is restricted to child-path writes, and flushing a stale
+            // local deposits array could overwrite a newer cloud deposit.
+            dbgFirebasePendingSync = false;
+            clearTimeout(dbgFirebaseSyncTimer);
             return true;
         }
 
