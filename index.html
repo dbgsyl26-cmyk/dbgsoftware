@@ -2817,6 +2817,7 @@ closeMemberModal();
 
         // Send SMS to Member via Bulk SMS Dhaka API
         async function sendDepositSMS(deposit) {
+            if (!deposit) { alert('ডিপোজিট তথ্য পাওয়া যায়নি।'); return false; }
             const member = db.members.find(m => m.code === deposit.memberCode);
             if (!member || !member.phone) {
                 alert('সদস্যের মোবাইল নম্বর পাওয়া যায়নি।');
@@ -2911,16 +2912,37 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             const method = document.getElementById('depMethod').value;
 
             const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
+            // Save locally first so the entry cannot disappear from the current browser.
             db.deposits.push(newDeposit);
-            saveData();
-                        // ড্যাশবোর্ড, মেম্বার প্রোফাইল ও ইতিহাস রিয়েল-টাইমে আপডেট করার কোড
+            saveLocalData();
+
+            // IMPORTANT: force Firebase to finish this deposit write before the
+            // realtime listener can refresh the UI with an older cloud snapshot.
+            // This fixes deposits that appeared temporarily and disappeared after refresh.
+            let cloudSaved = true;
+            if (typeof writeFirebaseDataNow === 'function' && dbgFirebaseSyncReady && !dbgFirebaseApplyingRemote) {
+                try {
+                    await writeFirebaseDataNow();
+                } catch (syncError) {
+                    cloudSaved = false;
+                    console.error('Deposit Firebase save failed:', syncError);
+                }
+            } else if (typeof window.dbgSyncToFirebase === 'function') {
+                window.dbgSyncToFirebase();
+            }
+
             if (typeof renderAll === 'function') renderAll();
             if (typeof renderDeposits === 'function') renderDeposits();
             if (typeof renderDashboard === 'function') renderDashboard();
 
-            showReceipt(newDeposit);
-            
-            // Ask & Trigger SMS
+            // Always show the receipt immediately after saving the deposit.
+            try { showReceipt(newDeposit); } catch (receiptError) { console.error('Receipt error:', receiptError); }
+
+            if (!cloudSaved) {
+                alert('জমা আপনার বর্তমান ডিভাইসে সেভ হয়েছে, কিন্তু Firebase-এ সেভ করা যায়নি। ইন্টারনেট/Firebase সংযোগ ঠিক হলে আবার চেষ্টা করুন।');
+            }
+
+            // Ask & trigger SMS after the deposit is saved.
             if (confirm("জমা সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
                 await sendDepositSMS(newDeposit);
             }
@@ -2971,10 +2993,10 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
                 <td class="p-2.5 text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
                 <td class="p-2.5 text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
                 <td class="p-2.5 text-center space-x-1 no-print">
-                    <button onclick='showReceipt(${JSON.stringify(d)})' class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
+                    <button onclick="showReceipt(db.deposits.find(x => x.id === ${d.id}))" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
                         <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick='sendDepositSMS(${JSON.stringify(d)})' class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
+                    <button onclick="sendDepositSMS(db.deposits.find(x => x.id === ${d.id}))" class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
                         <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="editDepositDate(${d.id})" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="জমার তারিখ সংশোধন">
