@@ -2920,13 +2920,17 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
 
         async function saveDeposit(e) {
             e.preventDefault();
+            const form = document.getElementById('depositForm');
+            const submitBtn = form?.querySelector('button[type="submit"]');
             const memberCode = document.getElementById('depMemberSelect').value;
+            const selectedMemberLabel = document.getElementById('depMemberSelect').selectedOptions?.[0]?.text || '';
             const selectedMonth = document.getElementById('depMonthSelect').value;
             const selectedYear = document.getElementById('depYearSelect').value;
             const month = `${selectedYear}-${selectedMonth}`;
             const scheme = document.getElementById('depScheme').value;
             const dateInput = document.getElementById('depDate').value;
             const date = parseDepositDate(dateInput);
+            if (!memberCode) { alert('অনুগ্রহ করে সদস্য সিলেক্ট করুন।'); return; }
             if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
 
             const amount = parseFloat(document.getElementById('depAmount').value);
@@ -2934,87 +2938,70 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
             const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
             const method = document.getElementById('depMethod').value;
+            if (!Number.isFinite(amount) || amount < 0) { alert('সঠিক ডিপোজিটের পরিমাণ দিন।'); return; }
 
-            const newDeposit = {
-                id: Date.now(), memberCode, month, scheme, date, amount,
-                expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method
-            };
-            if (db.deposits.some(d => String(d.id) === String(newDeposit.id))) {
-                newDeposit.id = Date.now() + Math.floor(Math.random() * 1000);
-            }
+            const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
+            while (db.deposits.some(d => String(d.id) === String(newDeposit.id))) newDeposit.id++;
 
-            let cloudSaved = false;
             const previousDeposits = Array.isArray(db.deposits) ? db.deposits.slice() : [];
+            const previousSelection = memberCode;
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.dataset.dbgOldHtml = submitBtn.innerHTML; submitBtn.innerHTML = 'সেভ হচ্ছে...'; }
 
             try {
-                // Do not allow a deposit to be treated as successful until the active
-                // Firebase user, token and role have all been checked.
-                await dbgEnsureDepositFirebaseAccess();
+                const user = firebaseAuth?.currentUser;
+                if (!user?.uid) throw new Error('Firebase Login session পাওয়া যায়নি। আবার Login করুন।');
+                // Do not read/check dbg_users here. Firebase Rules itself is the source of
+                // permission truth; the old extra role read was causing a failed read to
+                // abort the deposit and reset the selected member.
+                await user.getIdToken();
                 if (dbgFirebaseInitPromise) await dbgFirebaseInitPromise;
 
-                // Read the latest shared deposits first, merge the new item by ID,
-                // then write the merged list. This prevents a stale realtime snapshot
-                // from deleting a just-entered deposit or overwriting another device.
                 const depositsRef = ref(firebaseDB, 'dbg_erp/deposits');
                 const remoteSnap = await get(depositsRef);
                 const remoteValue = remoteSnap.val();
                 const latestDeposits = Array.isArray(remoteValue)
                     ? remoteValue.filter(Boolean)
                     : Object.values(remoteValue || {}).filter(Boolean);
-
                 const mergedDeposits = latestDeposits.some(d => String(d?.id) === String(newDeposit.id))
                     ? latestDeposits.map(d => String(d?.id) === String(newDeposit.id) ? newDeposit : d)
                     : [...latestDeposits, newDeposit];
 
-                // Keep the listener from applying an older snapshot over this local
-                // deposit while the confirmed Firebase write is in progress.
                 dbgFirebaseApplyingRemote = true;
                 try {
                     await set(depositsRef, mergedDeposits);
                     const verifySnap = await get(depositsRef);
-                    const verifyValue = verifySnap.val();
-                    const verifiedList = Array.isArray(verifyValue)
-                        ? verifyValue.filter(Boolean)
-                        : Object.values(verifyValue || {}).filter(Boolean);
-                    if (!verifiedList.some(d => String(d?.id) === String(newDeposit.id))) {
-                        throw new Error('Firebase-এ ডিপোজিট যাচাই করা যায়নি।');
-                    }
-
+                    const verifiedList = Array.isArray(verifySnap.val()) ? verifySnap.val().filter(Boolean) : Object.values(verifySnap.val() || {}).filter(Boolean);
+                    if (!verifiedList.some(d => String(d?.id) === String(newDeposit.id))) throw new Error('Firebase-এ ডিপোজিট যাচাই করা যায়নি।');
                     db.deposits = verifiedList;
                     saveLocalData();
-                    cloudSaved = true;
                     dbgFirebasePendingSync = false;
-                    console.info('DBG deposit saved and verified in Firebase:', newDeposit.id);
-                } finally {
-                    dbgFirebaseApplyingRemote = false;
-                }
+                } finally { dbgFirebaseApplyingRemote = false; }
+
+                // Firebase is confirmed first. Only now refresh UI, send SMS and show receipt.
+                if (typeof renderAll === 'function') renderAll();
+                if (typeof renderDeposits === 'function') renderDeposits();
+                if (typeof renderDashboard === 'function') renderDashboard();
+                const selectAfterRender = document.getElementById('depMemberSelect');
+                if (selectAfterRender && previousSelection) selectAfterRender.value = previousSelection;
+
+                let smsOk = false;
+                try { smsOk = await sendDepositSMS(newDeposit); } catch (smsError) { console.error('Deposit SMS flow error:', smsError); }
+                try { showReceipt(newDeposit); } catch (receiptError) { console.error('Receipt error:', receiptError); alert('ডিপোজিট সেভ হয়েছে, কিন্তু রসিদ দেখাতে সমস্যা হয়েছে।'); }
+
+                form?.reset();
+                const dateEl = document.getElementById('depDate');
+                if (dateEl) dateEl.value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+                alert(smsOk ? 'ডিপোজিট সফলভাবে সেভ হয়েছে, SMS পাঠানো হয়েছে এবং রসিদ তৈরি হয়েছে।' : 'ডিপোজিট সফলভাবে সেভ হয়েছে এবং রসিদ তৈরি হয়েছে। SMS Gateway থেকে পাঠানো না গেলে আলাদা বার্তা দেখানো হয়েছে।');
             } catch (syncError) {
                 dbgFirebaseApplyingRemote = false;
                 db.deposits = previousDeposits;
                 saveLocalData();
-                if (typeof renderAll === 'function') renderAll();
+                const selectNow = document.getElementById('depMemberSelect');
+                if (selectNow && previousSelection) selectNow.value = previousSelection;
                 console.error('Deposit Firebase save failed:', syncError);
-                alert('ডিপোজিট Firebase-এ সেভ করা যায়নি, তাই জমাটি বাতিল করা হয়েছে।\nকারণ: ' + (syncError?.message || syncError));
-                return;
-            }
-
-            // Only a confirmed cloud save can trigger SMS and receipt.
-            if (typeof renderAll === 'function') renderAll();
-            if (typeof renderDeposits === 'function') renderDeposits();
-            if (typeof renderDashboard === 'function') renderDashboard();
-
-            try { await sendDepositSMS(newDeposit); }
-            catch (smsError) { console.error('Deposit SMS flow error:', smsError); }
-
-            try { showReceipt(newDeposit); }
-            catch (receiptError) {
-                console.error('Receipt error:', receiptError);
-                alert('ডিপোজিট সেভ হয়েছে, কিন্তু রসিদ দেখাতে সমস্যা হয়েছে।');
-            }
-
-            if (cloudSaved) {
-                document.getElementById('depositForm').reset();
-                document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+                alert('ডিপোজিট Firebase-এ সেভ করা যায়নি। নির্বাচিত সদস্য পরিবর্তন করা হয়নি।\nকারণ: ' + (syncError?.message || syncError));
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; if (submitBtn.dataset.dbgOldHtml) submitBtn.innerHTML = submitBtn.dataset.dbgOldHtml; }
             }
         }
     let currentDepPage = 1;
@@ -4136,7 +4123,7 @@ async function applyFirebasePayload(payload) {
             db.members = payload.members;
             if (memberStorageReady) await replaceAllMembersInIDB(db.members);
         }
-        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits;
+        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits.filter(Boolean); else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
         if (Array.isArray(payload.accounts)) db.accounts = payload.accounts;
