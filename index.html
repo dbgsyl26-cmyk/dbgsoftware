@@ -2817,7 +2817,6 @@ closeMemberModal();
 
         // Send SMS to Member via Bulk SMS Dhaka API
         async function sendDepositSMS(deposit) {
-            if (!deposit) { alert('ডিপোজিট তথ্য পাওয়া যায়নি।'); return false; }
             const member = db.members.find(m => m.code === deposit.memberCode);
             if (!member || !member.phone) {
                 alert('সদস্যের মোবাইল নম্বর পাওয়া যায়নি।');
@@ -2825,23 +2824,7 @@ closeMemberModal();
             }
 
             const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
-            const monthNames = {
-    '01': 'জানুয়ারি',
-    '02': 'ফেব্রুয়ারি',
-    '03': 'মার্চ',
-    '04': 'এপ্রিল',
-    '05': 'মে',
-    '06': 'জুন',
-    '07': 'জুলাই',
-    '08': 'আগস্ট',
-    '09': 'সেপ্টেম্বর',
-    '10': 'অক্টোবর',
-    '11': 'নভেম্বর',
-    '12': 'ডিসেম্বর'
-};
-
-const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
-            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${monthName} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
+            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${deposit.month} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
@@ -2895,38 +2878,8 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             }
         }
 
-        async function dbgEnsureDepositFirebaseAccess() {
-            const auth = window.dbgFirebaseAuth;
-            const database = window.dbgFirebaseDB;
-            const firebaseRef = window.dbgFirebaseRef;
-            const firebaseGet = window.dbgFirebaseGet;
-            if (!auth || !database || !firebaseRef || !firebaseGet) {
-                throw new Error('Firebase এখনও সম্পূর্ণভাবে প্রস্তুত হয়নি। অনুগ্রহ করে পেজটি Reload করে আবার Login করুন।');
-            }
-            const user = auth.currentUser;
-            if (!user?.uid) throw new Error('Firebase Authentication session পাওয়া যায়নি। অনুগ্রহ করে আবার Login করুন।');
-
-            await user.getIdToken(true);
-
-            const profileSnap = await firebaseGet(firebaseRef(database, `dbg_users/${user.uid}`));
-            if (!profileSnap.exists()) throw new Error('বর্তমান Login account-এর Firebase role profile পাওয়া যায়নি।');
-
-            const profile = profileSnap.val() || {};
-            const role = String(profile.role || profile.userRole || '').trim();
-            if (!isAdminRole(role) && !isAccountantRole(role)) {
-                throw new Error('এই account-এর Deposit permission নেই। Role: ' + (role || 'Unknown'));
-            }
-
-            // Always use the role stored in Firebase as the active role.
-            window.dbgFirebaseRole = role;
-            window.dbgFirebaseUser = user;
-            return { user, role };
-        }
-
         async function saveDeposit(e) {
             e.preventDefault();
-            const form = document.getElementById('depositForm');
-            const submitBtn = form?.querySelector('button[type="submit"]');
             const memberCode = document.getElementById('depMemberSelect').value;
             const selectedMonth = document.getElementById('depMonthSelect').value;
             const selectedYear = document.getElementById('depYearSelect').value;
@@ -2934,70 +2887,30 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             const scheme = document.getElementById('depScheme').value;
             const dateInput = document.getElementById('depDate').value;
             const date = parseDepositDate(dateInput);
+            if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
             const amount = parseFloat(document.getElementById('depAmount').value);
             const expenseAmount = parseFloat(document.getElementById('depExpenseAmount').value || 0);
             const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
             const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
             const method = document.getElementById('depMethod').value;
 
-            if (!memberCode) { alert('অনুগ্রহ করে সদস্য নির্বাচন করুন।'); return; }
-            if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
-            if (!Number.isFinite(amount) || amount < 0) { alert('সঠিক মূল ডিপোজিটের পরিমাণ পাওয়া যায়নি।'); return; }
+            const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
+            db.deposits.push(newDeposit);
+            saveData();
+                        // ড্যাশবোর্ড, মেম্বার প্রোফাইল ও ইতিহাস রিয়েল-টাইমে আপডেট করার কোড
+            if (typeof renderAll === 'function') renderAll();
+            if (typeof renderDeposits === 'function') renderDeposits();
+            if (typeof renderDashboard === 'function') renderDashboard();
 
-            const member = db.members.find(m => String(m.code) === String(memberCode));
-            if (!member) { alert('নির্বাচিত সদস্যের তথ্য পাওয়া যায়নি। আবার সদস্য নির্বাচন করুন।'); return; }
-
-            const id = `${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-            const newDeposit = { id, memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method, createdAt: Date.now() };
-            const selectedMemberBeforeSave = memberCode;
-            const previousButtonHtml = submitBtn?.innerHTML;
-
-            try {
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = 'সেভ হচ্ছে...'; }
-                await dbgEnsureDepositFirebaseAccess();
-
-                // Write only this deposit record. This avoids replacing the whole deposits
-                // collection with a stale browser array and prevents refresh from deleting it.
-                const depositRef = window.dbgFirebaseRef(window.dbgFirebaseDB, `dbg_erp/deposits/${id}`);
-                await window.dbgFirebaseSet(depositRef, newDeposit);
-                const verifySnap = await window.dbgFirebaseGet(depositRef);
-                if (!verifySnap.exists()) throw new Error('Firebase-এ ডিপোজিট যাচাই করা যায়নি।');
-
-                const verifiedDeposit = verifySnap.val();
-                const list = Array.isArray(db.deposits) ? db.deposits.filter(Boolean) : [];
-                const idx = list.findIndex(d => String(d?.id) === String(id));
-                if (idx >= 0) list[idx] = verifiedDeposit; else list.push(verifiedDeposit);
-                db.deposits = list;
-                localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
-
-                // Keep the member selected until SMS and receipt have completed.
-                if (document.getElementById('depMemberSelect')) document.getElementById('depMemberSelect').value = selectedMemberBeforeSave;
-
-                try { await sendDepositSMS(verifiedDeposit); }
-                catch (smsError) { console.error('Deposit SMS flow error:', smsError); }
-
-                try { showReceipt(verifiedDeposit); }
-                catch (receiptError) { console.error('Receipt error:', receiptError); alert('ডিপোজিট সেভ হয়েছে, কিন্তু রসিদ দেখাতে সমস্যা হয়েছে।'); }
-
-                if (typeof renderDeposits === 'function') renderDeposits();
-                if (typeof renderDashboard === 'function') renderDashboard();
-                if (typeof renderAll === 'function') renderAll();
-
-                // Reset only after successful save, SMS attempt and receipt display.
-                if (form) form.reset();
-                const memberSelect = document.getElementById('depMemberSelect');
-                if (memberSelect) memberSelect.value = '';
-                const depDate = document.getElementById('depDate');
-                if (depDate) depDate.value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
-            } catch (syncError) {
-                console.error('Deposit Firebase save failed:', syncError);
-                // Do not reset or unselect the member on failure.
-                if (document.getElementById('depMemberSelect')) document.getElementById('depMemberSelect').value = selectedMemberBeforeSave;
-                alert('ডিপোজিট Firebase-এ সেভ করা যায়নি।
-কারণ: ' + (syncError?.message || syncError));
-            } finally {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = previousButtonHtml || 'জমার রসিদ সেভ ও SMS পাঠান'; }
+            showReceipt(newDeposit);
+            
+            // Ask & Trigger SMS
+            if (confirm("জমা সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
+                await sendDepositSMS(newDeposit);
             }
+
+            document.getElementById('depositForm').reset();
+            document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
         }
     let currentDepPage = 1;
     const depPageSize = 10;
@@ -3042,10 +2955,10 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
                 <td class="p-2.5 text-right font-bold text-emerald-700">৳${d.dreamProsperityAmount || 0}</td>
                 <td class="p-2.5 text-right font-bold text-amber-700">৳${d.dreamDevelopmentAmount || 0}</td>
                 <td class="p-2.5 text-center space-x-1 no-print">
-                    <button onclick="showReceipt(db.deposits.find(x => x.id === ${d.id}))" class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
+                    <button onclick='showReceipt(${JSON.stringify(d)})' class="bg-indigo-600 text-white p-1 rounded hover:bg-indigo-700" title="রসিদ">
                         <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="sendDepositSMS(db.deposits.find(x => x.id === ${d.id}))" class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
+                    <button onclick='sendDepositSMS(${JSON.stringify(d)})' class="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-700" title="SMS পাঠান">
                         <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="editDepositDate(${d.id})" class="bg-amber-500 text-white p-1 rounded hover:bg-amber-600" title="জমার তারিখ সংশোধন">
@@ -3777,14 +3690,6 @@ const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
 const firebaseFunctions = getFunctions(firebaseApp);
-// Expose only the Firebase objects/functions needed by the main non-module ERP script.
-// The main deposit form runs outside this module, so direct module-scoped names would
-// otherwise cause: "firebaseAuth is not defined".
-window.dbgFirebaseAuth = firebaseAuth;
-window.dbgFirebaseDB = firebaseDB;
-window.dbgFirebaseRef = ref;
-window.dbgFirebaseGet = get;
-window.dbgFirebaseSet = set;
 const memberResetPasswordFunction = httpsCallable(firebaseFunctions, 'memberResetPassword');
 let dbgMemberRecoveryConfirmation = null;
 let dbgMemberRecoveryRecaptcha = null;
@@ -4126,12 +4031,10 @@ async function applyFirebasePayload(payload) {
             db.members = payload.members;
             if (memberStorageReady) await replaceAllMembersInIDB(db.members);
         }
-        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits.filter(Boolean);
-        else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
+        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits;
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
-        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts.filter(Boolean);
-        else if (payload.accounts && typeof payload.accounts === 'object') db.accounts = Object.values(payload.accounts).filter(Boolean);
+        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts;
         if (Array.isArray(payload.notices)) db.notices = payload.notices;
         renderAdminNotices();
 
