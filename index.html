@@ -4146,8 +4146,10 @@ window.dbgFirebaseCommitDeposit = async function (deposit) {
     try {
         // Write ONLY the deposits branch. Never replace the entire ERP tree from
         // a Deposit form; that could overwrite members/accounts/etc. from a stale cache.
+        // Accountant is NOT allowed to write /dbg_erp/updatedAt under the
+        // current Firebase Rules. The deposits child write is explicitly allowed,
+        // so commit only that authorized path.
         await set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []);
-        await set(ref(firebaseDB, 'dbg_erp/updatedAt'), Date.now());
         return true;
     } catch (e) {
         console.error('DBG Firebase deposit commit failed:', e);
