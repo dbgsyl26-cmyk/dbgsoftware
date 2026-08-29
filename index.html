@@ -3963,6 +3963,7 @@ let dbgFirebaseWriteInProgress = false;
 let dbgFirebasePendingSync = false;
 let dbgFirebaseSyncTimer = null;
 let dbgFirebaseUnsubscribe = null;
+let dbgFirebaseAdminDepositUnsub = null;
 let dbgFirebaseAccountantUnsubs = [];
 let dbgFirebaseInitPromise = null;
 let dbgFirebaseInitError = null;
@@ -3983,6 +3984,7 @@ function isAdminRole(role) {
 }
 
 function clearRealtimeListeners() {
+    if (dbgFirebaseAdminDepositUnsub) { try { dbgFirebaseAdminDepositUnsub(); } catch (_) {} dbgFirebaseAdminDepositUnsub = null; }
     if (dbgFirebaseUnsubscribe) {
         try { dbgFirebaseUnsubscribe(); } catch (_) {}
         dbgFirebaseUnsubscribe = null;
@@ -4321,21 +4323,49 @@ async function initializeFirebaseERPData(role) {
             return true;
         }
 
-        // ================= ADMIN: FULL ERP TREE =================
+        // ================= ADMIN: FULL ERP TREE + DEDICATED DEPOSIT LISTENER =================
         const dataRef = ref(firebaseDB, 'dbg_erp');
 
+        // Keep the full ERP listener for members/accounts/settings, but also
+        // listen directly to /deposits. This guarantees that an Accountant's
+        // push() is reflected in the Admin panel immediately, even when the
+        // parent snapshot is delayed or another local sync is in progress.
         dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
-            if (dbgFirebaseWriteInProgress) return;
             if (!snapshot.exists()) return;
             try {
-                await applyFirebasePayload(snapshot.val(), { accountantOnly: false });
+                const payload = snapshot.val() || {};
+                // Deposit data is handled by the dedicated listener below.
+                const copy = { ...payload };
+                delete copy.deposits;
+                await applyFirebasePayload(copy, { accountantOnly: false });
             } catch (e) {
-                console.error('DBG Firebase payload apply failed:', e);
+                console.error('DBG Firebase parent payload apply failed:', e);
             }
         }, error => {
             console.error('DBG Firebase realtime listener failed:', error);
             setAuthStatus(`Firebase Realtime Database সংযোগে সমস্যা হয়েছে: ${error?.code || error?.message || 'unknown error'}`);
         });
+
+        const adminDepositRef = ref(firebaseDB, 'dbg_erp/deposits');
+        const adminDepositUnsub = onValue(adminDepositRef, snapshot => {
+            try {
+                const value = snapshot.exists() ? snapshot.val() : [];
+                if (Array.isArray(value)) {
+                    db.deposits = value.filter(Boolean);
+                } else if (value && typeof value === 'object') {
+                    db.deposits = Object.values(value).filter(Boolean);
+                } else {
+                    db.deposits = [];
+                }
+                localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
+                renderAll();
+            } catch (e) {
+                console.error('DBG Admin deposit realtime update failed:', e);
+            }
+        }, error => {
+            console.error('DBG Admin deposit listener failed:', error);
+        });
+        dbgFirebaseAdminDepositUnsub = adminDepositUnsub;
 
         const snap = await get(dataRef);
         const remote = snap.exists() ? (snap.val() || {}) : {};
