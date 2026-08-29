@@ -4236,48 +4236,74 @@ async function initializeFirebaseERPData(role) {
             const depositRef = ref(firebaseDB, 'dbg_erp/deposits');
             const accountRef = ref(firebaseDB, 'dbg_erp/accounts');
 
+            // Firebase may return either an Array or an object with numeric keys.
+            // Always normalize both forms so one malformed/legacy branch cannot
+            // prevent Deposit Collection from becoming ready.
+            const asList = value => {
+                if (Array.isArray(value)) return value.filter(Boolean);
+                if (value && typeof value === 'object') return Object.values(value).filter(Boolean);
+                return [];
+            };
+
             const attach = (dbRef, key) => onValue(dbRef, snapshot => {
                 if (dbgFirebaseWriteInProgress) return;
-                const value = snapshot.exists() ? snapshot.val() : [];
-                if (key === 'members' && Array.isArray(value)) {
+                const value = asList(snapshot.exists() ? snapshot.val() : []);
+                if (key === 'members') {
                     db.members = value;
                     if (memberStorageReady) replaceAllMembersInIDB(db.members).catch(() => {});
-                } else if (key === 'deposits' && Array.isArray(value)) {
+                } else if (key === 'deposits') {
                     db.deposits = value;
-                } else if (key === 'accounts' && Array.isArray(value)) {
+                } else if (key === 'accounts') {
                     db.accounts = value;
                 }
                 saveLocalData();
                 renderAll();
             }, error => {
+                // An Accountant does not need the accounts branch in order to
+                // record a deposit. A denied/optional branch must NOT block the
+                // Deposit Collection Firebase connection.
                 console.error(`DBG Accountant realtime listener failed (${key}):`, error);
-                setAuthStatus(`Firebase ${key} সংযোগে সমস্যা: ${error?.code || error?.message || 'unknown error'}`);
+                if (key === 'deposits') {
+                    setAuthStatus(`Firebase deposits সংযোগে সমস্যা: ${error?.code || error?.message || 'unknown error'}`);
+                }
             });
 
+            // Attach each branch independently. Do not let /accounts permission
+            // errors stop /deposits from working.
             dbgFirebaseAccountantUnsubs.push(
                 attach(memberRef, 'members'),
                 attach(depositRef, 'deposits'),
                 attach(accountRef, 'accounts')
             );
 
-            // Explicitly load the three branches. Do not read /dbg_erp parent.
-            const [ms, ds, as] = await Promise.all([
+            // Read branches independently. Promise.all() previously meant that
+            // ONE denied branch could reject the whole Accountant initialization,
+            // leaving dbgFirebaseSyncReady=false and blocking every deposit save.
+            const results = await Promise.allSettled([
                 get(memberRef),
                 get(depositRef),
                 get(accountRef)
             ]);
 
-            if (ms.exists() && Array.isArray(ms.val())) db.members = ms.val();
-            if (ds.exists() && Array.isArray(ds.val())) db.deposits = ds.val();
-            if (as.exists() && Array.isArray(as.val())) db.accounts = as.val();
+            const ms = results[0];
+            const ds = results[1];
+            const as = results[2];
+
+            if (ms.status === 'fulfilled' && ms.value.exists()) db.members = asList(ms.value.val());
+            if (ds.status === 'fulfilled' && ds.value.exists()) db.deposits = asList(ds.value.val());
+            if (as.status === 'fulfilled' && as.value.exists()) db.accounts = asList(as.value.val());
 
             if (memberStorageReady) await replaceAllMembersInIDB(db.members);
             saveLocalData();
             renderAll();
 
+            // Deposit Collection is the critical Accountant function. Mark the
+            // Firebase module ready after the independent branch setup completes.
+            // A denied optional branch must not produce the old "connection not
+            // ready" error on deposit entry.
             dbgFirebaseSyncReady = true;
             window.dbgFirebaseSyncReady = true;
-            setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Accountant data loaded');
+            setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Accountant Deposit ready');
 
             if (dbgFirebasePendingSync) {
                 dbgFirebasePendingSync = false;
