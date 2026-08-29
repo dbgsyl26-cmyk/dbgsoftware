@@ -2823,7 +2823,7 @@ closeMemberModal();
                 return false;
             }
 
-            // SMS text only: show optional items only when the member actually paid them.
+            // SMS message only: optional text appears only when that amount is greater than zero.
             const monthNumber = String(deposit.month || '').split('-')[1];
             const monthNames = {
                 '01':'January','02':'February','03':'March','04':'April',
@@ -2840,21 +2840,15 @@ closeMemberModal();
             if (expenseAmount > 0) receivedItems.push('expense');
             if (halfYearlyAmount > 0 || yearlyAmount > 0) receivedItems.push('special deposit');
 
-            const itemText = receivedItems.length === 1
-                ? receivedItems[0]
-                : receivedItems.length === 2
-                    ? `${receivedItems[0]} and ${receivedItems[1]}`
-                    : `${receivedItems.slice(0, -1).join(', ')} and ${receivedItems[receivedItems.length - 1]}`;
+            let itemText = 'deposit';
+            if (receivedItems.length === 2) itemText = `${receivedItems[0]} and ${receivedItems[1]}`;
+            if (receivedItems.length === 3) itemText = `${receivedItems[0]}, ${receivedItems[1]} and ${receivedItems[2]}`;
 
-            // Current Balance = the member profile's “মোট জমা ডিপোজিট”.
-            // It includes normal deposit + both special deposits, but excludes expense.
-            const memberDeposits = (db.deposits || []).filter(d => d.memberCode === deposit.memberCode);
-            const currentBalance = memberDeposits.reduce((sum, d) => {
-                return sum
-                    + (parseFloat(d.amount || 0) || 0)
-                    + (parseFloat(d.dreamProsperityAmount || 0) || 0)
-                    + (parseFloat(d.dreamDevelopmentAmount || 0) || 0);
-            }, 0);
+            // Current Balance must match the member profile's "মোট জমা ডিপোজিট".
+            // The profile currently calculates this from regular monthly deposit amounts only.
+            const currentBalance = (db.deposits || [])
+                .filter(d => d.memberCode === deposit.memberCode)
+                .reduce((sum, d) => sum + (parseFloat(d.amount || 0) || 0), 0);
 
             const memberName = String(member.name || member.nameEn || 'Member').trim() || 'Member';
             const formattedBalance = currentBalance.toLocaleString('en-US', {
