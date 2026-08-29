@@ -1608,6 +1608,9 @@
 
     <!-- JS LOGIC -->
     <script>
+        // Global timer used by the profile renderer. This script is a classic
+        // script; the later Firebase module has its own lexical scope.
+        var dbgIndividualProfileClockTimer = null;
         // Direct print handler: window.print() must run immediately from the button click.
         // Using setTimeout can cause browsers to block the print dialog because the user gesture is lost.
         function printReport() {
@@ -2935,32 +2938,14 @@ closeMemberModal();
                 saveLocalData();
                 renderAll();
 
-                // IMPORTANT: commit the deposit directly to Firebase and wait for
-                // the write to finish. The previous code used saveData()'s delayed
-                // 250ms whole-array sync, allowing an older realtime snapshot to
-                // overwrite the new deposit and later write the old array back.
-                const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
-                if (dbgFirebaseSyncReady && isAdminRole(role)) {
-                    dbgFirebaseWriteInProgress = true;
-                    try {
-                        await update(ref(firebaseDB, 'dbg_erp'), {
-                            deposits: Array.isArray(db.deposits) ? db.deposits : [],
-                            updatedAt: Date.now()
-                        });
-                        console.info('DBG Firebase: deposit committed successfully.', newDeposit);
-                    } catch (firebaseError) {
-                        console.error('DBG Firebase deposit write failed:', firebaseError);
-                        alert(`ডিপোজিট Firebase-এ সেভ হয়নি।\nকারণ: ${firebaseError?.code || firebaseError?.message || firebaseError}`);
-                        // Keep the local record visible, but clearly tell the user
-                        // that cloud synchronization failed.
-                        return;
-                    } finally {
-                        dbgFirebaseWriteInProgress = false;
-                    }
-                } else if (typeof window.dbgSyncToFirebase === 'function') {
-                    // Accountant/other permitted role: use the normal role-aware
-                    // sync path. Admin was handled above with an awaited write.
-                    window.dbgSyncToFirebase();
+                // IMPORTANT: commit the deposit through the Firebase module's
+                // public transaction API. The UI script must not directly access
+                // module-scoped Firebase variables (ref/update/firebaseDB/etc.).
+                if (typeof window.dbgFirebaseCommitDeposit === 'function') {
+                    await window.dbgFirebaseCommitDeposit(newDeposit);
+                    console.info('DBG Firebase: deposit committed successfully.', newDeposit);
+                } else {
+                    throw new Error('Firebase Deposit Sync module এখনো প্রস্তুত হয়নি। পেজটি একবার Refresh করুন।');
                 }
 
                 // Show the receipt only after the deposit has been committed.
@@ -4084,7 +4069,7 @@ async function writeFirebaseDataNow() {
         console.info('DBG Firebase: data synced successfully.');
     } catch (e) {
         console.error('DBG Firebase write failed:', e);
-        // Do not interrupt local operation when Firebase is temporarily offline.
+        throw e;
     }
 }
 
@@ -4100,7 +4085,48 @@ window.dbgSyncToFirebase = function () {
     dbgFirebaseSyncTimer = setTimeout(writeFirebaseDataNow, 250);
 };
 
+// Explicit cloud commit API used by transaction forms. Unlike the debounced
+// trigger above, this waits for the Firebase write to finish.
+window.dbgFirebaseSyncToFirebaseNow = async function () {
+    if (!dbgFirebaseSyncReady) {
+        // Wait briefly for the authentication/ERP listener to become ready.
+        const started = Date.now();
+        while (!dbgFirebaseSyncReady && Date.now() - started < 10000) {
+            await new Promise(r => setTimeout(r, 100));
+        }
+    }
+    if (!dbgFirebaseSyncReady) throw new Error('Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি।');
+    await writeFirebaseDataNow();
+    return true;
+};
+
+// Transaction-safe Deposit commit. The main UI calls this instead of reaching
+// into module-scoped Firebase objects. While the write is in progress, realtime
+// snapshots are ignored so an older snapshot cannot erase the new deposit.
+window.dbgFirebaseCommitDeposit = async function (deposit) {
+    if (!deposit || typeof deposit !== 'object') throw new Error('অবৈধ ডিপোজিট রেকর্ড।');
+    if (!dbgFirebaseSyncReady) {
+        const started = Date.now();
+        while (!dbgFirebaseSyncReady && Date.now() - started < 10000) {
+            await new Promise(r => setTimeout(r, 100));
+        }
+    }
+    if (!dbgFirebaseSyncReady) throw new Error('Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি।');
+
+    dbgFirebaseWriteInProgress = true;
+    try {
+        // Write ONLY the deposits branch. Never replace the entire ERP tree from
+        // a Deposit form; that could overwrite members/accounts/etc. from a stale cache.
+        await set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []);
+        await set(ref(firebaseDB, 'dbg_erp/updatedAt'), Date.now());
+        return true;
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+};
+
 async function applyFirebasePayload(payload) {
+    if (dbgFirebaseWriteInProgress) return;
     if (!payload || typeof payload !== 'object') return;
     dbgFirebaseApplyingRemote = true;
     try {
@@ -5115,7 +5141,7 @@ async function downloadMemberIdCardJPEG(member){
 }
 
 let dbgMemberPortalClockTimer = null;
-let dbgIndividualProfileClockTimer = null;
+/* dbgIndividualProfileClockTimer is declared in the main classic script. */
 
 function updateMemberPortalDateTime() {
     const dateEl = document.getElementById('dbgMemberPortalDate');
