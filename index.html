@@ -2905,50 +2905,88 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             const dateInput = document.getElementById('depDate').value;
             const date = parseDepositDate(dateInput);
             if (!date) { alert('ডিপোজিট জমার তারিখ দিন-মাস-বছর (DD-MM-YYYY) ফরম্যাটে লিখুন।'); document.getElementById('depDate').focus(); return; }
+
             const amount = parseFloat(document.getElementById('depAmount').value);
             const expenseAmount = parseFloat(document.getElementById('depExpenseAmount').value || 0);
             const dreamProsperityAmount = parseFloat(document.getElementById('depDreamProsperityAmount').value || 0);
             const dreamDevelopmentAmount = parseFloat(document.getElementById('depDreamDevelopmentAmount').value || 0);
             const method = document.getElementById('depMethod').value;
 
-            const newDeposit = { id: Date.now(), memberCode, month, scheme, date, amount, expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method };
-            // Save locally first so the entry cannot disappear from the current browser.
+            const newDeposit = {
+                id: Date.now(), memberCode, month, scheme, date, amount,
+                expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method
+            };
+
+            // Prevent duplicate clicks for the same deposit ID.
+            if (db.deposits.some(d => String(d.id) === String(newDeposit.id))) {
+                newDeposit.id = Date.now() + Math.floor(Math.random() * 1000);
+            }
+
+            // Save locally first.
             db.deposits.push(newDeposit);
             saveLocalData();
 
-            // IMPORTANT: force Firebase to finish this deposit write before the
-            // realtime listener can refresh the UI with an older cloud snapshot.
-            // This fixes deposits that appeared temporarily and disappeared after refresh.
-            let cloudSaved = true;
-            if (typeof writeFirebaseDataNow === 'function' && dbgFirebaseSyncReady && !dbgFirebaseApplyingRemote) {
-                try {
-                    await writeFirebaseDataNow();
-                } catch (syncError) {
-                    cloudSaved = false;
-                    console.error('Deposit Firebase save failed:', syncError);
+            // CRITICAL FIX: deposit is written directly to its Firebase child path
+            // and awaited. Do not rely on the debounced whole-ERP sync here, because
+            // a stale realtime root snapshot can otherwise overwrite the new deposit.
+            let cloudSaved = false;
+            try {
+                if (typeof firebaseDB === 'undefined' || !firebaseDB || typeof ref !== 'function' || typeof set !== 'function') {
+                    throw new Error('Firebase Database সংযোগ পাওয়া যায়নি।');
                 }
-            } else if (typeof window.dbgSyncToFirebase === 'function') {
-                window.dbgSyncToFirebase();
+
+                await set(
+                    ref(firebaseDB, 'dbg_erp/deposits'),
+                    Array.isArray(db.deposits) ? db.deposits : []
+                );
+
+                // Verify that Firebase really contains this exact deposit before
+                // continuing. This ensures refresh and Accountant panel see the same data.
+                if (typeof get === 'function') {
+                    const verifySnap = await get(ref(firebaseDB, 'dbg_erp/deposits'));
+                    const remoteDeposits = verifySnap.val();
+                    const list = Array.isArray(remoteDeposits)
+                        ? remoteDeposits
+                        : Object.values(remoteDeposits || {});
+                    if (!list.some(d => String(d && d.id) === String(newDeposit.id))) {
+                        throw new Error('Firebase-এ ডিপোজিট যাচাই করা যায়নি।');
+                    }
+                }
+
+                cloudSaved = true;
+                dbgFirebasePendingSync = false;
+                console.info('DBG deposit saved and verified in Firebase:', newDeposit.id);
+            } catch (syncError) {
+                console.error('Deposit Firebase save failed:', syncError);
+                // Keep the current deposit in local storage, but do not pretend it
+                // was shared successfully.
+                alert('ডিপোজিটটি বর্তমান ডিভাইসে সেভ হয়েছে, কিন্তু Firebase-এ সেভ/যাচাই করা যায়নি।\nকারণ: ' + (syncError?.message || syncError));
             }
 
+            // Update every local view immediately.
             if (typeof renderAll === 'function') renderAll();
             if (typeof renderDeposits === 'function') renderDeposits();
             if (typeof renderDashboard === 'function') renderDashboard();
 
-            // Always show the receipt immediately after saving the deposit.
-            try { showReceipt(newDeposit); } catch (receiptError) { console.error('Receipt error:', receiptError); }
-
-            if (!cloudSaved) {
-                alert('জমা আপনার বর্তমান ডিভাইসে সেভ হয়েছে, কিন্তু Firebase-এ সেভ করা যায়নি। ইন্টারনেট/Firebase সংযোগ ঠিক হলে আবার চেষ্টা করুন।');
-            }
-
-            // Ask & trigger SMS after the deposit is saved.
-            if (confirm("জমা সেভ হয়েছে! সদস্যের মোবাইলে SMS পাঠাতে চান?")) {
+            // SMS and receipt are restored to the deposit-success flow.
+            // SMS is sent only after the deposit save attempt, then the receipt opens.
+            try {
                 await sendDepositSMS(newDeposit);
+            } catch (smsError) {
+                console.error('Deposit SMS flow error:', smsError);
             }
 
-            document.getElementById('depositForm').reset();
-            document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+            try {
+                showReceipt(newDeposit);
+            } catch (receiptError) {
+                console.error('Receipt error:', receiptError);
+                alert('ডিপোজিট সেভ হয়েছে, কিন্তু রসিদ দেখাতে সমস্যা হয়েছে।');
+            }
+
+            if (cloudSaved) {
+                document.getElementById('depositForm').reset();
+                document.getElementById('depDate').value = formatDateDDMMYYYY(new Date().toISOString().slice(0, 10));
+            }
         }
     let currentDepPage = 1;
     const depPageSize = 10;
