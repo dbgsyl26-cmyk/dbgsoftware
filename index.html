@@ -4144,12 +4144,15 @@ window.dbgFirebaseCommitDeposit = async function (deposit) {
 
     dbgFirebaseWriteInProgress = true;
     try {
-        // Write ONLY the deposits branch. Never replace the entire ERP tree from
-        // a Deposit form; that could overwrite members/accounts/etc. from a stale cache.
-        // Accountant is NOT allowed to write /dbg_erp/updatedAt under the
-        // current Firebase Rules. The deposits child write is explicitly allowed,
-        // so commit only that authorized path.
-        await set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []);
+        // IMPORTANT: do NOT replace the whole deposits collection with the
+        // Accountant browser's local array. Another browser (Admin) may have
+        // added deposits after this Accountant session started. Replacing the
+        // collection would overwrite those newer cloud records.
+        //
+        // Instead, append ONLY this new deposit under a Firebase push key.
+        // This is permitted by the existing /dbg_erp/deposits .write rule and
+        // does not require Accountant read permission on the whole collection.
+        await push(ref(firebaseDB, 'dbg_erp/deposits'), deposit);
         return true;
     } catch (e) {
         console.error('DBG Firebase deposit commit failed:', e);
@@ -4185,7 +4188,10 @@ async function applyFirebasePayload(payload) {
             db.members = payload.members;
             if (memberStorageReady) await replaceAllMembersInIDB(db.members);
         }
-        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits;
+        // Firebase deposits may be stored as an Array (legacy data) or as an
+        // object keyed by push IDs (new transaction-safe writes). Normalize both.
+        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits.filter(Boolean);
+        else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
         if (Array.isArray(payload.accounts)) db.accounts = payload.accounts;
