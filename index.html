@@ -2895,6 +2895,29 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
             }
         }
 
+        async function dbgEnsureDepositFirebaseAccess() {
+            const user = firebaseAuth?.currentUser;
+            if (!user?.uid) throw new Error('Firebase Authentication session পাওয়া যায়নি। অনুগ্রহ করে আবার Login করুন।');
+
+            // Refresh the current Firebase ID token so an old browser session cannot
+            // continue using a stale authentication state after Rules/session changes.
+            await user.getIdToken(true);
+
+            const profileSnap = await get(ref(firebaseDB, `dbg_users/${user.uid}`));
+            if (!profileSnap.exists()) throw new Error('বর্তমান Login account-এর Firebase role profile পাওয়া যায়নি।');
+
+            const profile = profileSnap.val() || {};
+            const role = String(profile.role || profile.userRole || '').trim();
+            if (!isAdminRole(role) && !isAccountantRole(role)) {
+                throw new Error('এই account-এর Deposit permission নেই। Role: ' + (role || 'Unknown'));
+            }
+
+            // Always use the role stored in Firebase as the active role.
+            window.dbgFirebaseRole = role;
+            window.dbgFirebaseUser = user;
+            return { user, role };
+        }
+
         async function saveDeposit(e) {
             e.preventDefault();
             const memberCode = document.getElementById('depMemberSelect').value;
@@ -2916,69 +2939,75 @@ const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
                 id: Date.now(), memberCode, month, scheme, date, amount,
                 expenseAmount, dreamProsperityAmount, dreamDevelopmentAmount, method
             };
-
-            // Prevent duplicate clicks for the same deposit ID.
             if (db.deposits.some(d => String(d.id) === String(newDeposit.id))) {
                 newDeposit.id = Date.now() + Math.floor(Math.random() * 1000);
             }
 
-            // Save locally first.
-            db.deposits.push(newDeposit);
-            saveLocalData();
-
-            // CRITICAL FIX: deposit is written directly to its Firebase child path
-            // and awaited. Do not rely on the debounced whole-ERP sync here, because
-            // a stale realtime root snapshot can otherwise overwrite the new deposit.
             let cloudSaved = false;
+            const previousDeposits = Array.isArray(db.deposits) ? db.deposits.slice() : [];
+
             try {
-                if (typeof firebaseDB === 'undefined' || !firebaseDB || typeof ref !== 'function' || typeof set !== 'function') {
-                    throw new Error('Firebase Database সংযোগ পাওয়া যায়নি।');
-                }
+                // Do not allow a deposit to be treated as successful until the active
+                // Firebase user, token and role have all been checked.
+                await dbgEnsureDepositFirebaseAccess();
+                if (dbgFirebaseInitPromise) await dbgFirebaseInitPromise;
 
-                await set(
-                    ref(firebaseDB, 'dbg_erp/deposits'),
-                    Array.isArray(db.deposits) ? db.deposits : []
-                );
+                // Read the latest shared deposits first, merge the new item by ID,
+                // then write the merged list. This prevents a stale realtime snapshot
+                // from deleting a just-entered deposit or overwriting another device.
+                const depositsRef = ref(firebaseDB, 'dbg_erp/deposits');
+                const remoteSnap = await get(depositsRef);
+                const remoteValue = remoteSnap.val();
+                const latestDeposits = Array.isArray(remoteValue)
+                    ? remoteValue.filter(Boolean)
+                    : Object.values(remoteValue || {}).filter(Boolean);
 
-                // Verify that Firebase really contains this exact deposit before
-                // continuing. This ensures refresh and Accountant panel see the same data.
-                if (typeof get === 'function') {
-                    const verifySnap = await get(ref(firebaseDB, 'dbg_erp/deposits'));
-                    const remoteDeposits = verifySnap.val();
-                    const list = Array.isArray(remoteDeposits)
-                        ? remoteDeposits
-                        : Object.values(remoteDeposits || {});
-                    if (!list.some(d => String(d && d.id) === String(newDeposit.id))) {
+                const mergedDeposits = latestDeposits.some(d => String(d?.id) === String(newDeposit.id))
+                    ? latestDeposits.map(d => String(d?.id) === String(newDeposit.id) ? newDeposit : d)
+                    : [...latestDeposits, newDeposit];
+
+                // Keep the listener from applying an older snapshot over this local
+                // deposit while the confirmed Firebase write is in progress.
+                dbgFirebaseApplyingRemote = true;
+                try {
+                    await set(depositsRef, mergedDeposits);
+                    const verifySnap = await get(depositsRef);
+                    const verifyValue = verifySnap.val();
+                    const verifiedList = Array.isArray(verifyValue)
+                        ? verifyValue.filter(Boolean)
+                        : Object.values(verifyValue || {}).filter(Boolean);
+                    if (!verifiedList.some(d => String(d?.id) === String(newDeposit.id))) {
                         throw new Error('Firebase-এ ডিপোজিট যাচাই করা যায়নি।');
                     }
-                }
 
-                cloudSaved = true;
-                dbgFirebasePendingSync = false;
-                console.info('DBG deposit saved and verified in Firebase:', newDeposit.id);
+                    db.deposits = verifiedList;
+                    saveLocalData();
+                    cloudSaved = true;
+                    dbgFirebasePendingSync = false;
+                    console.info('DBG deposit saved and verified in Firebase:', newDeposit.id);
+                } finally {
+                    dbgFirebaseApplyingRemote = false;
+                }
             } catch (syncError) {
+                dbgFirebaseApplyingRemote = false;
+                db.deposits = previousDeposits;
+                saveLocalData();
+                if (typeof renderAll === 'function') renderAll();
                 console.error('Deposit Firebase save failed:', syncError);
-                // Keep the current deposit in local storage, but do not pretend it
-                // was shared successfully.
-                alert('ডিপোজিটটি বর্তমান ডিভাইসে সেভ হয়েছে, কিন্তু Firebase-এ সেভ/যাচাই করা যায়নি।\nকারণ: ' + (syncError?.message || syncError));
+                alert('ডিপোজিট Firebase-এ সেভ করা যায়নি, তাই জমাটি বাতিল করা হয়েছে।\nকারণ: ' + (syncError?.message || syncError));
+                return;
             }
 
-            // Update every local view immediately.
+            // Only a confirmed cloud save can trigger SMS and receipt.
             if (typeof renderAll === 'function') renderAll();
             if (typeof renderDeposits === 'function') renderDeposits();
             if (typeof renderDashboard === 'function') renderDashboard();
 
-            // SMS and receipt are restored to the deposit-success flow.
-            // SMS is sent only after the deposit save attempt, then the receipt opens.
-            try {
-                await sendDepositSMS(newDeposit);
-            } catch (smsError) {
-                console.error('Deposit SMS flow error:', smsError);
-            }
+            try { await sendDepositSMS(newDeposit); }
+            catch (smsError) { console.error('Deposit SMS flow error:', smsError); }
 
-            try {
-                showReceipt(newDeposit);
-            } catch (receiptError) {
+            try { showReceipt(newDeposit); }
+            catch (receiptError) {
                 console.error('Receipt error:', receiptError);
                 alert('ডিপোজিট সেভ হয়েছে, কিন্তু রসিদ দেখাতে সমস্যা হয়েছে।');
             }
