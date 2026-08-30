@@ -2826,7 +2826,7 @@ closeMemberModal();
                 return false;
             }
 
-            const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
+           const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
             const monthNames = {
     '01': 'জানুয়ারি',
     '02': 'ফেব্রুয়ারি',
@@ -3109,7 +3109,7 @@ function changeDepPage(direction) {
             saveLocalData();
             renderAll();
             try {
-                await deleteFirebaseTransaction('dbg_erp/deposits', id);
+                await window.deleteFirebaseTransaction('dbg_erp/deposits', id);
             } catch (e) {
                 console.error('DBG deposit delete cloud sync failed:', e);
                 db.deposits = previous;
@@ -3541,7 +3541,7 @@ function changeDepPage(direction) {
             saveLocalData();
             renderAll();
             try {
-                await deleteFirebaseTransaction('dbg_erp/accounts', id);
+                await window.deleteFirebaseTransaction('dbg_erp/accounts', id);
             } catch (e) {
                 console.error('DBG account delete cloud sync failed:', e);
                 db.accounts = previous;
@@ -4320,7 +4320,7 @@ async function updateFirebaseTransaction(path, record) {
     }
 }
 
-async function deleteFirebaseTransaction(path, id) {
+window.deleteFirebaseTransaction = async function deleteFirebaseTransaction(path, id) {
     if (id == null || !dbgFirebaseSyncReady) return false;
     dbgFirebaseWriteInProgress = true;
     try {
@@ -5168,12 +5168,10 @@ function installMemberPortalStylesAndRoot() {
         }
 
         /* ================= UNIQUE MEMBER LOGIN DATE/TIME HEADER ================= */
-        .dbg-member-login-topbar { display:grid; grid-template-columns:1fr 0 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
+        .dbg-member-login-topbar { position:relative; display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
         .dbg-member-login-date,.dbg-member-login-time { font-size:13px; line-height:1.35; font-weight:800; color:#475569; white-space:nowrap; }
-        .dbg-member-login-date { text-align:left; } .dbg-member-login-time {
-    text-align: right;
-    justify-self: end;
-}
+        .dbg-member-login-date { text-align:left; justify-self:start; }
+        .dbg-member-login-time { text-align:right; justify-self:end; margin-left:auto; }
         .dbg-member-login-title { text-align:center; font-size:18px; line-height:1.35; font-weight:900; color:#312e81; white-space:nowrap; letter-spacing:.01em; }
         @media(max-width:767px){
     .dbg-member-login-topbar {
