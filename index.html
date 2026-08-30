@@ -2866,7 +2866,7 @@ closeMemberModal();
             };
 
             const monthName = monthNames[String(deposit.month).split('-')[1]] || deposit.month;
-            const smsText = `Dear ${member.name || member.nameEn || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
+            const smsText = `Dear ${member.nameEn || member.name || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
