@@ -2216,6 +2216,8 @@ function changeMemPage(direction) {
             const depSelect = document.getElementById('depMemberSelect');
             const filterSelect = document.getElementById('filterDepMember');
             const profSelect = document.getElementById('profileSelect');
+            const currentDep = depSelect.value;
+            const currentFilter = filterSelect.value;
             const currentProf = profSelect.value;
 
             depSelect.innerHTML = '<option value="">সদস্য সিলেক্ট করুন</option>';
@@ -2228,7 +2230,17 @@ function changeMemPage(direction) {
                 profSelect.innerHTML += `<option value="${m.code}">${m.code} - ${m.name}</option>`;
             });
 
-            if (currentProf) profSelect.value = currentProf;
+            if (currentDep && db.members.some(m => m.code === currentDep)) {
+                depSelect.value = currentDep;
+            }
+
+            if (currentFilter && db.members.some(m => m.code === currentFilter)) {
+                filterSelect.value = currentFilter;
+            }
+
+            if (currentProf && db.members.some(m => m.code === currentProf)) {
+                profSelect.value = currentProf;
+            }
         }
         // FULL MEMBER PROFILE WITH DEPOSIT SUMMARY
         function renderIndividualProfile() {
@@ -2854,7 +2866,7 @@ closeMemberModal();
             };
 
             const monthName = monthNames[String(deposit.month).split('-')[1]] || deposit.month;
-            const smsText = `Dear ${member.nameEn || member.name || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
+            const smsText = `Dear ${member.name || member.nameEn || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
