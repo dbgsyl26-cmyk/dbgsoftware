@@ -2827,7 +2827,23 @@ closeMemberModal();
             }
 
             const totalPaid = parseFloat(deposit.amount || 0) + parseFloat(deposit.expenseAmount || 0);
-            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${deposit.month} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
+            const monthNames = {
+    '01': 'জানুয়ারি',
+    '02': 'ফেব্রুয়ারি',
+    '03': 'মার্চ',
+    '04': 'এপ্রিল',
+    '05': 'মে',
+    '06': 'জুন',
+    '07': 'জুলাই',
+    '08': 'আগস্ট',
+    '09': 'সেপ্টেম্বর',
+    '10': 'অক্টোবর',
+    '11': 'নভেম্বর',
+    '12': 'ডিসেম্বর'
+};
+
+const monthName = monthNames[deposit.month.split('-')[1]] || deposit.month;
+            const smsText = `প্রিয় ${member.name}, ড্রিমস বিজনেস গ্রুপে আপনার ${monthName} মাসের ডিপোজিট ৳${deposit.amount} এবং খরচ ৳${deposit.expenseAmount || 0} (সর্বমোট ৳${totalPaid}) জমা হয়েছে। ধন্যবাদ!`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
@@ -5159,7 +5175,25 @@ function installMemberPortalStylesAndRoot() {
     justify-self: end;
 }
         .dbg-member-login-title { text-align:center; font-size:18px; line-height:1.35; font-weight:900; color:#312e81; white-space:nowrap; letter-spacing:.01em; }
-        @media(max-width:767px){ .dbg-member-login-topbar { grid-template-columns:1fr; gap:3px; padding:8px 10px; } .dbg-member-login-date,.dbg-member-login-time { text-align:center; } .dbg-member-login-title { order:-1; font-size:17px; } }
+        @media(max-width:767px){
+    .dbg-member-login-topbar {
+        grid-template-columns:1fr 1fr;
+        gap:3px;
+        padding:8px 10px;
+    }
+    .dbg-member-login-date {
+        text-align:left;
+        justify-self:start;
+    }
+    .dbg-member-login-time {
+        text-align:right;
+        justify-self:end;
+    }
+    .dbg-member-login-title {
+        order:-1;
+        font-size:17px;
+    }
+}
 </style>
       <!-- UNIQUE MEMBER LOGIN DATE / TIME HEADER: above Welcome + Hotline -->
       <div class="dbg-member-login-topbar" aria-label="Member profile date and time">
