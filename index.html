@@ -3064,7 +3064,7 @@ function changeDepPage(direction) {
 }
 
 
-        function editDepositDate(id) {
+        async function editDepositDate(id) {
             const deposit = db.deposits.find(d => d.id === id);
             if (!deposit) return;
             const currentDate = deposit.date ? deposit.date.split('-').reverse().join('-') : '';
@@ -3076,13 +3076,30 @@ function changeDepPage(direction) {
                 return;
             }
             deposit.date = newDate;
-            saveData();
+            saveLocalData();
+            renderAll();
+            try {
+                await updateFirebaseTransaction('dbg_erp/deposits', deposit);
+            } catch (e) {
+                console.error('DBG deposit edit cloud sync failed:', e);
+                alert('জমার তারিখ স্থানীয়ভাবে পরিবর্তন হয়েছে, কিন্তু Cloud Sync হয়নি।\nকারণ: ' + (e?.message || e));
+            }
         }
 
-        function deleteDeposit(id) {
-            if (confirm("আপনি কি জমার রেকর্ডটি ডিলিট করতে চান?")) {
-                db.deposits = db.deposits.filter(d => d.id !== id);
-                saveData();
+        async function deleteDeposit(id) {
+            if (!confirm("আপনি কি জমার রেকর্ডটি ডিলিট করতে চান?")) return;
+            const previous = db.deposits.slice();
+            db.deposits = db.deposits.filter(d => d.id !== id);
+            saveLocalData();
+            renderAll();
+            try {
+                await deleteFirebaseTransaction('dbg_erp/deposits', id);
+            } catch (e) {
+                console.error('DBG deposit delete cloud sync failed:', e);
+                db.deposits = previous;
+                saveLocalData();
+                renderAll();
+                alert('ডিপোজিট Cloud থেকে ডিলিট করা যায়নি। স্থানীয় রেকর্ড পুনরুদ্ধার করা হয়েছে।\nকারণ: ' + (e?.message || e));
             }
         }
 
@@ -3364,25 +3381,68 @@ function changeDepPage(direction) {
             if (qty > 0) document.getElementById('accRate').value = (amount / qty).toFixed(2).replace(/\.00$/, '');
         }
 
-        function saveAccount(e) {
+        async function saveAccount(e) {
             e.preventDefault();
-            const qty = parseFloat(document.getElementById('accQty').value || 0);
-            const rate = parseFloat(document.getElementById('accRate').value || 0);
-            const amount = parseFloat(document.getElementById('accAmount').value || (qty * rate));
-            db.accounts.push({
-                id: Date.now(),
-                type: document.getElementById('accType').value,
-                title: document.getElementById('accTitle').value,
-                quantity: qty,
-                rate: rate,
-                amount: amount,
-                date: document.getElementById('accDate').value
-            });
-            saveData();
-            document.getElementById('accForm').reset();
-            document.getElementById('accQty').value = 1;
-            document.getElementById('accRate').value = 0;
-            document.getElementById('accAmount').value = 0;
+
+            const form = document.getElementById('accForm');
+            const submitButton = form?.querySelector('button[type="submit"]');
+            if (submitButton?.dataset.saving === '1') return;
+            if (submitButton) {
+                submitButton.dataset.saving = '1';
+                submitButton.disabled = true;
+            }
+
+            try {
+                const qty = parseFloat(document.getElementById('accQty').value || 0);
+                const rate = parseFloat(document.getElementById('accRate').value || 0);
+                const amount = parseFloat(document.getElementById('accAmount').value || (qty * rate));
+                if (!Number.isFinite(amount) || amount < 0) {
+                    alert('সঠিক আয়/ব্যয়ের পরিমাণ দিন।');
+                    return;
+                }
+
+                const account = {
+                    id: Date.now(),
+                    type: document.getElementById('accType').value,
+                    title: document.getElementById('accTitle').value,
+                    quantity: qty,
+                    rate: rate,
+                    amount: amount,
+                    date: document.getElementById('accDate').value
+                };
+
+                // Save locally first for immediate UI/receipt use.
+                db.accounts.push(account);
+                saveLocalData();
+                renderAll();
+
+                let cloudSaved = false;
+                try {
+                    if (typeof window.dbgFirebaseCommitAccount === 'function') {
+                        await window.dbgFirebaseCommitAccount(account);
+                        cloudSaved = true;
+                    } else {
+                        throw new Error('Firebase Account Sync module এখনো প্রস্তুত হয়নি।');
+                    }
+                } catch (cloudError) {
+                    console.error('DBG Account Cloud Sync failed:', cloudError);
+                    alert(`আয়/ব্যয় স্থানীয়ভাবে সংরক্ষিত হয়েছে, কিন্তু Cloud Sync হয়নি।\nকারণ: ${cloudError?.message || cloudError}\n\nFirebase সংযোগ ঠিক হলে আবার Sync করতে হবে।`);
+                }
+
+                if (cloudSaved) {
+                    console.info('DBG Firebase: income/expense committed successfully.', account);
+                }
+
+                form?.reset();
+                document.getElementById('accQty').value = 1;
+                document.getElementById('accRate').value = 0;
+                document.getElementById('accAmount').value = 0;
+            } finally {
+                if (submitButton) {
+                    submitButton.dataset.saving = '0';
+                    submitButton.disabled = false;
+                }
+            }
         }
 
         function renderAccounts() {
@@ -3458,10 +3518,20 @@ function changeDepPage(direction) {
             document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
         }
 
-        function deleteAccount(id) {
-            if (confirm("রেকর্ডটি ডিলিট করতে চান?")) {
-                db.accounts = db.accounts.filter(a => a.id !== id);
-                saveData();
+        async function deleteAccount(id) {
+            if (!confirm("রেকর্ডটি ডিলিট করতে চান?")) return;
+            const previous = db.accounts.slice();
+            db.accounts = db.accounts.filter(a => a.id !== id);
+            saveLocalData();
+            renderAll();
+            try {
+                await deleteFirebaseTransaction('dbg_erp/accounts', id);
+            } catch (e) {
+                console.error('DBG account delete cloud sync failed:', e);
+                db.accounts = previous;
+                saveLocalData();
+                renderAll();
+                alert('আয়/ব্যয় Cloud থেকে ডিলিট করা যায়নি। স্থানীয় রেকর্ড পুনরুদ্ধার করা হয়েছে।\nকারণ: ' + (e?.message || e));
             }
         }
 
@@ -3757,6 +3827,7 @@ import {
     equalTo,
     set,
     update,
+    push,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -4080,16 +4151,24 @@ async function writeFirebaseDataNow() {
         const dataRef = ref(firebaseDB, 'dbg_erp');
         const isAccountant = ['accountant','accounts','account','হিসাবরক্ষক','একাউন্টেন্ট','অ্যাকাউন্টেন্ট'].includes(role);
         if (isAccountant) {
-            // Accountant is allowed to write ONLY Deposit Collection and Income/Expense.
-            // IMPORTANT: write directly to the two child paths. The Firebase Rules
-            // intentionally deny Accountant writes to /dbg_erp itself.
-            await Promise.all([
-                set(ref(firebaseDB, 'dbg_erp/deposits'), Array.isArray(db.deposits) ? db.deposits : []),
-                set(ref(firebaseDB, 'dbg_erp/accounts'), Array.isArray(db.accounts) ? db.accounts : [])
-            ]);
+            // IMPORTANT: Deposit and Income/Expense are transaction collections.
+            // They are committed one record at a time through push() below.
+            // Never replace the whole collection with this browser's possibly-stale
+            // local array; doing so can erase records created by the other panel.
+            console.info('DBG Firebase: accountant routine sync skipped for transaction collections.');
         } else {
-            // Admin can synchronize all ERP collections.
-            await update(dataRef, buildFirebasePayload());
+            // Admin routine sync is intentionally limited to non-transactional data.
+            // Deposits/accounts are written through transaction-safe APIs so an
+            // Admin save can never overwrite a newer Accountant record.
+            const safeAdminPayload = {
+                logo: db.logo || '',
+                members: Array.isArray(db.members) ? db.members : [],
+                investments: Array.isArray(db.investments) ? db.investments : [],
+                investorProfiles: Array.isArray(db.investorProfiles) ? db.investorProfiles : [],
+                notices: Array.isArray(db.notices) ? db.notices : [],
+                updatedAt: Date.now()
+            };
+            await update(dataRef, safeAdminPayload);
         }
         console.info('DBG Firebase: data synced successfully.');
     } catch (e) {
@@ -4154,7 +4233,9 @@ window.dbgFirebaseCommitDeposit = async function (deposit) {
         // Instead, append ONLY this new deposit under a Firebase push key.
         // This is permitted by the existing /dbg_erp/deposits .write rule and
         // does not require Accountant read permission on the whole collection.
-        await push(ref(firebaseDB, 'dbg_erp/deposits'), deposit);
+        const depositRef = push(ref(firebaseDB, 'dbg_erp/deposits'));
+        await set(depositRef, deposit);
+        console.info('DBG Firebase: deposit committed with key:', depositRef.key);
         return true;
     } catch (e) {
         console.error('DBG Firebase deposit commit failed:', e);
@@ -4163,6 +4244,79 @@ window.dbgFirebaseCommitDeposit = async function (deposit) {
         dbgFirebaseWriteInProgress = false;
     }
 };
+
+// Transaction-safe Income/Expense commit. Accountant and Admin both use this
+// API so a new record is appended without replacing the shared collection.
+window.dbgFirebaseCommitAccount = async function (account) {
+    if (!account || typeof account !== 'object') throw new Error('অবৈধ আয়/ব্যয় রেকর্ড।');
+
+    if (!dbgFirebaseSyncReady && dbgFirebaseInitPromise) {
+        try { await dbgFirebaseInitPromise; } catch (_) {}
+    }
+    if (!dbgFirebaseSyncReady) {
+        const detail = dbgFirebaseInitError?.code || dbgFirebaseInitError?.message || '';
+        throw new Error(detail
+            ? `Firebase Realtime সংযোগ প্রস্তুত হয়নি: ${detail}`
+            : 'Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি। লগইন করার পর কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
+    }
+
+    dbgFirebaseWriteInProgress = true;
+    try {
+        const accountRef = push(ref(firebaseDB, 'dbg_erp/accounts'));
+        await set(accountRef, account);
+        console.info('DBG Firebase: account committed with key:', accountRef.key);
+        return true;
+    } catch (e) {
+        console.error('DBG Firebase account commit failed:', e);
+        throw new Error(`আয়/ব্যয় Cloud Sync ব্যর্থ: ${e?.code || e?.message || e}`);
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+};
+
+// Find a shared transaction record by its existing application-level id.
+// This supports edit/delete without replacing the whole collection.
+async function findFirebaseRecordKey(path, id) {
+    const snap = await get(ref(firebaseDB, path));
+    if (!snap.exists()) return null;
+    const value = snap.val();
+    if (Array.isArray(value)) {
+        const index = value.findIndex(x => x && String(x.id) === String(id));
+        return index >= 0 ? String(index) : null;
+    }
+    if (value && typeof value === 'object') {
+        const entry = Object.entries(value).find(([_, x]) => x && String(x.id) === String(id));
+        return entry ? entry[0] : null;
+    }
+    return null;
+}
+
+async function updateFirebaseTransaction(path, record) {
+    if (!record || record.id == null || !dbgFirebaseSyncReady) return false;
+    dbgFirebaseWriteInProgress = true;
+    try {
+        const key = await findFirebaseRecordKey(path, record.id);
+        if (key == null) throw new Error('Cloud record পাওয়া যায়নি।');
+        await set(ref(firebaseDB, `${path}/${key}`), record);
+        return true;
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+}
+
+async function deleteFirebaseTransaction(path, id) {
+    if (id == null || !dbgFirebaseSyncReady) return false;
+    dbgFirebaseWriteInProgress = true;
+    try {
+        const key = await findFirebaseRecordKey(path, id);
+        if (key == null) return false;
+        await set(ref(firebaseDB, `${path}/${key}`), null);
+        return true;
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+}
+
 window.dbgRetryFirebaseSync = async function () {
     try {
         if (!dbgFirebaseSyncReady && dbgFirebaseInitPromise) {
