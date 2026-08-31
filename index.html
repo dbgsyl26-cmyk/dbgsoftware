@@ -4546,10 +4546,11 @@ async function initializeFirebaseERPData(role) {
             if (!snapshot.exists()) return;
             try {
                 const payload = snapshot.val() || {};
-                // Deposit data is handled by the dedicated listener below.
-                const copy = { ...payload };
-                delete copy.deposits;
-                await applyFirebasePayload(copy, { accountantOnly: false });
+                // Apply the complete payload, including deposits. Firebase now stores
+                // Accountant deposits under push keys, and applyFirebasePayload() normalizes
+                // both the legacy array format and push-keyed object format. Keeping deposits
+                // in this realtime path ensures the Admin dashboard is refreshed immediately.
+                await applyFirebasePayload(payload);
             } catch (e) {
                 console.error('DBG Firebase parent payload apply failed:', e);
             }
