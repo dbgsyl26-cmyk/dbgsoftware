@@ -3957,7 +3957,14 @@ function setLoggedInUI(user, role = '') {
         setAuthError(''); setAuthStatus('');
         window.dbgFirebaseUser = user; window.dbgFirebaseRole = role || 'Member';
         window.dbgFirebaseLogout = () => signOut(firebaseAuth);
-        if (dbgFirebaseUnsubscribe) { try { dbgFirebaseUnsubscribe(); } catch (_) {} dbgFirebaseUnsubscribe = null; }
+        // Member Portal must not keep any Admin/Accountant ERP listeners alive.
+        // In particular, an old Admin deposit listener would otherwise try to
+        // read /dbg_erp/deposits with Member permissions and produce permission_denied.
+        clearRealtimeListeners();
+        dbgFirebaseSyncReady = false;
+        window.dbgFirebaseSyncReady = false;
+        dbgFirebaseInitPromise = null;
+        dbgFirebaseInitError = null;
         showMemberPortal(user);
         return;
     }
@@ -5428,7 +5435,9 @@ async function renderMemberIdQr(member){
             height:94,
             colorDark:'#064e3b',
             colorLight:'#ffffff',
-            correctLevel:QRCode.CorrectLevel.M
+            // Keep the complete existing QR data unchanged; use the lower
+            // error-correction level so the same data fits within QR capacity.
+            correctLevel:QRCode.CorrectLevel.L
         });
     }catch(e){
         console.warn('DBG QR generation unavailable:',e?.message||e);
