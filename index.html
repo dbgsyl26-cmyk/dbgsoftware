@@ -1968,11 +1968,11 @@
         });
 
         function switchTab(tabId) {
-            // Role restriction: Accountant may open only Deposit Collection and Accounts.
+            // Role restriction: Accountant may open Dashboard, Deposit Collection and Accounts.
             const role = String(window.dbgFirebaseRole || '').trim().toLowerCase();
             const isAccountant = ['accountant', 'accounts', 'account', 'হিসাবরক্ষক', 'একাউন্টেন্ট', 'অ্যাকাউন্টেন্ট'].includes(role);
-            if (isAccountant && tabId !== 'deposits' && tabId !== 'accounts') {
-                tabId = 'deposits';
+            if (isAccountant && tabId !== 'dashboard' && tabId !== 'deposits' && tabId !== 'accounts') {
+                tabId = 'dashboard';
             }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-tab').forEach(el => {
@@ -3970,9 +3970,9 @@ function setLoggedInUI(user, role = '') {
     }
     document.body.classList.remove('dbg-member-mode');
     document.body.classList.toggle('dbg-accountant-mode', isAccountant);
-    // Accountant can access ONLY Deposit Collection and Income/Expense.
+    // Accountant can access Dashboard, Deposit Collection and Income/Expense.
     document.querySelectorAll('.nav-tab').forEach(btn => {
-        const allowed = btn.id === 'tab-deposits' || btn.id === 'tab-accounts';
+        const allowed = btn.id === 'tab-dashboard' || btn.id === 'tab-deposits' || btn.id === 'tab-accounts';
         btn.classList.toggle('dbg-admin-only', isAccountant && !allowed);
     });
     overlay?.classList.add('hidden');
@@ -4000,8 +4000,8 @@ function setLoggedInUI(user, role = '') {
     }
 
     if (isAccountant) {
-        // Do not leave the accountant on Dashboard after login.
-        setTimeout(() => { try { switchTab('deposits'); } catch (_) {} }, 0);
+        // Accountant now starts on the same Dashboard available to Admin.
+        setTimeout(() => { try { switchTab('dashboard'); } catch (_) {} }, 0);
     }
 
     // Add a logout button if the existing header does not have one.
@@ -5435,9 +5435,10 @@ async function renderMemberIdQr(member){
             height:94,
             colorDark:'#064e3b',
             colorLight:'#ffffff',
-            // Keep the complete existing QR data unchanged; use the lower
-            // error-correction level so the same data fits within QR capacity.
-            correctLevel:QRCode.CorrectLevel.L
+            // Keep the complete existing QR data unchanged; let QRCode.js
+            // automatically select the smallest QR version that fits.
+            correctLevel:QRCode.CorrectLevel.L,
+            typeNumber:0
         });
     }catch(e){
         console.warn('DBG QR generation unavailable:',e?.message||e);
