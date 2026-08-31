@@ -2996,6 +2996,14 @@ closeMemberModal();
                     if (typeof window.dbgFirebaseCommitDeposit === 'function') {
                         await window.dbgFirebaseCommitDeposit(newDeposit);
                         cloudSaved = true;
+                        // Ensure the just-saved deposit remains reflected in the
+                        // current Accountant dashboard even if a realtime snapshot
+                        // was skipped while the Firebase write was in progress.
+                        if (!db.deposits.some(d => String(d?.id) === String(newDeposit.id))) {
+                            db.deposits.push(newDeposit);
+                            saveLocalData();
+                        }
+                        renderDashboard();
                         console.info('DBG Firebase: deposit committed successfully.', newDeposit);
                     } else {
                         throw new Error('Firebase Deposit Sync module এখনো প্রস্তুত হয়নি।');
@@ -4396,7 +4404,11 @@ async function applyFirebasePayload(payload) {
         else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
-        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts;
+        // Firebase push() stores accounts as an object keyed by push IDs.
+        // Normalize both legacy arrays and push-keyed objects so Admin Dashboard
+        // receives Accountant income/expense entries without changing any data.
+        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts.filter(Boolean);
+        else if (payload.accounts && typeof payload.accounts === 'object') db.accounts = Object.values(payload.accounts).filter(Boolean);
         if (Array.isArray(payload.notices)) db.notices = payload.notices;
         renderAdminNotices();
 
