@@ -11,28 +11,21 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-        <script src="https://onesignal.com" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "734c0117-829f-4b2d-92b7-12cd13c353a7",
-          serviceWorkerPath: "OneSignalSDKWorker.js",
-          serviceWorkerParam: { scope: "/dbgsoftware/" },
-          pageBust: true 
-        });
-        
-        await OneSignal.Notifications.requestPermission();
-      });
-    </script>
-
+       <script src="https://onesignal.com" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "734c0117-829f-4b2d-92b7-12cd13c353a7",
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/dbgsoftware/" },
+      pageBust: true 
+    });
     
-    // নোটিফিকেশন পারমিশন পপ-আপ চাওয়ার জন্য
     await OneSignal.Notifications.requestPermission();
   });
 </script>
 
-</script>
     <style>
         body {
             font-family: 'Hind Siliguri', sans-serif;
