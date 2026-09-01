@@ -17,9 +17,16 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: "734c0117-829f-4b2d-92b7-12cd13c353a7",
+      // গিটহাব সাব-ফোল্ডারের জন্য সম্পূর্ণ ইউআরএল এবং পেজ-বাস্ট যুক্ত করা হলো
       serviceWorkerPath: "OneSignalSDKWorker.js",
-      serviceWorkerParam: { scope: "/dbgsoftware/" }
+      serviceWorkerParam: { scope: "/dbgsoftware/" },
+      pageBust: true 
     });
+    
+    await OneSignal.Notifications.requestPermission();
+  });
+</script>
+
     
     // নোটিফিকেশন পারমিশন পপ-আপ চাওয়ার জন্য
     await OneSignal.Notifications.requestPermission();
