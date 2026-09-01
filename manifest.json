@@ -1,13 +1,23 @@
 {
-  "background_color": "#304534",
-  "dir": "ltr",
-  "display": "standalone",
-  "name": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
-  "orientation": "any",
-  "scope": "/",
+  "name": "DBG Software",
   "short_name": "DBG",
-  "start_url": "/",
-  "theme_color": "#03400a",
-  "id": "dbgsoftware",
-  "lang": "bn"
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "Official app for DBG Software",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
