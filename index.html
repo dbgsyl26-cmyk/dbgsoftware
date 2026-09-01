@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
     <style>
         body {
             font-family: 'Hind Siliguri', sans-serif;
@@ -6126,6 +6127,11 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         setLoggedOutUI();
     }
 });
+</script>
+<script type="module">
+   import 'https://jsdelivr.net';
+   const el = document.createElement('pwa-update');
+   document.body.appendChild(el);
 </script>
 
 </body>
