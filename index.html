@@ -6128,11 +6128,10 @@ onAuthStateChanged(firebaseAuth, async (user) => {
     }
 });
 </script>
-<script type="module">
-   import 'https://jsdelivr.net';
-   const el = document.createElement('pwa-update');
-   document.body.appendChild(el);
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
 </script>
-
 </body>
 </html>
