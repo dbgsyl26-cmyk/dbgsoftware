@@ -1,0 +1,13 @@
+{
+  "background_color": "#304534",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "DBG",
+  "start_url": "/",
+  "theme_color": "#03400a",
+  "id": "dbgsoftware",
+  "lang": "bn"
+}
