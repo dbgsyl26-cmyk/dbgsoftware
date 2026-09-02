@@ -4204,8 +4204,8 @@ function initAdminNoticeBoard(){
     document.getElementById('dbgNoticeForm')?.addEventListener('submit',async event=>{
         event.preventDefault(); if(!isAdminRole(window.dbgFirebaseRole)){setNoticeFormStatus('শুধুমাত্র Admin নোটিশ পরিবর্তন করতে পারবেন।',true);return;}
         const title=document.getElementById('dbgNoticeTitle')?.value.trim()||'', message=document.getElementById('dbgNoticeMessage')?.value.trim()||'', editId=document.getElementById('dbgNoticeEditId')?.value.trim()||'';
-                // ওয়ানসিগন্যাল নোটিফিকেশন পাঠানোর নতুন কোড:
-        try {
+        // ওয়ানসিগন্যাল নোটিফিকেশন পাঠানোর নতুন কোড:
+                try {
             fetch("https://vercel.app", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
