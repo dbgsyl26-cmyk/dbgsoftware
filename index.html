@@ -10,6 +10,22 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+       <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "734c0117-829f-4b2d-92b7-12cd13c353a7",
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: {
+        scope: "/dbgsoftware/"
+      }
+    });
+  });
+</script>
+
     <style>
         body {
             font-family: 'Hind Siliguri', sans-serif;
@@ -2883,6 +2899,9 @@ closeMemberModal();
             const callerID = 'Random';
             const endpoint = 'https://bulksmsdhaka.net/api/sendtext';
 
+            // BulkSMS Dhaka documents support POST. Keep all existing deposit,
+            // receipt and Firebase behaviour unchanged; only the SMS transport is
+            // sent as form data instead of exposing the full message in a GET URL.
             const params = new URLSearchParams({
                 apikey: apiKey,
                 callerID: callerID,
@@ -2891,23 +2910,39 @@ closeMemberModal();
             });
 
             try {
-                const response = await fetch(`${endpoint}?${params.toString()}`, {
-                    method: 'GET',
+                const response = await fetch(endpoint, {
+                    method: 'POST',
                     mode: 'cors',
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'Accept': 'application/json, text/plain, */*'
+                    },
+                    body: params.toString()
                 });
 
                 const raw = await response.text();
                 let result = raw;
+                let statusCode = '';
                 try {
                     const json = JSON.parse(raw);
-                    result = json.message || json.status || json.error || raw;
+                    statusCode = String(json.Status || json.status || json.code || '');
+                    result = json.Message || json.message || json.Status || json.status || json.error || raw;
                 } catch (_) {}
 
-                const lower = String(raw).toLowerCase();
-                const failed = !response.ok || /error|failed|invalid|insufficient|unauthor|balance|rejected|denied/.test(lower);
+                const gatewayText = String(raw || result || '');
+                const lower = gatewayText.toLowerCase();
+                const ipDenied = statusCode === '1008' || /ip[^\n]*not\s*whitelist|not\s*whitelisted|access\s*denied[^\n]*ip/i.test(gatewayText);
+                const failed = !response.ok || ipDenied || /error|failed|invalid|insufficient|unauthor|balance|rejected|denied/.test(lower);
+
                 if (failed) {
-                    const gatewayText = String(raw || result || '');
+                    if (ipDenied) {
+                        const ipMatch = gatewayText.match(/ip\s*\(?\s*([0-9a-f:.]+)\s*\)?/i);
+                        const currentIp = ipMatch ? ipMatch[1] : '';
+                        alert(`SMS Gateway আপনার বর্তমান Internet IP-টি Block করেছে।${currentIp ? `\nCurrent IP: ${currentIp}` : ''}\n\nBulkSMS Dhaka account-এ এই IP whitelist/approve করতে হবে অথবা API Key-এর IP Whitelist restriction বন্ধ করতে হবে।\n\nGateway response: ${result}`);
+                        return false;
+                    }
+
                     if (/invalid.*api|api.*invalid|unauthor|unauthorized/i.test(gatewayText)) {
                         const newKey = prompt('BulkSMS Dhaka API Key সঠিক নয়। নতুন API Key লিখুন:');
                         if (newKey && newKey.trim()) {
@@ -6127,6 +6162,10 @@ onAuthStateChanged(firebaseAuth, async (user) => {
     }
 });
 </script>
-
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
 </body>
 </html>
