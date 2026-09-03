@@ -10,6 +10,17 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker Registered!'))
+            .catch(err => console.log('Service Worker Failed!', err));
+        });
+      }
+    </script>
+
     <style>
         body {
             font-family: 'Hind Siliguri', sans-serif;
