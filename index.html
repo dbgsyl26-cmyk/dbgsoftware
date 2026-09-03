@@ -509,7 +509,7 @@
             <div class="flex items-center space-x-3 space-x-reverse border-b border-indigo-800 pb-4 mb-6">
                 <div class="relative group cursor-pointer flex-shrink-0">
                     <label for="logoUpload" class="cursor-pointer block">
-                        <img id="groupLogoImg" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22 viewBox=%220 0 50 50%22%3E%3Crect width=%2250%22 height=%2250%22 rx=%2210%22 fill=%22%234f46e5%22/%3E%3Ctext x=%2225%22 y=%2231%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2218%22 font-weight=%22700%22 fill=%22white%22%3EDBG%3C/text%3E%3C/svg%3E" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
+                        <img id="groupLogoImg" src="https://via.placeholder.com/50?text=DBG" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
                         <div class="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                             <i data-lucide="camera" class="w-4 h-4 text-white"></i>
                         </div>
@@ -1597,11 +1597,25 @@
                     <p class="text-right">তারিখ: <strong id="voucherDate"></strong></p>
                 </div>
                 <div class="border rounded-lg overflow-hidden">
-                    <table class="w-full text-sm">
-                        <tr><td class="p-2 border-b font-semibold">বিবরণ / খাত</td><td class="p-2 border-b text-right" id="voucherTitle"></td></tr>
-                        <tr><td class="p-2 border-b font-semibold">পরিমাণ</td><td class="p-2 border-b text-right" id="voucherQty"></td></tr>
-                        <tr><td class="p-2 border-b font-semibold">দর</td><td class="p-2 border-b text-right">৳<span id="voucherRate"></span></td></tr>
-                        <tr><td class="p-2 font-bold">মোট</td><td class="p-2 text-right font-bold text-lg">৳<span id="voucherAmount"></span></td></tr>
+                    <table class="w-full text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="p-2 border-b border-r text-center font-semibold whitespace-nowrap">ক্রমিক</th>
+                                <th class="p-2 border-b border-r text-left font-semibold">বিবরণ / খাত</th>
+                                <th class="p-2 border-b border-r text-center font-semibold whitespace-nowrap">পরিমাণ</th>
+                                <th class="p-2 border-b border-r text-right font-semibold whitespace-nowrap">দর</th>
+                                <th class="p-2 border-b text-right font-semibold whitespace-nowrap">মোট</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border-r text-center font-semibold">১</td>
+                                <td class="p-2 border-r" id="voucherTitle"></td>
+                                <td class="p-2 border-r text-center" id="voucherQty"></td>
+                                <td class="p-2 border-r text-right">৳<span id="voucherRate"></span></td>
+                                <td class="p-2 text-right font-bold text-lg">৳<span id="voucherAmount"></span></td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
                 <div class="flex justify-between text-xs text-gray-500 pt-6">
@@ -2276,7 +2290,7 @@ function changeMemPage(direction) {
             const totalDreamDevelopmentPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
             const totalDepPaidWithSpecialDeposits = totalDepPaid + totalDreamProsperityPaid + totalDreamDevelopmentPaid;
             const totalExpensePaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
-            const photoSrc = member.photo || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%2275%22 y=%2283%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2220%22 font-weight=%22700%22 fill=%22%2364758b%22%3EDBG%3C/text%3E%3C/svg%3E';
+            const photoSrc = member.photo || 'https://via.placeholder.com/150';
 
             // Individual Deposit Summary Rows
             const banglaMonthNames = {
@@ -3567,7 +3581,7 @@ function changeDepPage(direction) {
         function downloadAccountVoucher() {
             const source = document.getElementById('accountVoucherContent');
             if (!source) return;
-            const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style></head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
+            const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style></head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
             const blob = new Blob([html], {type:'text/html;charset=utf-8'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
