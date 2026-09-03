@@ -509,7 +509,7 @@
             <div class="flex items-center space-x-3 space-x-reverse border-b border-indigo-800 pb-4 mb-6">
                 <div class="relative group cursor-pointer flex-shrink-0">
                     <label for="logoUpload" class="cursor-pointer block">
-                        <img id="groupLogoImg" src="https://via.placeholder.com/50?text=DBG" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
+                        <img id="groupLogoImg" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22 viewBox=%220 0 50 50%22%3E%3Crect width=%2250%22 height=%2250%22 rx=%2210%22 fill=%22%234f46e5%22/%3E%3Ctext x=%2225%22 y=%2231%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2218%22 font-weight=%22700%22 fill=%22white%22%3EDBG%3C/text%3E%3C/svg%3E" class="w-12 h-12 rounded-xl object-cover border border-amber-400 shadow-lg">
                         <div class="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                             <i data-lucide="camera" class="w-4 h-4 text-white"></i>
                         </div>
@@ -2276,7 +2276,7 @@ function changeMemPage(direction) {
             const totalDreamDevelopmentPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
             const totalDepPaidWithSpecialDeposits = totalDepPaid + totalDreamProsperityPaid + totalDreamDevelopmentPaid;
             const totalExpensePaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
-            const photoSrc = member.photo || 'https://via.placeholder.com/150';
+            const photoSrc = member.photo || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect width=%22150%22 height=%22150%22 fill=%22%23e2e8f0%22/%3E%3Ctext x=%2275%22 y=%2283%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2220%22 font-weight=%22700%22 fill=%22%2364758b%22%3EDBG%3C/text%3E%3C/svg%3E';
 
             // Individual Deposit Summary Rows
             const banglaMonthNames = {
