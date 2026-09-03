@@ -3444,7 +3444,7 @@ function changeDepPage(direction) {
         }
 
         function accountItemRowHtml(title = '', qty = 1, rate = 0) {
-            return `<div class="account-item-row grid grid-cols-[1fr_80px_95px_42px] gap-2 items-end border border-gray-200 rounded-lg p-2 bg-gray-50">
+            return `<div class="account-item-row grid grid-cols-[minmax(120px,1fr)_60px_70px_36px] gap-2 items-end border border-gray-200 rounded-lg p-2 bg-gray-50">
                 <div><label class="block text-[10px] font-semibold text-gray-500 mb-1">বিবরণ / খাত</label><input type="text" value="${escapeVoucherHtml(title)}" class="acc-item-title w-full border border-gray-300 rounded-lg p-2 text-sm" required></div>
                 <div><label class="block text-[10px] font-semibold text-gray-500 mb-1">পরিমাণ</label><input type="number" min="0" step="0.01" value="${qty}" class="acc-item-qty w-full border border-gray-300 rounded-lg p-2 text-sm" oninput="recalculateAccountItems()"></div>
                 <div><label class="block text-[10px] font-semibold text-gray-500 mb-1">দর</label><input type="number" min="0" step="0.01" value="${rate}" class="acc-item-rate w-full border border-gray-300 rounded-lg p-2 text-sm" oninput="recalculateAccountItems()"></div>
