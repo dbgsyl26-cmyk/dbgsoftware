@@ -2038,6 +2038,71 @@
             }
         }
 
+        // CUMULATIVE MONTHLY ARREARS CALCULATION
+        // Calculates unpaid monthly deposits from the member's joining month
+        // (or earliest recorded deposit month) through the selected/running month.
+        function dbgMonthIndex(monthKey) {
+            const m = String(monthKey || '').match(/^(\d{4})-(\d{2})$/);
+            return m ? (parseInt(m[1], 10) * 12 + parseInt(m[2], 10) - 1) : null;
+        }
+
+        function dbgMemberStartMonth(member, memberDeposits) {
+            const raw = member?.joinDate || member?.registrationDate || member?.createdAt || member?.date || '';
+            if (raw) {
+                const text = String(raw);
+                const iso = text.match(/^(\d{4})-(\d{2})/);
+                if (iso) return `${iso[1]}-${iso[2]}`;
+
+                const dmy = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+                if (dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2, '0')}`;
+
+                const timestamp = Number(raw);
+                if (Number.isFinite(timestamp) && timestamp > 0) {
+                    const d = new Date(timestamp);
+                    if (!Number.isNaN(d.getTime())) {
+                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    }
+                }
+            }
+
+            const recordedMonths = (memberDeposits || [])
+                .map(d => String(d.month || ''))
+                .filter(m => /^\d{4}-\d{2}$/.test(m))
+                .sort();
+
+            // If no joining date/deposit history exists, preserve the old
+            // behavior by counting only the selected/running month.
+            return recordedMonths[0] || null;
+        }
+
+        function dbgGetMemberCumulativeArrears(member, throughMonth) {
+            const target = Number(member?.units || 0) * 500;
+            if (!target || !/^\d{4}-\d{2}$/.test(String(throughMonth || ''))) return 0;
+
+            const memberDeposits = db.deposits.filter(d => d.memberCode === member.code);
+            const throughIndex = dbgMonthIndex(throughMonth);
+            let startMonth = dbgMemberStartMonth(member, memberDeposits);
+
+            if (!startMonth) startMonth = throughMonth;
+            const startIndex = dbgMonthIndex(startMonth);
+            if (startIndex === null || throughIndex === null || startIndex > throughIndex) return 0;
+
+            let arrears = 0;
+            for (let idx = startIndex; idx <= throughIndex; idx++) {
+                const year = Math.floor(idx / 12);
+                const month = (idx % 12) + 1;
+                const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+
+                const paid = memberDeposits
+                    .filter(d => d.month === monthKey)
+                    .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+
+                arrears += Math.max(0, target - paid);
+            }
+
+            return arrears;
+        }
+
         // DASHBOARD WITH TOTAL DUE CARD
         function renderDashboard() {
             const selectedMonth = document.getElementById('dashboardMonth').value;
@@ -2051,7 +2116,12 @@
             const paidMemberCodes = new Set(currentMonthDeposits.map(d => d.memberCode));
             const paidCount = paidMemberCodes.size;
             const dueCount = Math.max(0, totalMembers - paidCount);
-            const dueAmount = Math.max(0, monthlyDemand - collectedThisMonth);
+            // Total due now includes all unpaid monthly installments up to the
+            // selected month, so previous-month arrears carry into the total.
+            const dueAmount = db.members.reduce(
+                (sum, m) => sum + dbgGetMemberCumulativeArrears(m, selectedMonth),
+                0
+            );
 
             // Expense Fund Calculation
             const totalExpenseFundCollected = db.deposits.reduce((sum, d) => sum + parseFloat(d.expenseAmount || 0), 0);
@@ -2095,7 +2165,7 @@
             
             db.members.forEach(m => {
                 if (!paidMemberCodes.has(m.code)) {
-                    const dueMoney = m.units * 500;
+                    const dueMoney = dbgGetMemberCumulativeArrears(m, selectedMonth);
                     dueTableBody.innerHTML += `
                         <tr>
                             <td class="p-2 font-bold text-indigo-700">${m.code}</td>
@@ -2343,7 +2413,7 @@ function changeMemPage(direction) {
                             </div>
                             <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                                 <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
-                                <span class="text-xl font-bold text-rose-700">৳${member.units * 500 - memberDeposits.filter(d => d.month === new Date().toISOString().slice(0, 7)).reduce((sum, d) => sum + parseFloat(d.amount || 0), 0)}</span>
+                                <span class="text-xl font-bold text-rose-700">৳${dbgGetMemberCumulativeArrears(member, new Date().toISOString().slice(0, 7)).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -5658,7 +5728,8 @@ function buildMemberPortalProfileHtml(member, memberDeposits) {
     const currentMonthPaid = memberDeposits
         .filter(d => d.month === currentMonth)
         .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
-    const outstanding = Math.max(0, (Number(member.units || 0) * 500) - currentMonthPaid);
+    // Include all unpaid monthly installments up to the running month.
+    const outstanding = dbgGetMemberCumulativeArrears(member, currentMonth);
     const photoSrc = member.photo || ''; const memberWelcomeName = member.name || member.nameEn || 'সম্মানিত সদস্য';
     const monthlyTarget = Number(member.units || 0) * 500;
     const monthlyProgress = monthlyTarget > 0 ? Math.min(100, Math.round((currentMonthPaid / monthlyTarget) * 100)) : 0;
@@ -5679,7 +5750,7 @@ if (outstanding > 0) {
                         গুরুত্বপূর্ণ তথ্য
                     </h3>
                     <p class="text-sm text-red-700 mt-1">
-                        আপনার এই মাসের ডিপোজিটে ৳${outstanding.toLocaleString()} বকেয়া রয়েছে।
+                        আপনার মোট বকেয়া (আগের মাসসহ) ৳${outstanding.toLocaleString()} রয়েছে।
                     </p>
                 </div>
             </div>
@@ -5821,7 +5892,7 @@ if (outstanding > 0) {
                 <div class="dbg-member-stat-card stat-green"><div class="dbg-member-stat-icon">৳</div><div><span>মোট জমা</span><strong>৳${totalDepPaidWithSpecialDeposits.toLocaleString()}</strong></div></div>
                 <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
                 <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
-                <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'এই মাসের বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
+                <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'মোট বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
             </div>
 
             <div class="dbg-member-progress-card">
