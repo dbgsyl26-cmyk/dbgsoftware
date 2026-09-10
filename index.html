@@ -2047,16 +2047,31 @@
         }
 
         function dbgMemberStartMonth(member, memberDeposits) {
-            // Arrears must start from the first month that has an actual
-            // deposit record. Member registration/join date is not used here,
-            // because it can be earlier than the member's actual deposit start
-            // and would create false historical arrears.
+            const raw = member?.joinDate || member?.registrationDate || member?.createdAt || member?.date || '';
+            if (raw) {
+                const text = String(raw);
+                const iso = text.match(/^(\d{4})-(\d{2})/);
+                if (iso) return `${iso[1]}-${iso[2]}`;
+
+                const dmy = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+                if (dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2, '0')}`;
+
+                const timestamp = Number(raw);
+                if (Number.isFinite(timestamp) && timestamp > 0) {
+                    const d = new Date(timestamp);
+                    if (!Number.isNaN(d.getTime())) {
+                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    }
+                }
+            }
+
             const recordedMonths = (memberDeposits || [])
                 .map(d => String(d.month || ''))
                 .filter(m => /^\d{4}-\d{2}$/.test(m))
                 .sort();
 
-            // If there is no deposit history, count only the running month.
+            // If no joining date/deposit history exists, preserve the old
+            // behavior by counting only the selected/running month.
             return recordedMonths[0] || null;
         }
 
@@ -2068,24 +2083,22 @@
             const throughIndex = dbgMonthIndex(throughMonth);
             let startMonth = dbgMemberStartMonth(member, memberDeposits);
 
-            if (!startMonth) startMonth = throughMonth;
+            if (!startMonth) return 0;
             const startIndex = dbgMonthIndex(startMonth);
             if (startIndex === null || throughIndex === null || startIndex > throughIndex) return 0;
 
-            let arrears = 0;
-            for (let idx = startIndex; idx <= throughIndex; idx++) {
-                const year = Math.floor(idx / 12);
-                const month = (idx % 12) + 1;
-                const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            // Treat each valid monthly deposit record as payment toward one
+            // monthly installment. This prevents false arrears when a member
+            // has fully paid the required number of installments but historical
+            // deposit records contain month-key gaps/mismatches.
+            const expectedInstallments = throughIndex - startIndex + 1;
+            const paidAmount = memberDeposits.reduce(
+                (sum, d) => sum + Math.max(0, Number.parseFloat(d.amount || 0) || 0),
+                0
+            );
+            const expectedAmount = expectedInstallments * target;
 
-                const paid = memberDeposits
-                    .filter(d => d.month === monthKey)
-                    .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
-
-                arrears += Math.max(0, target - paid);
-            }
-
-            return arrears;
+            return Math.max(0, expectedAmount - paidAmount);
         }
 
         // DASHBOARD WITH TOTAL DUE CARD
