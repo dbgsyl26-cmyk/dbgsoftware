@@ -2047,31 +2047,16 @@
         }
 
         function dbgMemberStartMonth(member, memberDeposits) {
-            const raw = member?.joinDate || member?.registrationDate || member?.createdAt || member?.date || '';
-            if (raw) {
-                const text = String(raw);
-                const iso = text.match(/^(\d{4})-(\d{2})/);
-                if (iso) return `${iso[1]}-${iso[2]}`;
-
-                const dmy = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-                if (dmy) return `${dmy[3]}-${String(dmy[2]).padStart(2, '0')}`;
-
-                const timestamp = Number(raw);
-                if (Number.isFinite(timestamp) && timestamp > 0) {
-                    const d = new Date(timestamp);
-                    if (!Number.isNaN(d.getTime())) {
-                        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    }
-                }
-            }
-
+            // Arrears must start from the first month that has an actual
+            // deposit record. Member registration/join date is not used here,
+            // because it can be earlier than the member's actual deposit start
+            // and would create false historical arrears.
             const recordedMonths = (memberDeposits || [])
                 .map(d => String(d.month || ''))
                 .filter(m => /^\d{4}-\d{2}$/.test(m))
                 .sort();
 
-            // If no joining date/deposit history exists, preserve the old
-            // behavior by counting only the selected/running month.
+            // If there is no deposit history, count only the running month.
             return recordedMonths[0] || null;
         }
 
