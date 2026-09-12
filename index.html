@@ -140,9 +140,10 @@
         .dbg-member-password-wrap input { padding-right:44px; }
         .dbg-member-eye { position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:8px;color:#64748b;cursor:pointer; }
         .dbg-member-biometric {
-            position:absolute; right:46px; top:50%; transform:translateY(-50%);
-            border:0; background:transparent; padding:8px; color:#059669; cursor:pointer;
+            position:absolute; right:44px; top:50%; transform:translateY(-50%);
+            border:0; background:transparent; padding:7px; color:#059669; cursor:pointer;
         }
+        .dbg-member-biometric i { width:24px !important; height:24px !important; stroke-width:2.5 !important; }
         .dbg-member-biometric:hover { color:#047857; background:#ecfdf5; border-radius:9px; }
         .dbg-member-biometric:disabled { opacity:.55; cursor:not-allowed; }
 
@@ -6483,7 +6484,7 @@ document.getElementById('dbgMemberResetPassword')?.addEventListener('click',asyn
    an encrypted copy of the member's Firebase login credential on this device.
    The Firebase password itself is never stored in plain text.
 */
-const DBG_BIOMETRIC_PREFIX = 'dbg_member_biometric_v1_';
+const DBG_BIOMETRIC_PREFIX = 'dbg_member_biometric_v2_';
 
 function dbgB64uFromBytes(bytes){
     let bin=''; const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
@@ -6557,7 +6558,7 @@ async function dbgCreateMemberBiometric(){
         rp:{name:'Dreams Business Group',id:location.hostname},
         user:{id:userId,name:id,displayName:id},
         pubKeyCredParams:[{type:'public-key',alg:-7}],
-        authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',requireResidentKey:true,userVerification:'required'},
+        authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'discouraged',requireResidentKey:false,userVerification:'required'},
         timeout:60000,
         attestation:'none',
         extensions:{prf:{eval:{first:salt}}}
@@ -6598,25 +6599,30 @@ async function dbgBiometricLogin(){
     }
     if(!records.length) throw new Error('এই ডিভাইসে Fingerprint সেটআপ করা নেই। প্রথমে সদস্য আইডি ও পাসওয়ার্ড দিয়ে Fingerprint আইকনে ক্লিক করে সেটআপ করুন।');
 
-    const allowCredentials=records.map(r=>({type:'public-key',id:dbgBytesFromB64u(r.credentialId),transports:['internal']}));
-    const assertion=await navigator.credentials.get({
-        publicKey:{
-            challenge:dbgRandomBytes(32),
-            rpId:location.hostname,
-            allowCredentials,
-            userVerification:'required',
-            timeout:60000,
-            extensions:{prf:{eval:{first:dbgBytesFromB64u(records[0].salt)}}}
-        }
-    });
-    if(!assertion) throw new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
-
-    const usedId=dbgB64uFromBytes(new Uint8Array(assertion.rawId));
-    const record=records.find(r=>r.credentialId===usedId);
-    if(!record) throw new Error('Fingerprint credential পাওয়া যায়নি।');
-    const ext=assertion.getClientExtensionResults?.() || {};
-    const prf=ext?.prf?.results?.first;
-    if(!prf) throw new Error('Fingerprint যাচাই থেকে নিরাপদ key পাওয়া যায়নি।');
+    let assertion=null, record=null, prf=null, lastError=null;
+    // Each credential has its own PRF salt, so try the registered device credentials one by one.
+    for(const candidate of records){
+        try{
+            const result=await navigator.credentials.get({
+                publicKey:{
+                    challenge:dbgRandomBytes(32),
+                    rpId:location.hostname,
+                    allowCredentials:[{type:'public-key',id:dbgBytesFromB64u(candidate.credentialId),transports:['internal']}],
+                    userVerification:'required',
+                    timeout:60000,
+                    extensions:{prf:{eval:{first:dbgBytesFromB64u(candidate.salt)}}}
+                }
+            });
+            if(!result) throw new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
+            const ext=result.getClientExtensionResults?.() || {};
+            const candidatePrf=ext?.prf?.results?.first;
+            if(!candidatePrf) throw new Error('Fingerprint যাচাই থেকে নিরাপদ key পাওয়া যায়নি।');
+            assertion=result; record=candidate; prf=candidatePrf; break;
+        }catch(err){ lastError=err; }
+    }
+    if(!assertion || !record || !prf){
+        throw lastError || new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
+    }
 
     const key=await dbgBiometricKey(new Uint8Array(prf));
     const login=await dbgDecryptBiometric(key,record);
