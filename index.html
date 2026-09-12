@@ -139,6 +139,13 @@
         .dbg-member-password-wrap { position:relative; }
         .dbg-member-password-wrap input { padding-right:44px; }
         .dbg-member-eye { position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:8px;color:#64748b;cursor:pointer; }
+        .dbg-member-biometric {
+            position:absolute; right:46px; top:50%; transform:translateY(-50%);
+            border:0; background:transparent; padding:8px; color:#059669; cursor:pointer;
+        }
+        .dbg-member-biometric:hover { color:#047857; background:#ecfdf5; border-radius:9px; }
+        .dbg-member-biometric:disabled { opacity:.55; cursor:not-allowed; }
+
         /* Member Register button: keep it comfortably visible within the auth card. */
         #dbgMemberRegisterButton { margin-top:0; }
         .dbg-member-recovery { display:none; margin-top:12px; padding:14px; border:1px solid #dbeafe; background:#eff6ff; border-radius:14px; }
@@ -407,7 +414,7 @@
 
                 <form id="dbgMemberLoginForm" class="space-y-4">
                     <div><label class="block text-sm font-semibold text-slate-700 mb-1">সদস্য আইডি</label><input id="dbgMemberLoginId" type="text" required placeholder="যেমন: DBG-012" autocomplete="username"></div>
-                    <div><label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label><div class="dbg-member-password-wrap"><input id="dbgMemberLoginPassword" type="password" required placeholder="পাসওয়ার্ড লিখুন" autocomplete="current-password"><button type="button" class="dbg-member-eye" data-password-target="dbgMemberLoginPassword"><i data-lucide="eye" class="w-4 h-4"></i></button></div></div>
+                    <div><label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label><div class="dbg-member-password-wrap"><input id="dbgMemberLoginPassword" type="password" required placeholder="পাসওয়ার্ড লিখুন" autocomplete="current-password"><button type="button" id="dbgMemberBiometricButton" class="dbg-member-biometric" title="Fingerprint / Biometric Login" aria-label="Fingerprint / Biometric Login"><i data-lucide="fingerprint" class="w-4 h-4"></i></button><button type="button" class="dbg-member-eye" data-password-target="dbgMemberLoginPassword"><i data-lucide="eye" class="w-4 h-4"></i></button></div></div>
                     <div id="dbgMemberLoginError" class="dbg-member-error"></div><div id="dbgMemberLoginStatus" class="dbg-member-status"></div>
                     <button type="submit" id="dbgMemberLoginButton" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">Member Login</button>
                     <button type="button" id="dbgMemberForgotPassword" class="w-full text-emerald-700 hover:text-emerald-900 text-sm font-semibold py-1">পাসওয়ার্ড ভুলে গেছেন?</button>
@@ -6470,6 +6477,181 @@ document.getElementById('dbgMemberResetPassword')?.addEventListener('click',asyn
         setMemberMsg('dbgMemberRecoveryError2',error?.message||memberErrorText(error)); setMemberStatus('dbgMemberRecoveryStatus2','');
     }finally{btn.disabled=false; dbgOtpRecoveryInProgress=false;}
 });
+
+/* ================= MEMBER FINGERPRINT / BIOMETRIC LOGIN =================
+   Uses WebAuthn platform biometrics + the WebAuthn PRF extension to unlock
+   an encrypted copy of the member's Firebase login credential on this device.
+   The Firebase password itself is never stored in plain text.
+*/
+const DBG_BIOMETRIC_PREFIX = 'dbg_member_biometric_v1_';
+
+function dbgB64uFromBytes(bytes){
+    let bin=''; const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+    for(let i=0;i<a.length;i++) bin+=String.fromCharCode(a[i]);
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function dbgBytesFromB64u(str){
+    const b64=String(str).replace(/-/g,'+').replace(/_/g,'/');
+    const pad=b64.length%4? '='.repeat(4-(b64.length%4)):'';
+    const bin=atob(b64+pad), out=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+}
+function dbgRandomBytes(n){ const a=new Uint8Array(n); crypto.getRandomValues(a); return a; }
+async function dbgSha256(bytes){ return new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)); }
+
+async function dbgBiometricKey(prfOutput){
+    const raw=await dbgSha256(new TextEncoder().encode('DBG-MEMBER-BIOMETRIC-KEY-v1'));
+    const material=await crypto.subtle.importKey('raw',prfOutput,'HKDF',false,['deriveKey']);
+    return crypto.subtle.deriveKey(
+        {name:'HKDF',hash:'SHA-256',salt:raw,info:new TextEncoder().encode('DBG-MEMBER-BIOMETRIC-AES-GCM-v1')},
+        material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']
+    );
+}
+async function dbgEncryptBiometric(key, value){
+    const iv=dbgRandomBytes(12);
+    const data=new TextEncoder().encode(JSON.stringify(value));
+    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data));
+    return {iv:dbgB64uFromBytes(iv),ciphertext:dbgB64uFromBytes(cipher)};
+}
+async function dbgDecryptBiometric(key, record){
+    const iv=dbgBytesFromB64u(record.iv), cipher=dbgBytesFromB64u(record.ciphertext);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
+    return JSON.parse(new TextDecoder().decode(plain));
+}
+function dbgBiometricRecordKey(credentialId){ return DBG_BIOMETRIC_PREFIX + credentialId; }
+function dbgHasWebAuthnPrf(){
+    return !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+}
+function dbgShowBiometricMessage(msg, isError=false){
+    setMemberStatus('dbgMemberLoginStatus',msg);
+    if(isError) setMemberMsg('dbgMemberLoginError',msg);
+}
+
+async function dbgCreateMemberBiometric(){
+    if(!dbgHasWebAuthnPrf()){
+        throw new Error('এই ডিভাইস/অ্যাপের বর্তমান পরিবেশে Fingerprint/Biometric Login সমর্থিত নয়।');
+    }
+    const idEl=document.getElementById('dbgMemberLoginId');
+    const pwEl=document.getElementById('dbgMemberLoginPassword');
+    const id=String(idEl?.value||'').trim().toUpperCase();
+    const pw=String(pwEl?.value||'');
+    if(!id) throw new Error('প্রথমে সদস্য আইডি লিখুন।');
+    if(!pw) throw new Error('প্রথমবার Fingerprint সেটআপ করতে বর্তমান পাসওয়ার্ড লিখুন।');
+
+    // Verify the existing Member ID + password first.
+    const cred=await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw);
+    const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`));
+    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) ||
+       String(map.val()?.memberId||'').toUpperCase()!==id){
+        await signOut(firebaseAuth);
+        throw new Error('Member account mapping সঠিক নয়।');
+    }
+
+    const uidBytes=new TextEncoder().encode(String(cred.user.uid));
+    const userId=(await dbgSha256(uidBytes)).slice(0,32);
+    const challenge=dbgRandomBytes(32);
+    const salt=dbgRandomBytes(32);
+    const publicKey={
+        challenge,
+        rp:{name:'Dreams Business Group',id:location.hostname},
+        user:{id:userId,name:id,displayName:id},
+        pubKeyCredParams:[{type:'public-key',alg:-7}],
+        authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'required',requireResidentKey:true,userVerification:'required'},
+        timeout:60000,
+        attestation:'none',
+        extensions:{prf:{eval:{first:salt}}}
+    };
+    const created=await navigator.credentials.create({publicKey});
+    if(!created || !created.rawId) throw new Error('Fingerprint সেটআপ সম্পন্ন হয়নি।');
+
+    const ext=created.getClientExtensionResults?.() || {};
+    const prf=ext?.prf?.results?.first;
+    if(!prf) throw new Error('এই ডিভাইস WebAuthn PRF সমর্থন করছে না। Fingerprint Login চালু করা যায়নি।');
+
+    const key=await dbgBiometricKey(new Uint8Array(prf));
+    const encrypted=await dbgEncryptBiometric(key,{
+        email:memberAuthEmail(id),
+        password:pw,
+        memberId:id
+    });
+    const credentialId=dbgB64uFromBytes(new Uint8Array(created.rawId));
+    localStorage.setItem(dbgBiometricRecordKey(credentialId),JSON.stringify({
+        version:1,credentialId,salt:dbgB64uFromBytes(salt),...encrypted
+    }));
+    await signOut(firebaseAuth);
+    await new Promise(r=>setTimeout(r,100));
+    return true;
+}
+
+async function dbgBiometricLogin(){
+    if(!dbgHasWebAuthnPrf()) throw new Error('এই ডিভাইস/অ্যাপের বর্তমান পরিবেশে Fingerprint/Biometric Login সমর্থিত নয়।');
+
+    const records=[];
+    for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i)||'';
+        if(!k.startsWith(DBG_BIOMETRIC_PREFIX)) continue;
+        try{
+            const r=JSON.parse(localStorage.getItem(k)||'null');
+            if(r?.credentialId && r?.salt && r?.ciphertext && r?.iv) records.push(r);
+        }catch(_){}
+    }
+    if(!records.length) throw new Error('এই ডিভাইসে Fingerprint সেটআপ করা নেই। প্রথমে সদস্য আইডি ও পাসওয়ার্ড দিয়ে Fingerprint আইকনে ক্লিক করে সেটআপ করুন।');
+
+    const allowCredentials=records.map(r=>({type:'public-key',id:dbgBytesFromB64u(r.credentialId),transports:['internal']}));
+    const assertion=await navigator.credentials.get({
+        publicKey:{
+            challenge:dbgRandomBytes(32),
+            rpId:location.hostname,
+            allowCredentials,
+            userVerification:'required',
+            timeout:60000,
+            extensions:{prf:{eval:{first:dbgBytesFromB64u(records[0].salt)}}}
+        }
+    });
+    if(!assertion) throw new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
+
+    const usedId=dbgB64uFromBytes(new Uint8Array(assertion.rawId));
+    const record=records.find(r=>r.credentialId===usedId);
+    if(!record) throw new Error('Fingerprint credential পাওয়া যায়নি।');
+    const ext=assertion.getClientExtensionResults?.() || {};
+    const prf=ext?.prf?.results?.first;
+    if(!prf) throw new Error('Fingerprint যাচাই থেকে নিরাপদ key পাওয়া যায়নি।');
+
+    const key=await dbgBiometricKey(new Uint8Array(prf));
+    const login=await dbgDecryptBiometric(key,record);
+    const cred=await signInWithEmailAndPassword(firebaseAuth,login.email,login.password);
+    const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`));
+    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) ||
+       String(map.val()?.memberId||'').toUpperCase()!==String(login.memberId||'').toUpperCase()){
+        await signOut(firebaseAuth);
+        throw new Error('Member account mapping সঠিক নয়।');
+    }
+    setMemberStatus('dbgMemberLoginStatus','Fingerprint Login সফল হয়েছে...');
+}
+
+document.getElementById('dbgMemberBiometricButton')?.addEventListener('click',async()=>{
+    const btn=document.getElementById('dbgMemberBiometricButton');
+    if(!btn) return;
+    btn.disabled=true;
+    setMemberMsg('dbgMemberLoginError','');
+    try{
+        const hasAny=Object.keys(localStorage).some(k=>k.startsWith(DBG_BIOMETRIC_PREFIX));
+        if(hasAny){
+            await dbgBiometricLogin();
+        }else{
+            dbgShowBiometricMessage('প্রথমবার সেটআপ: Member ID ও বর্তমান Password লিখে আবার Fingerprint আইকনে ক্লিক করুন।');
+            await dbgCreateMemberBiometric();
+            dbgShowBiometricMessage('Fingerprint সেটআপ সফল হয়েছে। এখন পরেরবার Fingerprint আইকনে ক্লিক করে লগইন করতে পারবেন।');
+        }
+    }catch(error){
+        console.error('DBG Member Biometric Error:',error);
+        setMemberMsg('dbgMemberLoginError',error?.message||'Fingerprint Login সম্পন্ন হয়নি।');
+        setMemberStatus('dbgMemberLoginStatus','');
+        try{ if(firebaseAuth.currentUser) await signOut(firebaseAuth); }catch(_){}
+    }finally{btn.disabled=false;}
+});
+
 document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e=>{
     e.preventDefault(); setMemberMsg('dbgMemberLoginError',''); setMemberStatus('dbgMemberLoginStatus','লগইন হচ্ছে...');
     const id=document.getElementById('dbgMemberLoginId').value.trim().toUpperCase(); const pw=document.getElementById('dbgMemberLoginPassword').value; const btn=document.getElementById('dbgMemberLoginButton'); btn.disabled=true;
