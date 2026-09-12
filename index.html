@@ -5048,9 +5048,48 @@ function installMemberPortalStylesAndRoot() {
         }
         #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-title{font-size:12px;line-height:1.1}
         #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{font-size:9px;font-weight:600;opacity:.68}
+        #dbgMemberPortalRoot .dbg-member-dashboard-card{
+          width:100%;
+          min-height:88px;
+          margin:0 0 12px;
+          padding:14px 16px;
+          border:1px solid #d1fae5;
+          border-radius:20px;
+          background:linear-gradient(135deg,#ecfdf5,#f0fdfa 55%,#eef2ff);
+          color:#0f172a;
+          cursor:pointer;
+          display:flex;
+          align-items:center;
+          gap:13px;
+          text-align:left;
+          box-shadow:0 10px 26px rgba(15,23,42,.07);
+          transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+        }
+        #dbgMemberPortalRoot .dbg-member-dashboard-card:hover{
+          transform:translateY(-2px);
+          border-color:#6ee7b7;
+          box-shadow:0 13px 30px rgba(15,23,42,.11);
+        }
+        #dbgMemberPortalRoot .dbg-member-dashboard-card.active{
+          border-color:#059669;
+          box-shadow:0 13px 30px rgba(5,150,105,.16);
+        }
+        #dbgMemberPortalRoot .dbg-dashboard-card-icon{
+          width:50px;height:50px;flex:0 0 50px;border-radius:15px;
+          display:flex;align-items:center;justify-content:center;
+          background:linear-gradient(135deg,#059669,#0f766e);color:#fff;
+          box-shadow:0 7px 18px rgba(5,150,105,.22);
+        }
+        #dbgMemberPortalRoot .dbg-dashboard-card-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+        #dbgMemberPortalRoot .dbg-dashboard-card-title{font-size:16px;font-weight:900;color:#064e3b}
+        #dbgMemberPortalRoot .dbg-dashboard-card-sub{font-size:11px;color:#64748b;font-weight:600}
+        #dbgMemberPortalRoot .dbg-dashboard-card-arrow{color:#059669;flex:0 0 auto}
         #dbgMemberPortalRoot .dbg-member-portal-menu button.active .dbg-menu-sub{opacity:.9;color:#e2e8f0}
         #dbgMemberPortalRoot .dbg-member-portal-panel{
           animation:dbgMemberPanelIn .24s ease both;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-panel:not(.active){
+          display:none !important;
         }
         @keyframes dbgMemberPanelIn{
           from{opacity:0;transform:translateY(7px)}
@@ -5080,6 +5119,10 @@ function installMemberPortalStylesAndRoot() {
           #dbgMemberPortalRoot .dbg-member-brand-sub{font-size:9px}
           #dbgMemberPortalRoot .dbg-member-status-pill{font-size:9px;padding:6px 8px}
           #dbgMemberPortalRoot .dbg-member-portal-menu{gap:6px;padding:6px;border-radius:18px}
+          #dbgMemberPortalRoot .dbg-member-dashboard-card{min-height:76px;padding:11px 12px;border-radius:17px;gap:10px}
+          #dbgMemberPortalRoot .dbg-dashboard-card-icon{width:42px;height:42px;flex-basis:42px;border-radius:13px}
+          #dbgMemberPortalRoot .dbg-dashboard-card-title{font-size:14px}
+          #dbgMemberPortalRoot .dbg-dashboard-card-sub{font-size:9px}
           #dbgMemberPortalRoot .dbg-member-portal-menu button{min-height:68px;border-radius:14px;padding:8px 4px}
           #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-title{font-size:10px}
           #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{font-size:8px}
@@ -5587,12 +5630,17 @@ function installMemberPortalStylesAndRoot() {
         <div class="mt-0.5 text-[11px] text-slate-500">নিচের মেনু থেকে যেটি দেখতে চান সেটিতে ক্লিক করুন</div>
       </div>
       <div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div>
+      <button type="button" id="dbgMemberDashboardCard" class="dbg-member-dashboard-card no-print" data-member-menu="dashboard" role="tab" aria-selected="false">
+        <span class="dbg-dashboard-card-icon"><i data-lucide="layout-dashboard" class="w-7 h-7"></i></span>
+        <span class="dbg-dashboard-card-copy"><span class="dbg-dashboard-card-title">মেম্বার ড্যাশবোর্ড</span><span class="dbg-dashboard-card-sub">আপনার সঞ্চয়, ডিপোজিট ও বকেয়ার সংক্ষিপ্ত তথ্য</span></span>
+        <i data-lucide="chevron-right" class="dbg-dashboard-card-arrow w-5 h-5"></i>
+      </button>
       <div id="dbgMemberPortalMenu" class="dbg-member-portal-menu no-print" role="tablist" aria-label="Member Portal Menu">
         <button type="button" class="active" data-member-menu="profile" role="tab" aria-selected="true"><i data-lucide="user-round" class="w-5 h-5"></i><span class="dbg-menu-title">মেম্বার প্রোফাইল</span><span class="dbg-menu-sub">Personal Details</span></button>
         <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards" class="w-5 h-5"></i><span class="dbg-menu-title">ডিপোজিট সামারি</span><span class="dbg-menu-sub">Savings Overview</span></button>
         <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check" class="w-5 h-5"></i><span class="dbg-menu-title">ডিজিটাল ID কার্ড</span><span class="dbg-menu-sub">Digital Identity</span></button>
       </div>
-      <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
+      <div id="dbgMemberPortalContent"></div></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -6058,9 +6106,8 @@ if (outstanding > 0) {
           </div>
         </div>
         </div>
-        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
+        <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel" data-member-panel="dashboard">
         ${memberAlertHtml}
-
         <!-- UNIQUE MEMBER DASHBOARD -->
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="layout-dashboard" class="w-4 h-4"></i></span>
@@ -6091,7 +6138,21 @@ if (outstanding > 0) {
             </div>
         </div>
 
-            <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
+        </div>
+        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
+        ${memberAlertHtml}
+
+        <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print">
+          <button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> Profile Download
+          </button>
+          <button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print / PDF
+          </button>
+        </div>
+
+
+                    <div class="flex flex-wrap justify-between items-start gap-4 border-b pb-6">
                 <div class="flex items-center gap-4">
                     ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="w-24 h-24 rounded-xl object-cover border-2 border-indigo-600 shadow-md" alt="Member Photo">` : `<div class="w-24 h-24 rounded-xl border-2 border-indigo-600 shadow-md bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">DBG</div>`}
                     <div>
@@ -6261,10 +6322,10 @@ async function loadMemberPortalData(user) {
 
         // Member Portal: show details only after the member selects a menu item.
         // This changes presentation only; all existing data/calculations/features remain intact.
-        document.querySelectorAll('#dbgMemberPortalMenu [data-member-menu]').forEach(btn=>{
+        document.querySelectorAll('#dbgMemberPortalRoot [data-member-menu]').forEach(btn=>{
             btn.addEventListener('click',()=>{
                 const target=btn.getAttribute('data-member-menu');
-                document.querySelectorAll('#dbgMemberPortalMenu [data-member-menu]').forEach(b=>{
+                document.querySelectorAll('#dbgMemberPortalRoot [data-member-menu]').forEach(b=>{
                     b.classList.toggle('active', b===btn);
                     b.setAttribute('aria-selected', b===btn ? 'true' : 'false');
                 });
