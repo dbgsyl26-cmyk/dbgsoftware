@@ -140,11 +140,13 @@
         .dbg-member-password-wrap input { padding-right:44px; }
         .dbg-member-eye { position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:8px;color:#64748b;cursor:pointer; }
         .dbg-member-biometric {
-            position:absolute; right:44px; top:50%; transform:translateY(-50%);
-            border:0; background:transparent; padding:7px; color:#059669; cursor:pointer;
+            position:absolute; right:42px; top:50%; transform:translateY(-50%);
+            width:42px; height:42px; display:flex; align-items:center; justify-content:center;
+            border:2px solid #059669; background:#ecfdf5; border-radius:10px;
+            padding:0; color:#047857; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,.18);
         }
-        .dbg-member-biometric i { width:24px !important; height:24px !important; stroke-width:2.5 !important; }
-        .dbg-member-biometric:hover { color:#047857; background:#ecfdf5; border-radius:9px; }
+        .dbg-member-biometric i { width:28px !important; height:28px !important; stroke-width:2.8 !important; }
+        .dbg-member-biometric:hover { color:#065f46; background:#d1fae5; border-color:#047857; }
         .dbg-member-biometric:disabled { opacity:.55; cursor:not-allowed; }
 
         /* Member Register button: keep it comfortably visible within the auth card. */
@@ -6484,155 +6486,91 @@ document.getElementById('dbgMemberResetPassword')?.addEventListener('click',asyn
    an encrypted copy of the member's Firebase login credential on this device.
    The Firebase password itself is never stored in plain text.
 */
-const DBG_BIOMETRIC_PREFIX = 'dbg_member_biometric_v2_';
+const DBG_BIOMETRIC_PREFIX = 'dbg_member_biometric_v3_';
+const DBG_BIOMETRIC_DB = 'dbg_member_biometric_db_v3';
 
-function dbgB64uFromBytes(bytes){
-    let bin=''; const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
-    for(let i=0;i<a.length;i++) bin+=String.fromCharCode(a[i]);
-    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function dbgHasWebAuthn(){
+    return !!(window.isSecureContext && window.PublicKeyCredential && navigator.credentials);
 }
-function dbgBytesFromB64u(str){
-    const b64=String(str).replace(/-/g,'+').replace(/_/g,'/');
-    const pad=b64.length%4? '='.repeat(4-(b64.length%4)):'';
-    const bin=atob(b64+pad), out=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
-    return out;
+function dbgShowBiometricMessage(msg, isError=false){ setMemberStatus('dbgMemberLoginStatus',msg); if(isError) setMemberMsg('dbgMemberLoginError',msg); }
+function dbgBytesFromB64u(s){
+    const b=atob(String(s).replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4-(String(s).length%4))%4));
+    return new Uint8Array([...b].map(c=>c.charCodeAt(0)));
+}
+function dbgB64uFromBytes(bytes){
+    let s=''; for(const b of bytes) s+=String.fromCharCode(b);
+    return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 function dbgRandomBytes(n){ const a=new Uint8Array(n); crypto.getRandomValues(a); return a; }
-async function dbgSha256(bytes){ return new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)); }
-
-async function dbgBiometricKey(prfOutput){
-    const raw=await dbgSha256(new TextEncoder().encode('DBG-MEMBER-BIOMETRIC-KEY-v1'));
-    const material=await crypto.subtle.importKey('raw',prfOutput,'HKDF',false,['deriveKey']);
-    return crypto.subtle.deriveKey(
-        {name:'HKDF',hash:'SHA-256',salt:raw,info:new TextEncoder().encode('DBG-MEMBER-BIOMETRIC-AES-GCM-v1')},
-        material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']
-    );
+function dbgBiometricRecordKey(id){ return DBG_BIOMETRIC_PREFIX + id; }
+async function dbgOpenBiometricDB(){
+    return await new Promise((resolve,reject)=>{
+        const req=indexedDB.open(DBG_BIOMETRIC_DB,1);
+        req.onupgradeneeded=()=>{ if(!req.result.objectStoreNames.contains('keys')) req.result.createObjectStore('keys'); };
+        req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+    });
 }
-async function dbgEncryptBiometric(key, value){
-    const iv=dbgRandomBytes(12);
-    const data=new TextEncoder().encode(JSON.stringify(value));
-    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data));
-    return {iv:dbgB64uFromBytes(iv),ciphertext:dbgB64uFromBytes(cipher)};
+async function dbgStoreBiometricKey(id,key){
+    const db=await dbgOpenBiometricDB();
+    return await new Promise((resolve,reject)=>{ const tx=db.transaction('keys','readwrite'); tx.objectStore('keys').put(key,id); tx.oncomplete=()=>{db.close();resolve(true)}; tx.onerror=()=>{db.close();reject(tx.error)}; });
 }
-async function dbgDecryptBiometric(key, record){
-    const iv=dbgBytesFromB64u(record.iv), cipher=dbgBytesFromB64u(record.ciphertext);
-    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
+async function dbgGetBiometricKey(id){
+    const db=await dbgOpenBiometricDB();
+    return await new Promise((resolve,reject)=>{ const tx=db.transaction('keys','readonly'); const r=tx.objectStore('keys').get(id); r.onsuccess=()=>{db.close();resolve(r.result||null)}; r.onerror=()=>{db.close();reject(r.error)}; });
+}
+async function dbgEncryptWithStoredKey(key,data){
+    const iv=dbgRandomBytes(12), encoded=new TextEncoder().encode(JSON.stringify(data));
+    const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encoded);
+    return {iv:dbgB64uFromBytes(iv),ciphertext:dbgB64uFromBytes(new Uint8Array(ciphertext))};
+}
+async function dbgDecryptWithStoredKey(key,record){
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:dbgBytesFromB64u(record.iv)},key,dbgBytesFromB64u(record.ciphertext));
     return JSON.parse(new TextDecoder().decode(plain));
 }
-function dbgBiometricRecordKey(credentialId){ return DBG_BIOMETRIC_PREFIX + credentialId; }
-function dbgHasWebAuthnPrf(){
-    return !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
-}
-function dbgShowBiometricMessage(msg, isError=false){
-    setMemberStatus('dbgMemberLoginStatus',msg);
-    if(isError) setMemberMsg('dbgMemberLoginError',msg);
-}
-
 async function dbgCreateMemberBiometric(){
-    if(!dbgHasWebAuthnPrf()){
-        throw new Error('এই ডিভাইস/অ্যাপের বর্তমান পরিবেশে Fingerprint/Biometric Login সমর্থিত নয়।');
-    }
-    const idEl=document.getElementById('dbgMemberLoginId');
-    const pwEl=document.getElementById('dbgMemberLoginPassword');
-    const id=String(idEl?.value||'').trim().toUpperCase();
-    const pw=String(pwEl?.value||'');
+    if(!dbgHasWebAuthn()) throw new Error('এই ডিভাইস/অ্যাপে নিরাপদ Biometric Login সমর্থিত নয়।');
+    const id=String(document.getElementById('dbgMemberLoginId')?.value||'').trim().toUpperCase();
+    const pw=String(document.getElementById('dbgMemberLoginPassword')?.value||'');
     if(!id) throw new Error('প্রথমে সদস্য আইডি লিখুন।');
     if(!pw) throw new Error('প্রথমবার Fingerprint সেটআপ করতে বর্তমান পাসওয়ার্ড লিখুন।');
-
-    // Verify the existing Member ID + password first.
     const cred=await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw);
     const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`));
-    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) ||
-       String(map.val()?.memberId||'').toUpperCase()!==id){
-        await signOut(firebaseAuth);
-        throw new Error('Member account mapping সঠিক নয়।');
-    }
-
-    const uidBytes=new TextEncoder().encode(String(cred.user.uid));
-    const userId=(await dbgSha256(uidBytes)).slice(0,32);
-    const challenge=dbgRandomBytes(32);
-    const salt=dbgRandomBytes(32);
-    const publicKey={
+    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) || String(map.val()?.memberId||'').toUpperCase()!==id){ await signOut(firebaseAuth); throw new Error('Member account mapping সঠিক নয়।'); }
+    const userId=dbgRandomBytes(32), challenge=dbgRandomBytes(32);
+    const created=await navigator.credentials.create({publicKey:{
         challenge,
         rp:{name:'Dreams Business Group',id:location.hostname},
         user:{id:userId,name:id,displayName:id},
         pubKeyCredParams:[{type:'public-key',alg:-7}],
         authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'discouraged',requireResidentKey:false,userVerification:'required'},
-        timeout:60000,
-        attestation:'none',
-        extensions:{prf:{eval:{first:salt}}}
-    };
-    const created=await navigator.credentials.create({publicKey});
-    if(!created || !created.rawId) throw new Error('Fingerprint সেটআপ সম্পন্ন হয়নি।');
-
-    const ext=created.getClientExtensionResults?.() || {};
-    const prf=ext?.prf?.results?.first;
-    if(!prf) throw new Error('এই ডিভাইস WebAuthn PRF সমর্থন করছে না। Fingerprint Login চালু করা যায়নি।');
-
-    const key=await dbgBiometricKey(new Uint8Array(prf));
-    const encrypted=await dbgEncryptBiometric(key,{
-        email:memberAuthEmail(id),
-        password:pw,
-        memberId:id
-    });
+        timeout:60000,attestation:'none'
+    }});
+    if(!created?.rawId) throw new Error('Fingerprint সেটআপ সম্পন্ন হয়নি।');
     const credentialId=dbgB64uFromBytes(new Uint8Array(created.rawId));
-    localStorage.setItem(dbgBiometricRecordKey(credentialId),JSON.stringify({
-        version:1,credentialId,salt:dbgB64uFromBytes(salt),...encrypted
-    }));
-    await signOut(firebaseAuth);
-    await new Promise(r=>setTimeout(r,100));
-    return true;
+    const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+    await dbgStoreBiometricKey(credentialId,key);
+    const encrypted=await dbgEncryptWithStoredKey(key,{email:memberAuthEmail(id),password:pw,memberId:id});
+    localStorage.setItem(dbgBiometricRecordKey(credentialId),JSON.stringify({version:2,credentialId,...encrypted}));
+    await signOut(firebaseAuth); await new Promise(r=>setTimeout(r,100)); return true;
 }
-
 async function dbgBiometricLogin(){
-    if(!dbgHasWebAuthnPrf()) throw new Error('এই ডিভাইস/অ্যাপের বর্তমান পরিবেশে Fingerprint/Biometric Login সমর্থিত নয়।');
-
+    if(!dbgHasWebAuthn()) throw new Error('এই ডিভাইস/অ্যাপে নিরাপদ Biometric Login সমর্থিত নয়।');
     const records=[];
-    for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i)||'';
-        if(!k.startsWith(DBG_BIOMETRIC_PREFIX)) continue;
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i)||''; if(!k.startsWith(DBG_BIOMETRIC_PREFIX)) continue; try{const r=JSON.parse(localStorage.getItem(k)||'null'); if(r?.credentialId&&r?.ciphertext&&r?.iv) records.push(r);}catch(_){} }
+    if(!records.length) throw new Error('এই ডিভাইসে Fingerprint সেটআপ করা নেই। প্রথমে সদস্য আইডি ও পাসওয়ার্ড দিয়ে Fingerprint আইকনে ক্লিক করুন।');
+    let login=null,lastError=null;
+    for(const record of records){
         try{
-            const r=JSON.parse(localStorage.getItem(k)||'null');
-            if(r?.credentialId && r?.salt && r?.ciphertext && r?.iv) records.push(r);
-        }catch(_){}
-    }
-    if(!records.length) throw new Error('এই ডিভাইসে Fingerprint সেটআপ করা নেই। প্রথমে সদস্য আইডি ও পাসওয়ার্ড দিয়ে Fingerprint আইকনে ক্লিক করে সেটআপ করুন।');
-
-    let assertion=null, record=null, prf=null, lastError=null;
-    // Each credential has its own PRF salt, so try the registered device credentials one by one.
-    for(const candidate of records){
-        try{
-            const result=await navigator.credentials.get({
-                publicKey:{
-                    challenge:dbgRandomBytes(32),
-                    rpId:location.hostname,
-                    allowCredentials:[{type:'public-key',id:dbgBytesFromB64u(candidate.credentialId),transports:['internal']}],
-                    userVerification:'required',
-                    timeout:60000,
-                    extensions:{prf:{eval:{first:dbgBytesFromB64u(candidate.salt)}}}
-                }
-            });
+            const result=await navigator.credentials.get({publicKey:{challenge:dbgRandomBytes(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:dbgBytesFromB64u(record.credentialId),transports:['internal']}],userVerification:'required',timeout:60000}});
             if(!result) throw new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
-            const ext=result.getClientExtensionResults?.() || {};
-            const candidatePrf=ext?.prf?.results?.first;
-            if(!candidatePrf) throw new Error('Fingerprint যাচাই থেকে নিরাপদ key পাওয়া যায়নি।');
-            assertion=result; record=candidate; prf=candidatePrf; break;
-        }catch(err){ lastError=err; }
+            const key=await dbgGetBiometricKey(record.credentialId); if(!key) throw new Error('Fingerprint সেটআপের নিরাপদ key পাওয়া যায়নি।');
+            login=await dbgDecryptWithStoredKey(key,record); break;
+        }catch(err){lastError=err;}
     }
-    if(!assertion || !record || !prf){
-        throw lastError || new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
-    }
-
-    const key=await dbgBiometricKey(new Uint8Array(prf));
-    const login=await dbgDecryptBiometric(key,record);
+    if(!login) throw lastError||new Error('Fingerprint যাচাই সম্পন্ন হয়নি।');
     const cred=await signInWithEmailAndPassword(firebaseAuth,login.email,login.password);
     const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`));
-    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) ||
-       String(map.val()?.memberId||'').toUpperCase()!==String(login.memberId||'').toUpperCase()){
-        await signOut(firebaseAuth);
-        throw new Error('Member account mapping সঠিক নয়।');
-    }
+    if(!map.exists() || !['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase()) || String(map.val()?.memberId||'').toUpperCase()!==String(login.memberId||'').toUpperCase()){ await signOut(firebaseAuth); throw new Error('Member account mapping সঠিক নয়।'); }
     setMemberStatus('dbgMemberLoginStatus','Fingerprint Login সফল হয়েছে...');
 }
 
