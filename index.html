@@ -4929,6 +4929,32 @@ function installMemberPortalStylesAndRoot() {
         }
       
 
+
+        /* ================= MEMBER PORTAL MENU NAVIGATION ================= */
+        .dbg-member-portal-menu{
+          display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+          margin:0 0 16px;padding:6px;background:#f1f5f9;border:1px solid #e2e8f0;
+          border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,.05);
+        }
+        .dbg-member-portal-menu button{
+          border:1px solid transparent;border-radius:14px;padding:12px 9px;
+          background:transparent;color:#475569;font-weight:800;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;gap:7px;
+          transition:.18s ease;
+        }
+        .dbg-member-portal-menu button:hover{background:#fff;color:#047857}
+        .dbg-member-portal-menu button.active{
+          background:#fff;color:#047857;border-color:#bbf7d0;
+          box-shadow:0 4px 14px rgba(15,23,42,.08);
+        }
+        .dbg-member-portal-panel{display:none!important}
+        .dbg-member-portal-panel.active{display:block!important}
+        @media(max-width:520px){
+          .dbg-member-portal-menu{gap:5px;padding:5px}
+          .dbg-member-portal-menu button{padding:10px 5px;font-size:11px;gap:4px}
+          .dbg-member-portal-menu button i{width:16px;height:16px}
+        }
+
         /* ================= UNIQUE MEMBER PROFILE DASHBOARD ================= */
         .dbg-member-unique-dashboard{display:flex;flex-direction:column;gap:14px;margin-bottom:4px}
         .dbg-member-hero-strip{display:flex;align-items:center;gap:14px;padding:15px 17px;border-radius:18px;background:linear-gradient(135deg,#ecfdf5,#f0fdfa 48%,#eef2ff);border:1px solid #d1fae5;box-shadow:0 10px 30px rgba(15,23,42,.07)}
@@ -5393,7 +5419,14 @@ function installMemberPortalStylesAndRoot() {
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
-      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div><div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div><div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
+      <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div>
+      <div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div>
+      <div id="dbgMemberPortalMenu" class="dbg-member-portal-menu no-print" role="tablist" aria-label="Member Portal Menu">
+        <button type="button" class="active" data-member-menu="profile" role="tab"><i data-lucide="user-round" class="w-4 h-4"></i><span>মেম্বার প্রোফাইল</span></button>
+        <button type="button" data-member-menu="summary" role="tab"><i data-lucide="wallet-cards" class="w-4 h-4"></i><span>ডিপোজিট সামারি</span></button>
+        <button type="button" data-member-menu="idcard" role="tab"><i data-lucide="badge-check" class="w-4 h-4"></i><span>ডিজিটাল ID কার্ড</span></button>
+      </div>
+      <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -5791,6 +5824,7 @@ if (outstanding > 0) {
     return `
     <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
         <!-- DIGITAL MEMBER ID CARD -->
+        <div id="dbgMemberPortalIdCardPanel" class="dbg-member-portal-panel" data-member-panel="idcard">
         <div class="dbg-profile-section-title">
           <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
           <span>ডিজিটাল মেম্বার পরিচয়</span>
@@ -5857,6 +5891,8 @@ if (outstanding > 0) {
             </div>
           </div>
         </div>
+        </div>
+        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
         ${memberAlertHtml}
 
         <!-- UNIQUE MEMBER DASHBOARD -->
@@ -5942,7 +5978,9 @@ if (outstanding > 0) {
                     ${member.nidDoc ? `<div class="pt-2"><strong>NID এর ফটোকপি:</strong><br><img src="${escapeHtml(member.nidDoc)}" class="h-28 object-cover rounded border mt-1" alt="NID"></div>` : ''}
                 </div>
             </div>
+            </div>
 
+            <div id="dbgMemberPortalSummaryPanel" class="dbg-member-portal-panel" data-member-panel="summary">
             <div class="dbg-profile-section-title">
                 <span class="dbg-profile-section-icon"><i data-lucide="wallet-cards" class="w-4 h-4"></i></span>
                 <span>সঞ্চয় ও ডিপোজিট ইতিহাস</span>
@@ -5970,6 +6008,7 @@ if (outstanding > 0) {
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
             </div>
         </div>`;
@@ -6053,6 +6092,23 @@ async function loadMemberPortalData(user) {
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
+
+        // Member Portal: show details only after the member selects a menu item.
+        // This changes presentation only; all existing data/calculations/features remain intact.
+        document.querySelectorAll('#dbgMemberPortalMenu [data-member-menu]').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                const target=btn.getAttribute('data-member-menu');
+                document.querySelectorAll('#dbgMemberPortalMenu [data-member-menu]').forEach(b=>{
+                    b.classList.toggle('active', b===btn);
+                    b.setAttribute('aria-selected', b===btn ? 'true' : 'false');
+                });
+                document.querySelectorAll('#dbgMemberPortalRoot [data-member-panel]').forEach(panel=>{
+                    panel.classList.toggle('active', panel.getAttribute('data-member-panel')===target);
+                });
+                try{lucide.createIcons();}catch(_){}
+            });
+        });
+
         try{lucide.createIcons();}catch(_){ }
         renderMemberIdQr(member);
         status.textContent=`✅ ${memberId} এর Profile ও Deposit আপডেট লোড হয়েছে।`; err.classList.remove('show');
