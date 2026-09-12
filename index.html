@@ -4865,9 +4865,15 @@ function installMemberPortalStylesAndRoot() {
     root=document.createElement('div'); root.id='dbgMemberPortalRoot';
     root.className='fixed inset-0 z-[99990] bg-slate-50 overflow-y-auto';
     root.innerHTML=`<div class="min-h-screen p-4 md:p-8"><div class="max-w-6xl mx-auto">
-      <div class="text-center py-3 md:py-5">
-        <h1 class="text-2xl md:text-3xl font-extrabold text-indigo-950 tracking-tight">ড্রিমস বিজনেস গ্রুপ</h1>
-        <p class="text-sm md:text-base font-semibold text-slate-600 mt-1">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>
+      <div class="dbg-member-app-top no-print">
+        <div class="dbg-member-brand-row">
+          <div class="dbg-member-brand-mark"><i data-lucide="landmark" class="w-7 h-7 text-amber-300"></i></div>
+          <div>
+            <div class="dbg-member-brand-title">Dreams Business Group</div>
+            <div class="dbg-member-brand-sub">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</div>
+          </div>
+          <div class="dbg-member-status-pill"><span class="dbg-member-status-dot"></span> SECURE MEMBER</div>
+        </div>
       </div>
       <style>
         @keyframes dbgHotlineBlink {
@@ -4929,6 +4935,152 @@ function installMemberPortalStylesAndRoot() {
         }
       
 
+
+
+        /* ================= DBG PREMIUM MEMBER APP UI ================= */
+        #dbgMemberPortalRoot{
+          background:
+            radial-gradient(circle at 12% 0%, rgba(212,175,55,.12), transparent 28%),
+            radial-gradient(circle at 100% 8%, rgba(11,60,93,.13), transparent 30%),
+            linear-gradient(180deg,#f8fafc 0%,#eef3f7 100%) !important;
+          color:#0f172a;
+        }
+        #dbgMemberPortalRoot .dbg-member-app-shell{
+          position:relative;
+        }
+        #dbgMemberPortalRoot .dbg-member-app-top{
+          position:relative;
+          overflow:hidden;
+          margin-bottom:14px;
+          padding:18px 20px;
+          border-radius:24px;
+          background:linear-gradient(135deg,#062f4a 0%,#0b3c5d 48%,#14506f 100%);
+          border:1px solid rgba(212,175,55,.45);
+          box-shadow:0 18px 45px rgba(11,60,93,.18);
+          color:#fff;
+        }
+        #dbgMemberPortalRoot .dbg-member-app-top::before{
+          content:"";
+          position:absolute; width:240px;height:240px;right:-95px;top:-135px;
+          border-radius:50%;border:1px solid rgba(212,175,55,.25);
+          box-shadow:0 0 0 22px rgba(212,175,55,.035),0 0 0 45px rgba(212,175,55,.025);
+        }
+        #dbgMemberPortalRoot .dbg-member-app-top::after{
+          content:"";position:absolute;left:-80px;bottom:-105px;width:230px;height:170px;
+          border-radius:50%;background:rgba(255,255,255,.035);transform:rotate(-12deg);
+        }
+        #dbgMemberPortalRoot .dbg-member-brand-row{
+          position:relative;z-index:2;display:flex;align-items:center;gap:13px;
+        }
+        #dbgMemberPortalRoot .dbg-member-brand-mark{
+          width:54px;height:54px;flex:0 0 54px;border-radius:17px;
+          display:flex;align-items:center;justify-content:center;
+          background:rgba(255,255,255,.12);border:1px solid rgba(212,175,55,.55);
+          box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.14);
+        }
+        #dbgMemberPortalRoot .dbg-member-brand-title{
+          font-size:19px;line-height:1.15;font-weight:900;letter-spacing:.01em;
+        }
+        #dbgMemberPortalRoot .dbg-member-brand-sub{
+          margin-top:3px;font-size:11px;color:#dbeafe;font-weight:600;
+        }
+        #dbgMemberPortalRoot .dbg-member-status-pill{
+          position:relative;z-index:2;margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+          padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.10);
+          border:1px solid rgba(255,255,255,.18);font-size:10px;font-weight:800;color:#fef3c7;
+        }
+        #dbgMemberPortalRoot .dbg-member-status-dot{
+          width:7px;height:7px;border-radius:50%;background:#34d399;
+          box-shadow:0 0 0 4px rgba(52,211,153,.12);
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu{
+          position:relative;
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:10px;
+          margin:0 0 16px;
+          padding:8px;
+          background:rgba(255,255,255,.78);
+          backdrop-filter:blur(14px);
+          -webkit-backdrop-filter:blur(14px);
+          border:1px solid rgba(148,163,184,.25);
+          border-radius:22px;
+          box-shadow:0 12px 32px rgba(15,23,42,.08);
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button{
+          position:relative;overflow:hidden;
+          min-height:76px;
+          border:1px solid #e2e8f0;
+          border-radius:17px;
+          padding:10px 8px;
+          background:linear-gradient(180deg,#fff,#f8fafc);
+          color:#334155;
+          font-weight:800;cursor:pointer;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+          transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button:hover{
+          transform:translateY(-2px);
+          border-color:#cbd5e1;
+          box-shadow:0 9px 22px rgba(15,23,42,.09);
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button.active{
+          color:#fff;
+          border-color:#0b3c5d;
+          background:linear-gradient(135deg,#0b3c5d,#14506f);
+          box-shadow:0 10px 24px rgba(11,60,93,.22);
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button.active::after{
+          content:"";position:absolute;left:18%;right:18%;bottom:5px;height:3px;border-radius:9px;
+          background:#d4af37;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button i{
+          width:23px;height:23px;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-title{font-size:12px;line-height:1.1}
+        #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{font-size:9px;font-weight:600;opacity:.68}
+        #dbgMemberPortalRoot .dbg-member-portal-menu button.active .dbg-menu-sub{opacity:.9;color:#e2e8f0}
+        #dbgMemberPortalRoot .dbg-member-portal-panel{
+          animation:dbgMemberPanelIn .24s ease both;
+        }
+        @keyframes dbgMemberPanelIn{
+          from{opacity:0;transform:translateY(7px)}
+          to{opacity:1;transform:translateY(0)}
+        }
+        #dbgMemberPortalRoot .dbg-member-panel-shell{
+          background:rgba(255,255,255,.92)!important;
+          border:1px solid rgba(148,163,184,.22)!important;
+          box-shadow:0 16px 42px rgba(15,23,42,.08)!important;
+          border-radius:24px!important;
+        }
+        #dbgMemberPortalRoot .dbg-member-login-topbar{
+          margin:0 0 10px!important;
+          padding:0 2px 3px!important;
+        }
+        #dbgMemberPortalRoot .dbg-member-login-date{
+          color:#64748b!important;font-weight:700!important;
+        }
+        #dbgMemberPortalRoot .dbg-member-login-time{
+          color:#0b3c5d!important;font-weight:900!important;
+        }
+        @media(max-width:700px){
+          #dbgMemberPortalRoot .dbg-member-app-top{padding:15px;border-radius:20px}
+          #dbgMemberPortalRoot .dbg-member-brand-mark{width:46px;height:46px;flex-basis:46px;border-radius:14px}
+          #dbgMemberPortalRoot .dbg-member-brand-title{font-size:16px}
+          #dbgMemberPortalRoot .dbg-member-brand-sub{font-size:9px}
+          #dbgMemberPortalRoot .dbg-member-status-pill{font-size:9px;padding:6px 8px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu{gap:6px;padding:6px;border-radius:18px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu button{min-height:68px;border-radius:14px;padding:8px 4px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-title{font-size:10px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{font-size:8px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu button i{width:20px;height:20px}
+        }
+        @media(max-width:380px){
+          #dbgMemberPortalRoot .dbg-member-app-top{padding:12px}
+          #dbgMemberPortalRoot .dbg-member-status-pill{display:none}
+          #dbgMemberPortalRoot .dbg-member-portal-menu button{min-height:64px}
+          #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{display:none}
+        }
 
         /* ================= MEMBER PORTAL MENU NAVIGATION ================= */
         .dbg-member-portal-menu{
@@ -5420,11 +5572,15 @@ function installMemberPortalStylesAndRoot() {
         <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
       <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div>
+      <div class="no-print mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-center shadow-sm">
+        <div class="text-sm font-extrabold text-slate-800">আপনার Member Space-এ স্বাগতম</div>
+        <div class="mt-0.5 text-[11px] text-slate-500">নিচের মেনু থেকে যেটি দেখতে চান সেটিতে ক্লিক করুন</div>
+      </div>
       <div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div>
       <div id="dbgMemberPortalMenu" class="dbg-member-portal-menu no-print" role="tablist" aria-label="Member Portal Menu">
-        <button type="button" class="active" data-member-menu="profile" role="tab"><i data-lucide="user-round" class="w-4 h-4"></i><span>মেম্বার প্রোফাইল</span></button>
-        <button type="button" data-member-menu="summary" role="tab"><i data-lucide="wallet-cards" class="w-4 h-4"></i><span>ডিপোজিট সামারি</span></button>
-        <button type="button" data-member-menu="idcard" role="tab"><i data-lucide="badge-check" class="w-4 h-4"></i><span>ডিজিটাল ID কার্ড</span></button>
+        <button type="button" data-member-menu="profile" role="tab" aria-selected="false"><i data-lucide="user-round" class="w-5 h-5"></i><span class="dbg-menu-title">মেম্বার প্রোফাইল</span><span class="dbg-menu-sub">Personal Details</span></button>
+        <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards" class="w-5 h-5"></i><span class="dbg-menu-title">ডিপোজিট সামারি</span><span class="dbg-menu-sub">Savings Overview</span></button>
+        <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check" class="w-5 h-5"></i><span class="dbg-menu-title">ডিজিটাল ID কার্ড</span><span class="dbg-menu-sub">Digital Identity</span></button>
       </div>
       <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print"><button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Profile Download</button><button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i> Print / PDF</button></div><div id="dbgMemberPortalContent"></div></div>
       </div>
@@ -5822,7 +5978,7 @@ if (outstanding > 0) {
     });
 
     return `
-    <div id="memberPortalProfileCard" class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+    <div id="memberPortalProfileCard" class="dbg-member-panel-shell class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
         <!-- DIGITAL MEMBER ID CARD -->
         <div id="dbgMemberPortalIdCardPanel" class="dbg-member-portal-panel" data-member-panel="idcard">
         <div class="dbg-profile-section-title">
@@ -5892,7 +6048,7 @@ if (outstanding > 0) {
           </div>
         </div>
         </div>
-        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
+        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel" data-member-panel="profile">
         ${memberAlertHtml}
 
         <!-- UNIQUE MEMBER DASHBOARD -->
