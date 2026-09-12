@@ -141,11 +141,11 @@
         .dbg-member-eye { position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;padding:8px;color:#64748b;cursor:pointer; }
         .dbg-member-biometric {
             position:absolute; right:42px; top:50%; transform:translateY(-50%);
-            width:46px; height:46px; display:flex; align-items:center; justify-content:center;
+            width:50px; height:50px; display:flex; align-items:center; justify-content:center;
             border:2px solid #059669; background:#ecfdf5; border-radius:10px;
             padding:0; color:#047857; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,.18);
         }
-        .dbg-member-biometric svg { width:42px !important; height:42px !important; transform:scale(1.05); transform-origin:center; stroke-width:1.2 !important; }
+        .dbg-member-biometric svg { width:42px !important; height:42px !important; transform:none; transform-origin:center; fill:none; stroke:currentColor; stroke-width:1.25 !important; stroke-linecap:round; stroke-linejoin:round; }
         .dbg-member-biometric:hover { color:#065f46; background:#d1fae5; border-color:#047857; }
         .dbg-member-biometric:disabled { opacity:.55; cursor:not-allowed; }
 
@@ -417,7 +417,23 @@
 
                 <form id="dbgMemberLoginForm" class="space-y-4">
                     <div><label class="block text-sm font-semibold text-slate-700 mb-1">সদস্য আইডি</label><input id="dbgMemberLoginId" type="text" required placeholder="যেমন: DBG-012" autocomplete="username"></div>
-                    <div><label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label><div class="dbg-member-password-wrap"><input id="dbgMemberLoginPassword" type="password" required placeholder="পাসওয়ার্ড লিখুন" autocomplete="current-password"><button type="button" id="dbgMemberBiometricButton" class="dbg-member-biometric" title="Fingerprint / Biometric Login" aria-label="Fingerprint / Biometric Login"><i data-lucide="fingerprint" class="w-4 h-4"></i></button><button type="button" class="dbg-member-eye" data-password-target="dbgMemberLoginPassword"><i data-lucide="eye" class="w-4 h-4"></i></button></div></div>
+                    <div><label class="block text-sm font-semibold text-slate-700 mb-1">পাসওয়ার্ড</label><div class="dbg-member-password-wrap"><input id="dbgMemberLoginPassword" type="password" required placeholder="পাসওয়ার্ড লিখুন" autocomplete="current-password"><button type="button" id="dbgMemberBiometricButton" class="dbg-member-biometric" title="Fingerprint / Biometric Login" aria-label="Fingerprint / Biometric Login"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 7C14.2 7 6.5 14.8 6.5 24.4"/>
+<path d="M30.8 8.7C38 11.4 42.5 17.8 42.5 25.2"/>
+<path d="M19.3 8.5C11.9 10.6 7 16.8 7 24.4"/>
+<path d="M24 11.5C16.5 11.5 11 17.1 11 24.6"/>
+<path d="M28.9 12.4C34.3 14.2 37.8 18.8 37.8 24.7"/>
+<path d="M17.2 13.5C13.2 16.1 11 20.1 11 24.8"/>
+<path d="M24 15.3C18.9 15.3 15.2 19.1 15.2 24.5C15.2 31.8 13.2 35.1 10.8 37.8"/>
+<path d="M30.8 16.2C34.1 18.2 35.9 21.3 35.9 25.1C35.9 31.6 33.2 36.2 29.8 40.5"/>
+<path d="M24 19.1C20.4 19.1 18.1 21.3 18.1 24.7C18.1 32.8 16.1 37.4 12.9 41"/>
+<path d="M27.5 19.7C30.3 21 31.8 23.1 31.8 26.2C31.8 32.3 29.6 36.6 26.2 41"/>
+<path d="M24 22.7C21.9 22.7 20.8 24 20.8 26.1C20.8 33.5 19.3 38.1 16.5 42"/>
+<path d="M24.8 22.8C27.2 22.8 28.6 24.4 28.6 26.8C28.6 34.4 26.6 39.3 23.4 43"/>
+<path d="M8.4 30.2C8.8 34.2 7.7 37.5 5.8 40.1"/>
+<path d="M39.7 29.6C39.2 34.8 37.2 39 34.3 42.1"/>
+<path d="M22.5 27.1C22.5 34.1 21.8 38.5 20.2 42.5"/>
+</svg></button><button type="button" class="dbg-member-eye" data-password-target="dbgMemberLoginPassword"><i data-lucide="eye" class="w-4 h-4"></i></button></div></div>
                     <div id="dbgMemberLoginError" class="dbg-member-error"></div><div id="dbgMemberLoginStatus" class="dbg-member-status"></div>
                     <button type="submit" id="dbgMemberLoginButton" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">Member Login</button>
                     <button type="button" id="dbgMemberForgotPassword" class="w-full text-emerald-700 hover:text-emerald-900 text-sm font-semibold py-1">পাসওয়ার্ড ভুলে গেছেন?</button>
