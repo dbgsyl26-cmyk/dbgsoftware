@@ -118,6 +118,111 @@
             body.dbg-printing #dbg-print-root #memberPortalProfileCard h4 { font-size: 17px !important; }
         }
 
+        /* ================= DBG MEMBER PORTAL — MATTE BLACK + GOLD REDESIGN ================= */
+        #dbgMemberPortalRoot{
+          background:
+            radial-gradient(circle at 12% 0%,rgba(212,175,55,.07),transparent 30%),
+            radial-gradient(circle at 100% 12%,rgba(255,255,255,.035),transparent 26%),
+            linear-gradient(180deg,#0a0c0d 0%,#111416 48%,#080a0b 100%) !important;
+          color:#f4f4f5 !important;
+        }
+        #dbgMemberPortalRoot .dbg-member-app-top{
+          background:linear-gradient(135deg,#090b0c 0%,#15191b 55%,#0b0d0e 100%) !important;
+          border-color:rgba(212,175,55,.48) !important;
+          box-shadow:0 18px 48px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05) !important;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu{
+          background:rgba(18,21,23,.92) !important;
+          border-color:rgba(255,255,255,.08) !important;
+          box-shadow:0 14px 35px rgba(0,0,0,.28) !important;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button{
+          background:rgba(255,255,255,.025) !important;
+          color:#d4d4d8 !important;
+          border-color:rgba(255,255,255,.06) !important;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu button.active{
+          background:linear-gradient(135deg,rgba(212,175,55,.16),rgba(212,175,55,.055)) !important;
+          color:#f5d77a !important;
+          border-color:rgba(212,175,55,.46) !important;
+        }
+        #dbgMemberPortalRoot #memberPortalProfileCard{
+          background:linear-gradient(145deg,rgba(20,23,25,.97),rgba(10,12,13,.98)) !important;
+          border:1px solid rgba(255,255,255,.075) !important;
+          box-shadow:0 24px 70px rgba(0,0,0,.38) !important;
+        }
+        #dbgMemberPortalRoot .dbg-profile-section-title{color:#f3d57a !important}
+        #dbgMemberPortalRoot .dbg-profile-section-icon{
+          background:linear-gradient(135deg,#2a2413,#151515) !important;
+          color:#f2ce62 !important;border-color:rgba(212,175,55,.34) !important;
+          box-shadow:0 7px 18px rgba(0,0,0,.25) !important;
+        }
+        #dbgMemberPortalRoot .dbg-member-hero-strip,
+        #dbgMemberPortalRoot .dbg-member-stat-card,
+        #dbgMemberPortalRoot .dbg-member-progress-card,
+        #dbgMemberPortalRoot .dbg-profile-info-card,
+        #dbgMemberPortalRoot .dbg-profile-deposit-wrap{
+          background:linear-gradient(145deg,#171b1d,#0e1112) !important;
+          color:#e4e4e7 !important;
+          border-color:rgba(255,255,255,.08) !important;
+          box-shadow:0 12px 30px rgba(0,0,0,.28) !important;
+        }
+        #dbgMemberPortalRoot .dbg-profile-info-card h4{color:#f2d477 !important;border-color:rgba(255,255,255,.08) !important}
+        #dbgMemberPortalRoot .dbg-profile-info-card p{color:#c9c9cd !important;border-color:rgba(255,255,255,.07) !important}
+        #dbgMemberPortalRoot .dbg-profile-info-card p strong{color:#f0f0f2 !important}
+        #dbgMemberPortalRoot .dbg-profile-deposit-wrap .overflow-x-auto{border-color:rgba(255,255,255,.08) !important}
+        #dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody tr:hover{background:rgba(255,255,255,.035) !important}
+
+        /* Horizontal front/back card — swipe only, no extra data */
+        #dbgMemberPortalRoot .dbg-id-card-carousel{width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 1px 8px}
+        #dbgMemberPortalRoot .dbg-id-card-carousel::-webkit-scrollbar{display:none}
+        #dbgMemberPortalRoot .dbg-id-card-track{display:flex;width:max-content;gap:14px}
+        #dbgMemberPortalRoot .dbg-id-card-slide{width:min(100vw - 42px,856px);min-width:min(100vw - 42px,856px);scroll-snap-align:center}
+        #dbgMemberPortalRoot .dbg-id-card{width:100% !important;aspect-ratio:85.6/53.98 !important;border-radius:22px !important;background:#090b0c !important;border:1px solid rgba(255,255,255,.18) !important;box-shadow:0 24px 65px rgba(0,0,0,.52),inset 0 0 0 1px rgba(212,175,55,.12) !important;color:#fff !important}
+        #dbgMemberPortalRoot .dbg-id-card::before{content:"";position:absolute;width:330px;height:330px;right:-145px;top:-160px;border-radius:50%;border:1px solid rgba(212,175,55,.18);box-shadow:0 0 0 20px rgba(212,175,55,.025),0 0 0 42px rgba(212,175,55,.018);background:transparent}
+        #dbgMemberPortalRoot .dbg-id-card::after{content:"";position:absolute;width:420px;height:190px;right:-140px;bottom:-120px;border-radius:50%;border:1px solid rgba(212,175,55,.13);background:transparent;transform:rotate(-15deg);box-shadow:0 0 0 18px rgba(212,175,55,.018),0 0 0 36px rgba(212,175,55,.012)}
+        #dbgMemberPortalRoot .dbg-id-card-content{padding:24px !important}
+        #dbgMemberPortalRoot .dbg-id-card-accent{height:4px !important;background:linear-gradient(90deg,#a77b16,#f4d477,#b68a24,#f4d477,#a77b16) !important;box-shadow:0 2px 14px rgba(212,175,55,.25) !important}
+        #dbgMemberPortalRoot .dbg-card-front-head,#dbgMemberPortalRoot .dbg-card-front-main,#dbgMemberPortalRoot .dbg-card-front-footer{position:relative;z-index:3}
+        #dbgMemberPortalRoot .dbg-card-front-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,.12)}
+        #dbgMemberPortalRoot .dbg-card-brand{display:flex;align-items:center;gap:11px;min-width:0}
+        #dbgMemberPortalRoot .dbg-card-logo-mark{width:43px;height:43px;border-radius:12px;border:1px solid rgba(212,175,55,.55);background:linear-gradient(145deg,#171717,#080808);display:flex;align-items:center;justify-content:center;color:#f1d273;font-weight:900;font-size:12px;letter-spacing:.08em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+        #dbgMemberPortalRoot .dbg-card-brand-name{font-size:18px;font-weight:900;letter-spacing:.03em;color:#f2d477;line-height:1.1}
+        #dbgMemberPortalRoot .dbg-card-type{font-size:10px;letter-spacing:.18em;color:#cfcfd2;margin-top:4px}
+        #dbgMemberPortalRoot .dbg-card-chip{width:48px;height:35px;border-radius:8px;border:1px solid rgba(212,175,55,.72);background:linear-gradient(145deg,#f5dc88,#a77a1c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 5px 14px rgba(0,0,0,.25);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;padding:4px;gap:0}
+        #dbgMemberPortalRoot .dbg-card-chip span{border:1px solid rgba(85,61,13,.5)}
+        #dbgMemberPortalRoot .dbg-card-front-main{display:grid;grid-template-columns:108px minmax(0,1fr);gap:20px;align-items:center;padding:22px 0 17px}
+        #dbgMemberPortalRoot .dbg-card-photo-wrap{display:flex;justify-content:center}
+        #dbgMemberPortalRoot .dbg-id-card-photo{width:108px !important;height:122px !important;border-radius:14px !important;object-fit:cover;border:3px solid #fff !important;box-shadow:0 0 0 3px rgba(212,175,55,.78),0 12px 25px rgba(0,0,0,.42) !important;background:#fff}
+        #dbgMemberPortalRoot .dbg-card-photo-fallback{display:flex;align-items:center;justify-content:center;color:#171717;font-weight:900}
+        #dbgMemberPortalRoot .dbg-card-label{font-size:10px;letter-spacing:.2em;color:#c7c7ca;font-weight:700}
+        #dbgMemberPortalRoot .dbg-card-name-en{font-size:25px !important;line-height:1.08 !important;font-weight:900 !important;letter-spacing:.035em;color:#fff !important;margin:6px 0 12px !important;word-break:break-word}
+        #dbgMemberPortalRoot .dbg-card-member-id{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.12em;color:#d6d6d9}.dbg-card-member-id strong{font-size:17px;letter-spacing:.06em;color:#f2d477}
+        #dbgMemberPortalRoot .dbg-card-front-footer{display:grid;grid-template-columns:1fr 1fr 76px;gap:12px;align-items:end;padding-top:13px;border-top:1px solid rgba(255,255,255,.12)}
+        #dbgMemberPortalRoot .dbg-card-front-footer span{display:block;font-size:8px;letter-spacing:.14em;color:#aaaeb2;margin-bottom:3px}.dbg-card-front-footer strong{display:block;font-size:12px;color:#f2f2f3;word-break:break-word}
+        #dbgMemberPortalRoot .dbg-card-qr-mini-wrap{justify-self:end}.dbg-card-front-footer .dbg-id-card-qr{width:70px !important;height:70px !important;padding:5px !important;border-radius:9px !important;border:2px solid #f1d273 !important;box-shadow:none !important;background:#fff}
+        #dbgMemberPortalRoot .dbg-card-side-caption{text-align:center;color:#9c9da0;font-size:9px;letter-spacing:.17em;font-weight:800;margin-top:8px}.dbg-card-side-caption span{color:#d4af37;margin:0 4px}
+        #dbgMemberPortalRoot .dbg-card-back-strip{position:absolute;left:0;right:0;top:18%;height:42px;background:linear-gradient(180deg,#030303,#151719,#050505);z-index:2;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+        #dbgMemberPortalRoot .dbg-card-back-head{position:relative;z-index:3;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.12)}
+        #dbgMemberPortalRoot .dbg-card-back-body{position:relative;z-index:3;margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+        #dbgMemberPortalRoot .dbg-card-back-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.10);font-size:10px}.dbg-card-back-row span{color:#9ea0a3;letter-spacing:.06em}.dbg-card-back-row strong{color:#f2f2f3;text-align:right;word-break:break-word}.dbg-card-back-bottom{position:absolute;left:24px;right:24px;bottom:21px;z-index:3;text-align:center}.dbg-card-back-note{font-size:7px;letter-spacing:.08em;color:#888b8e;margin-top:3px}.dbg-card-back-brand{font-size:11px;font-weight:900;letter-spacing:.12em;color:#f2d477;margin-top:7px}.dbg-card-back-brand span{color:#777;margin:0 5px}
+        @media(max-width:700px){
+          #dbgMemberPortalRoot .dbg-id-card-slide{width:calc(100vw - 34px);min-width:calc(100vw - 34px)}
+          #dbgMemberPortalRoot .dbg-id-card{border-radius:18px !important}
+          #dbgMemberPortalRoot .dbg-id-card-content{padding:15px !important}
+          #dbgMemberPortalRoot .dbg-card-logo-mark{width:34px;height:34px;border-radius:9px;font-size:9px}
+          #dbgMemberPortalRoot .dbg-card-brand-name{font-size:12px}.dbg-card-type{font-size:7px !important}
+          #dbgMemberPortalRoot .dbg-card-chip{width:37px;height:27px;border-radius:6px;padding:3px}
+          #dbgMemberPortalRoot .dbg-card-front-head{padding-bottom:10px}
+          #dbgMemberPortalRoot .dbg-card-front-main{grid-template-columns:76px minmax(0,1fr);gap:12px;padding:15px 0 12px}
+          #dbgMemberPortalRoot .dbg-id-card-photo{width:76px !important;height:88px !important;border-radius:11px !important}
+          #dbgMemberPortalRoot .dbg-card-name-en{font-size:15px !important;margin:4px 0 8px !important;letter-spacing:.025em}
+          #dbgMemberPortalRoot .dbg-card-label{font-size:7px}.dbg-card-member-id{font-size:8px !important;gap:5px}.dbg-card-member-id strong{font-size:11px}
+          #dbgMemberPortalRoot .dbg-card-front-footer{grid-template-columns:1fr 1fr 54px;gap:7px;padding-top:9px}.dbg-card-front-footer span{font-size:6px}.dbg-card-front-footer strong{font-size:8px}.dbg-card-front-footer .dbg-id-card-qr{width:52px !important;height:52px !important;padding:4px !important}
+          #dbgMemberPortalRoot .dbg-card-back-body{grid-template-columns:1fr;gap:0;margin-top:14px}.dbg-card-back-row{font-size:8px;padding:5px 0}.dbg-card-back-bottom{left:15px;right:15px;bottom:12px}.dbg-card-back-note{font-size:5.5px}.dbg-card-back-brand{font-size:8px}.dbg-card-back-strip{top:19%;height:31px}
+          #dbgMemberPortalRoot .dbg-card-side-caption{font-size:7px;margin-top:5px}
+        }
+
         /* ================= 3-ROLE LOGIN / MEMBER PORTAL ================= */
         .dbg-role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
         .dbg-role-btn { border:1px solid #e2e8f0; border-radius:16px; padding:14px 8px; background:#fff; transition:.2s; cursor:pointer; }
@@ -6065,72 +6170,85 @@ if (outstanding > 0) {
     <div id="memberPortalProfileCard" class="dbg-member-panel-shell class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
         <!-- DIGITAL MEMBER ID CARD -->
         <div id="dbgMemberPortalIdCardPanel" class="dbg-member-portal-panel" data-member-panel="idcard">
-        <div class="dbg-profile-section-title">
-          <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
-          <span>ডিজিটাল মেম্বার পরিচয়</span>
-        </div>
-        <div class="dbg-id-card-wrap">
-          <div id="dbgDigitalIdCard" class="dbg-id-card">
-            <div class="dbg-id-card-accent"></div>
-            <div class="dbg-id-card-content">
-              <div class="flex items-start justify-between gap-4 border-b border-white/20 pb-3">
-                <div>
-                  <div class="text-[11px] tracking-[.18em] font-bold text-emerald-100">DREAMS BUSINESS GROUP</div>
-                  <div class="text-xl md:text-2xl font-extrabold mt-1">ডিজিটাল মেম্বার আইডি কার্ড</div>
-                  <div class="text-[11px] text-emerald-100 mt-1">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="rounded-full bg-white/15 border border-white/20 px-3 py-1 text-[10px] font-extrabold tracking-wide">ACTIVE MEMBER</span>
-                  <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
-                    <i data-lucide="badge-check" class="w-6 h-6 text-white"></i>
+          <div class="dbg-profile-section-title">
+            <span class="dbg-profile-section-icon"><i data-lucide="badge-check" class="w-4 h-4"></i></span>
+            <span>ডিজিটাল মেম্বার পরিচয়</span>
+          </div>
+
+          <div class="dbg-id-card-carousel" aria-label="Digital Member Card">
+            <div class="dbg-id-card-track">
+              <!-- FRONT SIDE: existing member data only -->
+              <div class="dbg-id-card-slide">
+                <div id="dbgDigitalIdCard" class="dbg-id-card dbg-id-card-front">
+                  <div class="dbg-id-card-accent"></div>
+                  <div class="dbg-card-wave dbg-card-wave-one"></div>
+                  <div class="dbg-card-wave dbg-card-wave-two"></div>
+                  <div class="dbg-id-card-content">
+                    <div class="dbg-card-front-head">
+                      <div class="dbg-card-brand">
+                        <div class="dbg-card-logo-mark">DBG</div>
+                        <div>
+                          <div class="dbg-card-brand-name">DREAMS BUSINESS GROUP</div>
+                          <div class="dbg-card-type">MEMBERSHIP CARD</div>
+                        </div>
+                      </div>
+                      <div class="dbg-card-chip" aria-hidden="true"><span></span><span></span><span></span></div>
+                    </div>
+
+                    <div class="dbg-card-front-main">
+                      <div class="dbg-card-photo-wrap">
+                        ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="dbg-id-card-photo" alt="Member Photo">` : `<div class="dbg-id-card-photo dbg-card-photo-fallback">DBG</div>`}
+                      </div>
+                      <div class="dbg-card-front-details">
+                        <div class="dbg-card-label">NAME</div>
+                        <div class="dbg-id-card-name dbg-card-name-en">${escapeHtml(String(member.nameEn || member.name || '-').toUpperCase())}</div>
+                        <div class="dbg-card-member-id"><span>MEMBER ID</span><strong>${escapeHtml(member.code || '-')}</strong></div>
+                      </div>
+                    </div>
+
+                    <div class="dbg-card-front-footer">
+                      <div><span>MOBILE</span><strong>${escapeHtml(member.phone || '-')}</strong></div>
+                      <div><span>BLOOD GROUP</span><strong>${escapeHtml(member.bloodGroup || '-')}</strong></div>
+                      <div class="dbg-card-qr-mini-wrap"><div id="dbgMemberIdQr" class="dbg-id-card-qr"><span>QR</span></div></div>
+                    </div>
                   </div>
                 </div>
+                <div class="dbg-card-side-caption">FRONT SIDE <span>•</span> SWIPE FOR BACK</div>
               </div>
 
-              <div class="dbg-id-card-main py-3">
-                <div>
-                  ${photoSrc ? `<img src="${escapeHtml(photoSrc)}" class="dbg-id-card-photo" alt="Member Photo">` : `<div class="dbg-id-card-photo flex items-center justify-center text-emerald-700 font-extrabold">DBG</div>`}
-                </div>
+              <!-- BACK SIDE: only fields already available in the current member object -->
+              <div class="dbg-id-card-slide">
+                <div class="dbg-id-card dbg-id-card-back">
+                  <div class="dbg-id-card-accent"></div>
+                  <div class="dbg-card-wave dbg-card-wave-one"></div>
+                  <div class="dbg-card-wave dbg-card-wave-two"></div>
+                  <div class="dbg-card-back-strip"></div>
+                  <div class="dbg-id-card-content">
+                    <div class="dbg-card-back-head">
+                      <div class="dbg-card-brand-name">DREAMS BUSINESS GROUP</div>
+                      <div class="dbg-card-type">MEMBERSHIP CARD</div>
+                    </div>
 
-                <div class="dbg-id-card-info">
-                  <div class="text-[10px] uppercase tracking-wider text-emerald-100 font-semibold">Member Name</div>
-                  <div class="dbg-id-card-name">${escapeHtml(member.name || '-')}</div>
-                  ${member.nameEn ? `<div class="dbg-id-card-name-en">${escapeHtml(member.nameEn)}</div>` : ''}
-                  <div class="dbg-id-card-grid">
-                    <div><span class="dbg-id-card-label">Member ID:</span><span class="dbg-id-card-value">${escapeHtml(member.code || '-')}</span></div>
-                    <div><span class="dbg-id-card-label">Blood Group:</span><span class="dbg-id-card-value">${escapeHtml(member.bloodGroup || '-')}</span></div>
-                    <div><span class="dbg-id-card-label">Mobile:</span><span class="dbg-id-card-value">${escapeHtml(member.phone || '-')}</span></div>
-                    <div><span class="dbg-id-card-label">Country:</span><span class="dbg-id-card-value">${escapeHtml(member.currentCountry || 'বাংলাদেশ')}</span></div>
-                  </div>
-                  <div class="dbg-id-card-actions no-print">
-                    <button id="dbgMemberIdDownload" type="button" class="dbg-id-card-download">
-                      <i data-lucide="download" class="w-4 h-4"></i> ID Card JPEG
-                    </button>
-                  </div>
-                </div>
+                    <div class="dbg-card-back-body">
+                      <div class="dbg-card-back-row"><span>MEMBER NAME</span><strong>${escapeHtml(String(member.nameEn || member.name || '-').toUpperCase())}</strong></div>
+                      <div class="dbg-card-back-row"><span>MEMBER ID</span><strong>${escapeHtml(member.code || '-')}</strong></div>
+                      <div class="dbg-card-back-row"><span>MOBILE</span><strong>${escapeHtml(member.phone || '-')}</strong></div>
+                      <div class="dbg-card-back-row"><span>BLOOD GROUP</span><strong>${escapeHtml(member.bloodGroup || '-')}</strong></div>
+                      <div class="dbg-card-back-row"><span>COUNTRY</span><strong>${escapeHtml(member.currentCountry || 'বাংলাদেশ')}</strong></div>
+                      <div class="dbg-card-back-row"><span>MEMBER SINCE</span><strong>${escapeHtml(memberSince)}</strong></div>
+                    </div>
 
-                <div class="text-center">
-                  <div id="dbgMemberIdQr" class="dbg-id-card-qr">
-                    <span class="text-[9px] text-slate-400 font-bold">QR</span>
+                    <div class="dbg-card-back-bottom">
+                      <div class="dbg-card-back-note">THIS CARD IS THE PROPERTY OF DREAMS BUSINESS GROUP.</div>
+                      <div class="dbg-card-back-note">KEEP THIS CARD SAFE AND PRESENT IT WHEN REQUIRED.</div>
+                      <div class="dbg-card-back-brand">DREAMS BUSINESS GROUP <span>•</span> DBG</div>
+                    </div>
                   </div>
-                  <div class="text-[9px] text-emerald-50 font-extrabold mt-2 tracking-[.12em]">SCAN TO VERIFY</div>
-                  <div class="text-[8px] text-emerald-100 mt-0.5 tracking-wide">QR VERIFICATION</div>
                 </div>
-              </div>
-
-              <div class="dbg-id-card-footer">
-                <div>
-                  <div class="text-xs font-extrabold">ড্রিমস বিজনেস গ্রুপ (DBG)</div>
-                  <div class="text-[10px] text-emerald-100 mt-0.5">Unique Digital Member Identity</div>
-                </div>
-                <div class="text-right text-[10px] text-emerald-100">
-                  <div>Member ID: <strong class="text-white">${escapeHtml(member.code || '-')}</strong></div>
-                  <div class="mt-0.5">Keep this card safe</div>
-                </div>
+                <div class="dbg-card-side-caption">BACK SIDE <span>•</span> SWIPE TO FRONT</div>
               </div>
             </div>
           </div>
-        </div>
         </div>
         <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel" data-member-panel="dashboard">
         ${memberAlertHtml}
