@@ -5161,6 +5161,86 @@ function installMemberPortalStylesAndRoot() {
           #dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{display:none}
         }
 
+
+        /* ================= MEMBER PORTAL FINAL GREEN NAV / SUMMARY UX ================= */
+        #dbgMemberPortalRoot .dbg-member-app-top{
+          background:linear-gradient(135deg,#064e3b 0%,#087f5b 55%,#0f766e 100%)!important;
+          border-color:rgba(212,175,55,.42)!important;
+        }
+        #dbgMemberPortalRoot .dbg-member-portal-menu,
+        #dbgMemberPortalRoot .dbg-member-dashboard-card{display:none!important;}
+        #dbgMemberPortalRoot .dbg-member-portal-panel{width:100%;}
+        #dbgMemberPortalRoot .dbg-member-portal-panel[data-member-panel=profile] .dbg-profile-shell{
+          border-radius:20px!important;
+        }
+        #dbgMemberPortalRoot .dbg-mobile-bottom-nav{
+          position:sticky;bottom:10px;z-index:30;
+          display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;
+          margin:18px 0 0;padding:7px;
+          background:rgba(6,78,59,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+          border:1px solid rgba(212,175,55,.38);border-radius:20px;
+          box-shadow:0 14px 35px rgba(6,78,59,.22);
+        }
+        #dbgMemberPortalRoot .dbg-mobile-bottom-nav button{
+          min-height:54px;border:1px solid transparent;border-radius:15px;background:transparent;color:#d1fae5;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+          font-size:10px;font-weight:800;cursor:pointer;transition:.2s ease;
+        }
+        #dbgMemberPortalRoot .dbg-mobile-bottom-nav button i{width:20px;height:20px;}
+        #dbgMemberPortalRoot .dbg-mobile-bottom-nav button.active{
+          color:#fff;background:linear-gradient(135deg,#0f9d72,#087f5b);
+          border-color:rgba(212,175,55,.55);box-shadow:0 6px 18px rgba(0,0,0,.18);
+        }
+        #dbgMemberPortalRoot .dbg-mobile-bottom-nav button.active i{color:#f1d77a;}
+        #dbgMemberPortalRoot .dbg-member-header-logout{
+          position:absolute!important;right:14px;top:14px;z-index:5;width:40px;height:40px;padding:0!important;
+          border-radius:13px!important;display:flex;align-items:center;justify-content:center;
+        }
+        #dbgMemberPortalRoot .dbg-member-app-top{position:relative;}
+        #dbgMemberPortalRoot .dbg-member-app-top .dbg-member-status-pill{margin-right:48px;}
+        #dbgMemberPortalRoot .dbg-deposit-summary-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;}
+        #dbgMemberPortalRoot .dbg-deposit-summary-actions button{
+          border:0;border-radius:12px;padding:9px 13px;font-size:11px;font-weight:800;cursor:pointer;
+          display:inline-flex;align-items:center;gap:6px;transition:.2s ease;
+        }
+        #dbgMemberPortalRoot .dbg-summary-print{background:#064e3b;color:#fff;}
+        #dbgMemberPortalRoot .dbg-summary-download{background:#d4af37;color:#173b32;}
+        #dbgMemberPortalRoot .dbg-deposit-summary-table-wrap{overflow:visible!important;}
+        #dbgMemberPortalRoot .dbg-deposit-summary-table{width:100%;}
+        @media(max-width:700px){
+          #dbgMemberPortalRoot .dbg-mobile-bottom-nav{position:fixed;left:10px;right:10px;bottom:10px;margin:0;}
+          #dbgMemberPortalRoot{padding-bottom:82px!important;}
+          #dbgMemberPortalRoot .dbg-member-app-top{padding-right:58px;}
+          #dbgMemberPortalRoot .dbg-member-brand-title{font-size:15px;}
+          #dbgMemberPortalRoot .dbg-member-brand-sub{font-size:9px;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table-wrap{overflow:visible!important;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table thead{display:none;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table,
+          #dbgMemberPortalRoot .dbg-deposit-summary-table tbody,
+          #dbgMemberPortalRoot .dbg-deposit-summary-table tr,
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td{display:block;width:100%;box-sizing:border-box;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table tr{
+            margin:0 0 10px;padding:9px;border:1px solid #d1fae5;border-radius:15px;background:#f7fffb;
+            box-shadow:0 5px 15px rgba(6,78,59,.07);
+          }
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td{
+            border:0!important;border-bottom:1px dashed #d1fae5!important;padding:6px 5px!important;
+            display:grid;grid-template-columns:48% 52%;text-align:left!important;font-size:11px!important;
+          }
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:last-child{border-bottom:0!important;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td::before{font-weight:800;color:#166534;}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(1)::before{content:'তারিখ';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(2)::before{content:'জমার মাস / স্কিম';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(3)::before{content:'মূল ডিপোজিট';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(4)::before{content:'খরচ বাবদ জমা';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(5)::before{content:'স্বপ্ন সমৃদ্ধি';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(6)::before{content:'স্বপ্ন উন্নয়ন';}
+          #dbgMemberPortalRoot .dbg-deposit-summary-table td:nth-child(7)::before{content:'মেথড';}
+        }
+        @media(min-width:701px){
+          #dbgMemberPortalRoot .dbg-mobile-bottom-nav{max-width:720px;margin:18px auto 0;}
+        }
+
         /* ================= MEMBER PORTAL MENU NAVIGATION ================= */
         .dbg-member-portal-menu{
           display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
@@ -5738,7 +5818,7 @@ function installMemberPortalStylesAndRoot() {
       <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
       <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 md:p-7 flex flex-wrap justify-between items-center gap-4">
         <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
-        <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
+        <button id="dbgMemberLogout" class="dbg-member-header-logout px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
       </div>
       <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div>
       <div class="no-print mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-center shadow-sm">
@@ -5752,14 +5832,14 @@ function installMemberPortalStylesAndRoot() {
         <i data-lucide="chevron-right" class="dbg-dashboard-card-arrow w-5 h-5"></i>
       </button>
       <div id="dbgMemberPortalMenu" class="dbg-member-portal-menu no-print" role="tablist" aria-label="Member Portal Menu">
-        <button type="button" class="active" data-member-menu="profile" role="tab" aria-selected="true"><i data-lucide="user-round" class="w-5 h-5"></i><span class="dbg-menu-title">মেম্বার প্রোফাইল</span><span class="dbg-menu-sub">Personal Details</span></button>
+        <button type="button" data-member-menu="profile" role="tab" aria-selected="false"><i data-lucide="user-round" class="w-5 h-5"></i><span class="dbg-menu-title">মেম্বার প্রোফাইল</span><span class="dbg-menu-sub">Personal Details</span></button>
         <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards" class="w-5 h-5"></i><span class="dbg-menu-title">ডিপোজিট সামারি</span><span class="dbg-menu-sub">Savings Overview</span></button>
         <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check" class="w-5 h-5"></i><span class="dbg-menu-title">ডিজিটাল ID কার্ড</span><span class="dbg-menu-sub">Digital Identity</span></button>
       </div>
       <div id="dbgMemberPortalContent"></div>
       <nav class="dbg-mobile-bottom-nav no-print" aria-label="মেম্বার মোবাইল নেভিগেশন">
-        <button type="button" data-member-menu="dashboard" aria-label="ড্যাশবোর্ড"><i data-lucide="layout-dashboard"></i><span>ড্যাশবোর্ড</span></button>
-        <button type="button" data-member-menu="profile" class="active" aria-label="প্রোফাইল"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
+        <button type="button" data-member-menu="dashboard" class="active" aria-label="ড্যাশবোর্ড"><i data-lucide="layout-dashboard"></i><span>ড্যাশবোর্ড</span></button>
+        <button type="button" data-member-menu="profile" aria-label="প্রোফাইল"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
         <button type="button" data-member-menu="summary" aria-label="সামারি"><i data-lucide="wallet-cards"></i><span>সামারি</span></button>
         <button type="button" data-member-menu="idcard" aria-label="ID কার্ড"><i data-lucide="badge-check"></i><span>ID কার্ড</span></button>
       </nav></div>
@@ -6228,7 +6308,7 @@ if (outstanding > 0) {
           </div>
         </div>
         </div>
-        <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel" data-member-panel="dashboard">
+        <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel active" data-member-panel="dashboard">
         ${memberAlertHtml}
         <!-- UNIQUE MEMBER DASHBOARD -->
         <div class="dbg-profile-section-title">
@@ -6261,7 +6341,7 @@ if (outstanding > 0) {
         </div>
 
         </div>
-        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
+        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel" data-member-panel="profile">
         ${memberAlertHtml}
 
         <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print">
@@ -6339,8 +6419,12 @@ if (outstanding > 0) {
                     <span><i data-lucide="wallet" class="inline w-4 h-4 mr-1"></i> সদস্য ডিপোজিট সামারি (Deposit Summary)</span>
                     <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
                 </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left border">
+                <div class="dbg-deposit-summary-actions no-print">
+                    <button type="button" id="dbgMemberSummaryPrint" class="dbg-summary-print"><i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট / PDF</button>
+                    <button type="button" id="dbgMemberSummaryDownload" class="dbg-summary-download"><i data-lucide="download" class="w-4 h-4"></i> PDF ডাউনলোড</button>
+                </div>
+                <div class="dbg-deposit-summary-table-wrap">
+                    <table class="dbg-deposit-summary-table w-full text-xs text-left border">
                         <thead class="bg-indigo-900 text-white font-bold">
                             <tr>
                                 <th class="p-2 border text-center">তারিখ</th>
@@ -6361,6 +6445,35 @@ if (outstanding > 0) {
             </div>
             </div>
         </div>`;
+}
+
+function printMemberDepositSummary(){
+    const source=document.getElementById('dbgMemberPortalSummaryPanel');
+    if(!source){alert('ডিপোজিট সামারি পাওয়া যায়নি।');return;}
+    const printRoot=document.createElement('div'); printRoot.id='dbg-print-root'; printRoot.setAttribute('data-print-title','DBG সদস্য ডিপোজিট সামারি');
+    const clone=source.cloneNode(true);
+    clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove());
+    const header=document.createElement('div'); header.className='dbg-print-company-header';
+    header.innerHTML='<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p><h2 style="margin:8px 0 0;font-size:18px">সদস্য ডিপোজিট সামারি</h2>';
+    printRoot.appendChild(header); printRoot.appendChild(clone); document.body.appendChild(printRoot); document.body.classList.add('dbg-printing');
+    setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('dbg-printing');printRoot.remove();},300);},50);
+}
+async function downloadMemberDepositSummaryPDF(member){
+    const source=document.getElementById('dbgMemberPortalSummaryPanel'); if(!source){alert('ডিপোজিট সামারি পাওয়া যায়নি।');return;}
+    const button=document.getElementById('dbgMemberSummaryDownload'); let root=null; const old=button?.innerHTML;
+    try{
+      if(button){button.disabled=true;button.innerHTML='<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> PDF তৈরি হচ্ছে...';try{lucide.createIcons();}catch(_){} }
+      await loadDbgPdfLibraries();
+      root=document.createElement('div'); root.style.cssText='position:fixed;left:-100000px;top:0;width:1100px;background:#fff;padding:28px;box-sizing:border-box;z-index:-1;';
+      const header=document.createElement('div'); header.style.cssText='text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #cbd5e1;';
+      header.innerHTML='<h1 style="margin:0;color:#064e3b;font-size:30px;font-weight:800">ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p style="margin:6px 0 0;color:#475569;font-size:17px;font-weight:600">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p><h2 style="margin:10px 0 0;color:#064e3b;font-size:21px">সদস্য ডিপোজিট সামারি</h2>';
+      root.appendChild(header); const clone=source.cloneNode(true); clone.removeAttribute('id'); clone.querySelectorAll('.no-print,button,input[type="button"],input[type="submit"]').forEach(el=>el.remove()); clone.style.cssText='width:100%;box-shadow:none;'; root.appendChild(clone); document.body.appendChild(root);
+      const canvas=await window.html2canvas(root,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,imageTimeout:15000,windowWidth:1100});
+      const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4'); const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),margin=8,uw=pw-margin*2,pxmm=canvas.width/uw,pageH=Math.floor((ph-margin*2)*pxmm); let y=0,page=0;
+      while(y<canvas.height){const h=Math.min(pageH,canvas.height-y),slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;const ctx=slice.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);if(page++)pdf.addPage();pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,uw,h/pxmm);y+=h;}
+      const code=String(member?.code||'member').trim()||'member'; pdf.save(`${code}_deposit_summary.pdf`);
+    }catch(e){console.error('DBG Deposit Summary PDF Error:',e);alert('PDF ডাউনলোড করা যায়নি। প্রয়োজনে “প্রিন্ট / PDF” থেকে Save as PDF ব্যবহার করুন।');}
+    finally{if(root)root.remove();if(button){button.disabled=false;button.innerHTML=old||'<i data-lucide="download" class="w-4 h-4"></i> PDF ডাউনলোড';try{lucide.createIcons();}catch(_){} }}
 }
 
 function printMemberPortalProfile() {
@@ -6441,6 +6554,8 @@ async function loadMemberPortalData(user) {
         document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
+        document.getElementById('dbgMemberSummaryPrint')?.addEventListener('click',printMemberDepositSummary);
+        document.getElementById('dbgMemberSummaryDownload')?.addEventListener('click',()=>downloadMemberDepositSummaryPDF(member));
 
         // Member Portal: show details only after the member selects a menu item.
         // This changes presentation only; all existing data/calculations/features remain intact.
