@@ -1594,6 +1594,17 @@
                 </div>
                 <p class="text-[10px] text-gray-400">ধন্যবাদ আপনার জমার জন্য। এটি একটি কম্পিউটার জেনারেটেড রসিদ।</p>
             </div>
+            <div class="grid grid-cols-2 gap-2 pt-1 no-print">
+                <button type="button" onclick="printReceipt()" class="bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট / PDF
+                </button>
+                <button type="button" id="receiptPdfDownloadButton" onclick="downloadReceiptPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> PDF ডাউনলোড
+                </button>
+                <button type="button" onclick="closeReceiptModal()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-lg font-semibold text-sm">
+                    বন্ধ
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3276,6 +3287,138 @@ function changeDepPage(direction) {
         function closeReceiptModal() {
             document.getElementById('receiptModal').classList.add('hidden');
             document.getElementById('receiptModal').classList.remove('flex');
+        }
+
+        // Receipt-only print: keeps the existing receipt data/design unchanged.
+        // This does not affect any other report print function.
+        function printReceipt() {
+            const source = document.getElementById('receiptContent');
+            if (!source) {
+                alert('রসিদ পাওয়া যায়নি।');
+                return;
+            }
+
+            const printRoot = document.createElement('div');
+            printRoot.id = 'dbg-print-root';
+            printRoot.setAttribute('data-print-title', 'DBG Payment Receipt');
+
+            const clone = source.cloneNode(true);
+            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+
+            const companyHeader = document.createElement('div');
+            companyHeader.className = 'dbg-print-company-header';
+            companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+
+            printRoot.appendChild(companyHeader);
+            printRoot.appendChild(clone);
+            document.body.appendChild(printRoot);
+            document.body.classList.add('dbg-printing');
+
+            // Keep the browser print call tied to the button action.
+            window.print();
+
+            setTimeout(() => {
+                document.body.classList.remove('dbg-printing');
+                printRoot.remove();
+            }, 500);
+        }
+
+        // Direct PDF download of the currently displayed receipt.
+        // The receipt is rendered as an image inside the PDF so Bangla text,
+        // spacing and the existing visual design remain intact.
+        async function downloadReceiptPDF() {
+            const source = document.getElementById('receiptContent');
+            const button = document.getElementById('receiptPdfDownloadButton');
+            if (!source) {
+                alert('রসিদ পাওয়া যায়নি।');
+                return;
+            }
+
+            let pdfRoot = null;
+            const originalText = button?.innerHTML;
+
+            try {
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> PDF তৈরি হচ্ছে...';
+                    try { lucide.createIcons(); } catch (_) {}
+                }
+
+                await loadDbgPdfLibraries();
+
+                pdfRoot = document.createElement('div');
+                pdfRoot.style.position = 'fixed';
+                pdfRoot.style.left = '-100000px';
+                pdfRoot.style.top = '0';
+                pdfRoot.style.width = '700px';
+                pdfRoot.style.background = '#ffffff';
+                pdfRoot.style.padding = '28px';
+                pdfRoot.style.boxSizing = 'border-box';
+                pdfRoot.style.zIndex = '-1';
+
+                const clone = source.cloneNode(true);
+                clone.removeAttribute('id');
+                clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
+                clone.style.width = '100%';
+                clone.style.maxWidth = 'none';
+                clone.style.margin = '0';
+                clone.style.boxShadow = 'none';
+
+                pdfRoot.appendChild(clone);
+                document.body.appendChild(pdfRoot);
+
+                const images = Array.from(pdfRoot.querySelectorAll('img'));
+                await Promise.all(images.map(img => new Promise(resolve => {
+                    if (img.complete) return resolve();
+                    img.onload = img.onerror = () => resolve();
+                })));
+
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+                const canvas = await window.html2canvas(pdfRoot, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    imageTimeout: 15000,
+                    windowWidth: 700
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a5');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 8;
+                const usableWidth = pageWidth - (margin * 2);
+                const usableHeight = pageHeight - (margin * 2);
+                const ratio = Math.min(usableWidth / canvas.width, usableHeight / canvas.height);
+                const renderWidth = canvas.width * ratio;
+                const renderHeight = canvas.height * ratio;
+                const x = (pageWidth - renderWidth) / 2;
+                const y = (pageHeight - renderHeight) / 2;
+
+                pdf.addImage(
+                    canvas.toDataURL('image/jpeg', 0.98),
+                    'JPEG',
+                    x, y,
+                    renderWidth, renderHeight
+                );
+
+                const receiptId = (document.getElementById('recId')?.innerText || 'receipt')
+                    .replace(/[^a-zA-Z0-9_-]/g, '');
+                pdf.save(`DBG-${receiptId || 'Receipt'}.pdf`);
+            } catch (error) {
+                console.error('DBG Receipt PDF Download Error:', error);
+                alert('রসিদ PDF ডাউনলোড করা যায়নি। ইন্টারনেট সংযোগ ঠিক আছে কিনা দেখে আবার চেষ্টা করুন।');
+            } finally {
+                if (pdfRoot) pdfRoot.remove();
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalText || '<i data-lucide="download" class="w-4 h-4"></i> PDF ডাউনলোড';
+                    try { lucide.createIcons(); } catch (_) {}
+                }
+            }
         }
 
         // INVESTMENTS LOGIC
