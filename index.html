@@ -1594,17 +1594,6 @@
                 </div>
                 <p class="text-[10px] text-gray-400">ধন্যবাদ আপনার জমার জন্য। এটি একটি কম্পিউটার জেনারেটেড রসিদ।</p>
             </div>
-            <div class="grid grid-cols-2 gap-2 pt-1 no-print">
-                <button type="button" onclick="printReceipt()" class="bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
-                    <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট / PDF
-                </button>
-                <button type="button" id="receiptPdfDownloadButton" onclick="downloadReceiptPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4"></i> PDF সেভ / প্রিন্ট
-                </button>
-                <button type="button" onclick="closeReceiptModal()" class="col-span-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-lg font-semibold text-sm">
-                    বন্ধ
-                </button>
-            </div>
         </div>
     </div>
 
@@ -3287,97 +3276,6 @@ function changeDepPage(direction) {
         function closeReceiptModal() {
             document.getElementById('receiptModal').classList.add('hidden');
             document.getElementById('receiptModal').classList.remove('flex');
-        }
-
-        // Receipt-only print: keeps the existing receipt data/design unchanged.
-        // This does not affect any other report print function.
-        function printReceipt() {
-            const source = document.getElementById('receiptContent');
-            if (!source) {
-                alert('রসিদ পাওয়া যায়নি।');
-                return;
-            }
-
-            const printRoot = document.createElement('div');
-            printRoot.id = 'dbg-print-root';
-            printRoot.setAttribute('data-print-title', 'DBG Payment Receipt');
-
-            const clone = source.cloneNode(true);
-            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
-
-            const companyHeader = document.createElement('div');
-            companyHeader.className = 'dbg-print-company-header';
-            companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
-
-            printRoot.appendChild(companyHeader);
-            printRoot.appendChild(clone);
-            document.body.appendChild(printRoot);
-            document.body.classList.add('dbg-printing');
-
-            // Keep the browser print call tied to the button action.
-            window.print();
-
-            setTimeout(() => {
-                document.body.classList.remove('dbg-printing');
-                printRoot.remove();
-            }, 500);
-        }
-
-        // Receipt PDF/Save handler.
-        // Uses the browser's native print dialog so it works without any
-        // external PDF library or internet connection. Choose "Save as PDF"
-        // in the print dialog to save the receipt as a PDF file.
-        function downloadReceiptPDF() {
-            const source = document.getElementById('receiptContent');
-            const button = document.getElementById('receiptPdfDownloadButton');
-            if (!source) {
-                alert('রসিদ পাওয়া যায়নি।');
-                return;
-            }
-
-            const printRoot = document.createElement('div');
-            printRoot.id = 'dbg-print-root';
-            printRoot.setAttribute('data-print-title', 'DBG Payment Receipt');
-
-            const clone = source.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.querySelectorAll('.no-print, button, input[type="button"], input[type="submit"]').forEach(el => el.remove());
-            clone.style.width = '100%';
-            clone.style.maxWidth = 'none';
-            clone.style.margin = '0';
-            clone.style.boxShadow = 'none';
-
-            // Keep the receipt itself unchanged; do not add or remove any
-            // member/deposit data. Only the action buttons are excluded.
-            printRoot.appendChild(clone);
-            document.body.appendChild(printRoot);
-            document.body.classList.add('dbg-printing');
-
-            // Keep window.print() directly inside the click handler so the
-            // browser does not block the print dialog.
-            window.print();
-
-            const cleanup = () => {
-                document.body.classList.remove('dbg-printing');
-                if (printRoot.parentNode) printRoot.remove();
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> PDF সেভ / প্রিন্ট';
-                    try { lucide.createIcons(); } catch (_) {}
-                }
-            };
-
-            // afterprint is the reliable cleanup event; timeout is a fallback
-            // for browsers that do not fire it.
-            let cleaned = false;
-            const finish = () => {
-                if (cleaned) return;
-                cleaned = true;
-                window.removeEventListener('afterprint', finish);
-                cleanup();
-            };
-            window.addEventListener('afterprint', finish, { once: true });
-            setTimeout(finish, 2000);
         }
 
         // INVESTMENTS LOGIC
@@ -5729,6 +5627,96 @@ function installMemberPortalStylesAndRoot() {
         font-size:17px;
     }
 }
+
+
+/* ================= DBG PREMIUM MATTE BLACK MEMBER PORTAL ================= */
+#dbgMemberPortalRoot{
+  --dbg-black:#07090d;--dbg-charcoal:#11151c;--dbg-panel:#151a22;--dbg-panel2:#1b212b;
+  --dbg-navy:#0b2036;--dbg-gold:#d4af37;--dbg-gold2:#f0d878;--dbg-white:#f5f7fa;--dbg-muted:#a6afbd;
+  background:#05070a!important;color:var(--dbg-white)!important;
+}
+#dbgMemberPortalRoot > div{background:linear-gradient(180deg,#07090d 0%,#0b0f15 55%,#07090d 100%)!important;padding-bottom:92px!important}
+#dbgMemberPortalRoot .dbg-member-app-top{
+  background:linear-gradient(145deg,#11161e 0%,#0a0d12 58%,#0b1b2b 100%)!important;
+  border:1px solid rgba(212,175,55,.22)!important;box-shadow:0 18px 55px rgba(0,0,0,.42)!important;position:relative;overflow:hidden;
+}
+#dbgMemberPortalRoot .dbg-member-app-top::before{background:linear-gradient(90deg,transparent,rgba(212,175,55,.22),transparent)!important}
+#dbgMemberPortalRoot .dbg-member-brand-mark{background:#0a0d12!important;border-color:rgba(212,175,55,.45)!important;box-shadow:0 0 24px rgba(212,175,55,.10)!important}
+#dbgMemberPortalRoot .dbg-member-brand-title{color:#f5f7fa!important}
+#dbgMemberPortalRoot .dbg-member-brand-sub{color:#d7dde6!important}
+#dbgMemberPortalRoot .dbg-member-status-pill{background:rgba(212,175,55,.08)!important;border-color:rgba(212,175,55,.28)!important;color:#e9d37a!important}
+#dbgMemberPortalRoot .dbg-member-status-dot{background:#d4af37!important;box-shadow:0 0 10px rgba(212,175,55,.7)!important}
+#dbgMemberPortalRoot .dbg-member-login-topbar{background:#10151d!important;border-color:rgba(212,175,55,.16)!important;box-shadow:0 8px 25px rgba(0,0,0,.22)!important}
+#dbgMemberPortalRoot .dbg-member-login-date{color:#9ea8b6!important}.dbg-member-login-time{color:#e3c85e!important}
+#dbgMemberPortalRoot .dbg-member-login-title{color:#f0d878!important}
+#dbgMemberPortalRoot .dbg-member-dashboard-card{
+  background:linear-gradient(135deg,#151b24,#0e131a)!important;border:1px solid rgba(212,175,55,.22)!important;
+  color:#f5f7fa!important;box-shadow:0 14px 36px rgba(0,0,0,.30)!important;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important
+}
+#dbgMemberPortalRoot .dbg-member-dashboard-card:hover{transform:translateY(-2px);border-color:rgba(212,175,55,.5)!important;box-shadow:0 18px 44px rgba(0,0,0,.38),0 0 24px rgba(212,175,55,.07)!important}
+#dbgMemberPortalRoot .dbg-dashboard-card-icon{background:linear-gradient(145deg,#202733,#0b2036)!important;color:#e3c85e!important;border:1px solid rgba(212,175,55,.22)!important}
+#dbgMemberPortalRoot .dbg-dashboard-card-title{color:#f5f7fa!important}.dbg-dashboard-card-sub{color:#aeb7c4!important}.dbg-dashboard-card-arrow{color:#d4af37!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu{
+  position:relative;background:rgba(13,17,23,.88)!important;border:1px solid rgba(212,175,55,.14)!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.3)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)
+}
+#dbgMemberPortalRoot .dbg-member-portal-menu button{color:#aeb7c4!important;border-color:transparent!important;transition:.22s ease!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu button:hover{background:#171d26!important;color:#f0d878!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu button.active{background:linear-gradient(145deg,#202733,#121820)!important;color:#f0d878!important;border-color:rgba(212,175,55,.3)!important;box-shadow:0 6px 20px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.04)!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu button.active::after{background:#d4af37!important;box-shadow:0 0 10px rgba(212,175,55,.55)!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu .dbg-menu-sub{color:#8f9aaa!important}
+#dbgMemberPortalRoot .dbg-member-portal-menu button.active .dbg-menu-sub{color:#d8ddea!important}
+#dbgMemberPortalRoot .dbg-member-unique-dashboard{gap:12px}
+#dbgMemberPortalRoot .dbg-member-hero-strip{background:linear-gradient(135deg,#171d26,#0c1622 60%,#11161e)!important;border:1px solid rgba(212,175,55,.18)!important;box-shadow:0 18px 45px rgba(0,0,0,.30)!important}
+#dbgMemberPortalRoot .dbg-member-hero-avatar{background:#0b2036!important;border-color:rgba(212,175,55,.5)!important;box-shadow:0 0 25px rgba(212,175,55,.08)!important}
+#dbgMemberPortalRoot .dbg-member-hero-kicker{color:#d4af37!important}.dbg-member-hero-name{color:#f5f7fa!important}.dbg-member-hero-meta{color:#9fa9b8!important}
+#dbgMemberPortalRoot .dbg-member-hero-badge{background:linear-gradient(145deg,#d4af37,#9d7c17)!important;color:#090b0f!important;box-shadow:0 7px 22px rgba(212,175,55,.16)!important}
+#dbgMemberPortalRoot .dbg-member-hero-badge small{color:#1a1608!important}
+#dbgMemberPortalRoot .dbg-member-stat-card{background:linear-gradient(145deg,#171c24,#10151c)!important;border-color:rgba(255,255,255,.07)!important;box-shadow:0 12px 28px rgba(0,0,0,.25)!important;color:#f5f7fa!important}
+#dbgMemberPortalRoot .dbg-member-stat-card span{color:#929dac!important}.dbg-member-stat-card strong{color:#f5f7fa!important}
+#dbgMemberPortalRoot .stat-green .dbg-member-stat-icon{background:#102c27!important;color:#d4af37!important}.dbg-member-stat-card .dbg-member-stat-icon{border:1px solid rgba(212,175,55,.12)}
+#dbgMemberPortalRoot .dbg-member-progress-card{background:#10151c!important;border-color:rgba(212,175,55,.12)!important}.dbg-member-progress-head{color:#b9c1cc!important}.dbg-member-progress-head strong{color:#e6cc69!important}.dbg-member-progress-track{background:#252c36!important}.dbg-member-progress-fill{background:linear-gradient(90deg,#8e6d12,#d4af37,#f0d878)!important}
+#dbgMemberPortalRoot .dbg-profile-shell{background:linear-gradient(180deg,#10151c,#0b0f14)!important;border-color:rgba(212,175,55,.16)!important;box-shadow:0 24px 70px rgba(0,0,0,.42)!important;color:#f5f7fa!important}
+#dbgMemberPortalRoot .dbg-profile-shell::before{background:linear-gradient(90deg,#0b2036,#d4af37,#f0d878,#0b2036)!important}
+#dbgMemberPortalRoot .dbg-profile-section-title{color:#f5f7fa!important}.dbg-profile-section-title::after{background:linear-gradient(90deg,rgba(212,175,55,.35),transparent)!important}
+#dbgMemberPortalRoot .dbg-profile-section-icon{background:#151b24!important;color:#e2c85e!important;border-color:rgba(212,175,55,.18)!important}
+#dbgMemberPortalRoot .dbg-profile-info-card{background:linear-gradient(145deg,#151a22,#10151c)!important;border-color:rgba(255,255,255,.07)!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important}
+#dbgMemberPortalRoot .dbg-profile-info-card h4{color:#f0d878!important}.dbg-profile-info-card p{color:#c4cbd5!important;border-color:rgba(255,255,255,.06)!important}.dbg-profile-info-card p strong{color:#8f99a8!important}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap{background:#0f141b!important;border-color:rgba(212,175,55,.13)!important}.dbg-profile-deposit-wrap table{color:#e8ebef!important}.dbg-profile-deposit-wrap th{background:#18202a!important;color:#e4ca6a!important}.dbg-profile-deposit-wrap td{border-color:rgba(255,255,255,.08)!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard{
+  background:radial-gradient(circle at 100% 0%,rgba(11,32,54,.95),transparent 38%),linear-gradient(145deg,#07090d 0%,#11161e 52%,#0b1017 100%)!important;
+  border:1px solid rgba(212,175,55,.5)!important;box-shadow:0 24px 65px rgba(0,0,0,.48),0 0 35px rgba(212,175,55,.06)!important;color:#f5f7fa!important;overflow:hidden;position:relative
+}
+#dbgMemberPortalRoot #dbgDigitalIdCard::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 20%,rgba(255,255,255,.045) 45%,transparent 70%);transform:translateX(-120%);animation:dbgCardSheen 7s ease-in-out infinite;pointer-events:none}
+@keyframes dbgCardSheen{0%,55%{transform:translateX(-120%)}75%,100%{transform:translateX(120%)}}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-accent{background:linear-gradient(90deg,#0b2036,#d4af37,#f0d878,#0b2036)!important;box-shadow:0 0 14px rgba(212,175,55,.25)}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-content{background:transparent!important;position:relative;z-index:1}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-content::before{border-color:rgba(212,175,55,.18)!important;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 45%)!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .text-emerald-100,#dbgMemberPortalRoot #dbgDigitalIdCard .text-emerald-50{color:#d7c26e!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-photo{border-color:#d4af37!important;background:#111923!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-name{color:#fff!important}.dbg-id-card-name-en{color:#aeb7c4!important}.dbg-id-card-label{color:#8994a3!important}.dbg-id-card-value{color:#f1f3f6!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-grid>div{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.05)!important;border-radius:8px;padding:5px 7px}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-download{background:linear-gradient(145deg,#d4af37,#9d7c17)!important;color:#0b0d10!important;border:0!important;box-shadow:0 8px 20px rgba(212,175,55,.16)!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-qr{background:#f7f8fa!important;border:3px solid #d4af37!important;box-shadow:0 8px 25px rgba(0,0,0,.3)!important}
+#dbgMemberPortalRoot #dbgDigitalIdCard .dbg-id-card-footer{border-color:rgba(212,175,55,.18)!important;color:#e9ecf0!important}
+#dbgMemberPortalRoot .dbg-hotline-banner{background:linear-gradient(145deg,#151b24,#0e141b)!important;border-color:rgba(212,175,55,.2)!important;color:#f0d878!important}
+#dbgMemberPortalRoot #dbgMemberLogout{background:rgba(212,175,55,.08)!important;border-color:rgba(212,175,55,.35)!important;color:#f0d878!important}
+#dbgMemberPortalRoot .no-print.mb-4.rounded-2xl{background:#10151c!important;border-color:rgba(212,175,55,.12)!important;color:#dfe4eb!important}
+#dbgMemberPortalRoot .no-print.mb-4.rounded-2xl .text-slate-800{color:#f0d878!important}.no-print.mb-4.rounded-2xl .text-slate-500{color:#929dac!important}
+
+/* Fixed mobile bottom navigation — uses the existing menu actions, no data/logic change */
+#dbgMemberPortalRoot .dbg-mobile-bottom-nav{display:none}
+@media(max-width:700px){
+  #dbgMemberPortalRoot .dbg-mobile-bottom-nav{
+    display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:10px;right:10px;bottom:10px;z-index:9999;
+    padding:7px;border:1px solid rgba(212,175,55,.22);border-radius:22px;background:rgba(12,16,22,.90);
+    box-shadow:0 18px 45px rgba(0,0,0,.55),0 0 25px rgba(212,175,55,.06);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+  }
+  #dbgMemberPortalRoot .dbg-mobile-bottom-nav button{border:0;background:transparent;color:#8993a1;min-height:56px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:900;transition:.22s ease}
+  #dbgMemberPortalRoot .dbg-mobile-bottom-nav button i{width:20px;height:20px}
+  #dbgMemberPortalRoot .dbg-mobile-bottom-nav button.active{background:linear-gradient(145deg,#202733,#121820);color:#f0d878;box-shadow:inset 0 1px rgba(255,255,255,.05),0 5px 14px rgba(0,0,0,.3)}
+  #dbgMemberPortalRoot .dbg-mobile-bottom-nav button.active i{filter:drop-shadow(0 0 6px rgba(212,175,55,.35))}
+}
 </style>
       <!-- UNIQUE MEMBER LOGIN DATE / TIME HEADER: above Welcome + Hotline -->
       <div class="dbg-member-login-topbar" aria-label="Member profile date and time">
@@ -5768,7 +5756,13 @@ function installMemberPortalStylesAndRoot() {
         <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards" class="w-5 h-5"></i><span class="dbg-menu-title">ডিপোজিট সামারি</span><span class="dbg-menu-sub">Savings Overview</span></button>
         <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check" class="w-5 h-5"></i><span class="dbg-menu-title">ডিজিটাল ID কার্ড</span><span class="dbg-menu-sub">Digital Identity</span></button>
       </div>
-      <div id="dbgMemberPortalContent"></div></div>
+      <div id="dbgMemberPortalContent"></div>
+      <nav class="dbg-mobile-bottom-nav no-print" aria-label="মেম্বার মোবাইল নেভিগেশন">
+        <button type="button" data-member-menu="dashboard" aria-label="ড্যাশবোর্ড"><i data-lucide="layout-dashboard"></i><span>ড্যাশবোর্ড</span></button>
+        <button type="button" data-member-menu="profile" class="active" aria-label="প্রোফাইল"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
+        <button type="button" data-member-menu="summary" aria-label="সামারি"><i data-lucide="wallet-cards"></i><span>সামারি</span></button>
+        <button type="button" data-member-menu="idcard" aria-label="ID কার্ড"><i data-lucide="badge-check"></i><span>ID কার্ড</span></button>
+      </nav></div>
       </div>
     </div></div>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
@@ -6454,8 +6448,9 @@ async function loadMemberPortalData(user) {
             btn.addEventListener('click',()=>{
                 const target=btn.getAttribute('data-member-menu');
                 document.querySelectorAll('#dbgMemberPortalRoot [data-member-menu]').forEach(b=>{
-                    b.classList.toggle('active', b===btn);
-                    b.setAttribute('aria-selected', b===btn ? 'true' : 'false');
+                    const sameTarget = b.getAttribute('data-member-menu')===target;
+                    b.classList.toggle('active', sameTarget);
+                    b.setAttribute('aria-selected', sameTarget ? 'true' : 'false');
                 });
                 document.querySelectorAll('#dbgMemberPortalRoot [data-member-panel]').forEach(panel=>{
                     panel.classList.toggle('active', panel.getAttribute('data-member-panel')===target);
