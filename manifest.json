@@ -1,12 +1,12 @@
 {
   "name": "DBG",
   "short_name": "DBG",
-  "start_url": "/dbgsoftware/",
-  "scope": "/dbgsoftware/",
+  "start_url": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
+  "scope": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
+  "id": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
   "display": "standalone",
   "background_color": "#304534",
   "theme_color": "#304534",
-  "id": "/dbgsoftware/",
   "lang": "bn",
   "icons": [
     {
