@@ -920,51 +920,68 @@
 </style>
 
 
-<!-- ChatGPT UI PATCH: Member edge-to-edge green leaf (UI only) -->
-<style id="chatgpt-member-ui-patch">
-/* Admin/Accountant data untouched */
-html,body{margin:0!important;padding:0!important;overflow-x:hidden;background:#e7f8ef;}
-body{
- background:
- radial-gradient(circle at 10% 8%,rgba(34,197,94,.18),transparent 22%),
- radial-gradient(circle at 90% 20%,rgba(16,185,129,.14),transparent 24%),
- linear-gradient(180deg,#dff5e8,#eef9f2 55%,#f7fcf9)!important;
+<style id="member-bottom-nav-fix-v2">
+/* 4 visible buttons across full width */
+#dbgMemberBottomNav{
+ position:fixed!important;
+ left:0!important; right:0!important; bottom:0!important;
+ width:100vw!important; max-width:none!important;
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:0!important;
+ padding:8px 4px calc(env(safe-area-inset-bottom,0px)+8px)!important;
+ border-radius:20px 20px 0 0!important;
+ background:linear-gradient(135deg,#065f46,#047857,#10b981)!important;
+ z-index:9999!important;
 }
-#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important;}
-#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
- content:"";position:fixed;pointer-events:none;filter:blur(18px);opacity:.55;z-index:0;
+#dbgMemberBottomNav button{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ justify-content:center!important;
+ width:100%!important;
+ min-width:0!important;
+ min-height:58px!important;
+ padding:6px 2px!important;
+ font-size:10px!important;
 }
-#dbgMemberPortalRoot::before{
- left:-60px;top:120px;width:230px;height:120px;border-radius:100% 0 100% 0;
- background:rgba(5,150,105,.18);transform:rotate(-28deg);
+#dbgMemberBottomNav button i,
+#dbgMemberBottomNav button svg{
+ width:22px!important;
+ height:22px!important;
+ margin-bottom:3px!important;
 }
-#dbgMemberPortalRoot::after{
- right:-70px;bottom:120px;width:250px;height:130px;border-radius:0 100% 0 100%;
- background:rgba(34,197,94,.16);transform:rotate(28deg);
-}
-#dbgMemberPortalRoot>.min-h-screen{position:relative;z-index:1;padding:0 0 90px!important;}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .dbg-member-app-top{
- margin:0!important;border-radius:0 0 24px 24px!important;
- background:linear-gradient(135deg,#064e3b,#047857 60%,#10b981)!important;
-}
-/* Notice board full width */
-.dbg-notice-marquee,#dbgNoticeBoard,.notice-board,.dbg-notice-wrap{
- width:100vw!important;max-width:none!important;
+.dbg-notice-marquee{
+ width:100vw!important;
  margin-left:calc(50% - 50vw)!important;
  margin-right:calc(50% - 50vw)!important;
  border-radius:0!important;
 }
-/* Single full-width bottom nav */
-#dbgMemberBottomNav{
- left:0!important;right:0!important;bottom:0!important;
- width:100vw!important;max-width:none!important;
- margin:0!important;border-radius:22px 22px 0 0!important;
- padding:8px 6px!important;
- background:linear-gradient(135deg,#064e3b,#047857,#059669)!important;
+#dbgMemberPortalRoot{
+ background:
+ radial-gradient(circle at 12% 10%,rgba(34,197,94,.18),transparent 24%),
+ radial-gradient(circle at 88% 18%,rgba(16,185,129,.15),transparent 26%),
+ linear-gradient(180deg,#dff7e8,#eef9f3 55%,#f8fcfa)!important;
 }
-#dbgMemberBottomNav~#dbgMemberBottomNav{display:none!important;}
-#dbgMemberPortalRoot *{word-break:break-word;}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
+ content:"";
+ position:fixed;
+ pointer-events:none;
+ filter:blur(16px);
+ opacity:.45;
+}
+#dbgMemberPortalRoot::before{
+ left:-50px;top:130px;width:180px;height:90px;
+ border-radius:100% 0;
+ background:rgba(5,150,105,.22);
+ transform:rotate(-25deg);
+}
+#dbgMemberPortalRoot::after{
+ right:-60px;bottom:140px;width:200px;height:100px;
+ border-radius:0 100%;
+ background:rgba(34,197,94,.18);
+ transform:rotate(28deg);
+}
 </style>
 
 </head>
@@ -4427,51 +4444,68 @@ function changeDepPage(direction) {
             const source = document.getElementById('accountVoucherContent');
             if (!source) return;
             const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style>
-<!-- ChatGPT UI PATCH: Member edge-to-edge green leaf (UI only) -->
-<style id="chatgpt-member-ui-patch">
-/* Admin/Accountant data untouched */
-html,body{margin:0!important;padding:0!important;overflow-x:hidden;background:#e7f8ef;}
-body{
- background:
- radial-gradient(circle at 10% 8%,rgba(34,197,94,.18),transparent 22%),
- radial-gradient(circle at 90% 20%,rgba(16,185,129,.14),transparent 24%),
- linear-gradient(180deg,#dff5e8,#eef9f2 55%,#f7fcf9)!important;
+<style id="member-bottom-nav-fix-v2">
+/* 4 visible buttons across full width */
+#dbgMemberBottomNav{
+ position:fixed!important;
+ left:0!important; right:0!important; bottom:0!important;
+ width:100vw!important; max-width:none!important;
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:0!important;
+ padding:8px 4px calc(env(safe-area-inset-bottom,0px)+8px)!important;
+ border-radius:20px 20px 0 0!important;
+ background:linear-gradient(135deg,#065f46,#047857,#10b981)!important;
+ z-index:9999!important;
 }
-#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important;}
-#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
- content:"";position:fixed;pointer-events:none;filter:blur(18px);opacity:.55;z-index:0;
+#dbgMemberBottomNav button{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ justify-content:center!important;
+ width:100%!important;
+ min-width:0!important;
+ min-height:58px!important;
+ padding:6px 2px!important;
+ font-size:10px!important;
 }
-#dbgMemberPortalRoot::before{
- left:-60px;top:120px;width:230px;height:120px;border-radius:100% 0 100% 0;
- background:rgba(5,150,105,.18);transform:rotate(-28deg);
+#dbgMemberBottomNav button i,
+#dbgMemberBottomNav button svg{
+ width:22px!important;
+ height:22px!important;
+ margin-bottom:3px!important;
 }
-#dbgMemberPortalRoot::after{
- right:-70px;bottom:120px;width:250px;height:130px;border-radius:0 100% 0 100%;
- background:rgba(34,197,94,.16);transform:rotate(28deg);
-}
-#dbgMemberPortalRoot>.min-h-screen{position:relative;z-index:1;padding:0 0 90px!important;}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .dbg-member-app-top{
- margin:0!important;border-radius:0 0 24px 24px!important;
- background:linear-gradient(135deg,#064e3b,#047857 60%,#10b981)!important;
-}
-/* Notice board full width */
-.dbg-notice-marquee,#dbgNoticeBoard,.notice-board,.dbg-notice-wrap{
- width:100vw!important;max-width:none!important;
+.dbg-notice-marquee{
+ width:100vw!important;
  margin-left:calc(50% - 50vw)!important;
  margin-right:calc(50% - 50vw)!important;
  border-radius:0!important;
 }
-/* Single full-width bottom nav */
-#dbgMemberBottomNav{
- left:0!important;right:0!important;bottom:0!important;
- width:100vw!important;max-width:none!important;
- margin:0!important;border-radius:22px 22px 0 0!important;
- padding:8px 6px!important;
- background:linear-gradient(135deg,#064e3b,#047857,#059669)!important;
+#dbgMemberPortalRoot{
+ background:
+ radial-gradient(circle at 12% 10%,rgba(34,197,94,.18),transparent 24%),
+ radial-gradient(circle at 88% 18%,rgba(16,185,129,.15),transparent 26%),
+ linear-gradient(180deg,#dff7e8,#eef9f3 55%,#f8fcfa)!important;
 }
-#dbgMemberBottomNav~#dbgMemberBottomNav{display:none!important;}
-#dbgMemberPortalRoot *{word-break:break-word;}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
+ content:"";
+ position:fixed;
+ pointer-events:none;
+ filter:blur(16px);
+ opacity:.45;
+}
+#dbgMemberPortalRoot::before{
+ left:-50px;top:130px;width:180px;height:90px;
+ border-radius:100% 0;
+ background:rgba(5,150,105,.22);
+ transform:rotate(-25deg);
+}
+#dbgMemberPortalRoot::after{
+ right:-60px;bottom:140px;width:200px;height:100px;
+ border-radius:0 100%;
+ background:rgba(34,197,94,.18);
+ transform:rotate(28deg);
+}
 </style>
 
 </head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
