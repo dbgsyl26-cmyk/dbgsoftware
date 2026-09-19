@@ -5000,7 +5000,10 @@ function installMemberPortalStylesAndRoot() {
             <div class="dbg-member-brand-title">Dreams Business Group</div>
             <div class="dbg-member-brand-sub">ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</div>
           </div>
-          <div class="dbg-member-status-pill"><span class="dbg-member-status-dot"></span> SECURE MEMBER</div>
+          <div class="dbg-member-top-actions">
+            <div class="dbg-member-status-pill"><span class="dbg-member-status-dot"></span> SECURE MEMBER</div>
+            <button type="button" id="dbgMemberLogout" class="dbg-member-logout-top" title="লগআউট" aria-label="লগআউট"><i data-lucide="log-out" class="w-4 h-4"></i><span>লগআউট</span></button>
+          </div>
         </div>
       </div>
       <style>
@@ -5129,6 +5132,55 @@ function installMemberPortalStylesAndRoot() {
         #dbgMemberPortalRoot .dbg-member-status-dot{
           width:7px;height:7px;border-radius:50%;background:#34d399;
           box-shadow:0 0 0 4px rgba(52,211,153,.12);
+        }
+        /* ===== Mobile-first green member panel (2026 refresh) ===== */
+        #dbgMemberPortalRoot .dbg-member-top-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+        #dbgMemberPortalRoot .dbg-member-logout-top{
+          display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.45);
+          background:rgba(255,255,255,.14);color:#fff;font-weight:800;font-size:12px;
+          padding:8px 12px;border-radius:12px;cursor:pointer;backdrop-filter:blur(4px);transition:.2s;
+        }
+        #dbgMemberPortalRoot .dbg-member-logout-top:hover{background:rgba(255,255,255,.28)}
+        #dbgMemberPortalRoot .dbg-member-logout-top i{width:16px;height:16px}
+        #dbgMemberPortalRoot .dbg-member-bottom-spacer{height:96px}
+        #dbgMemberBottomNav{
+          position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:99999;
+          width:min(620px,calc(100% - 20px));display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+          padding:8px;border-radius:22px;background:linear-gradient(135deg,#064e3b,#047857 55%,#059669);
+          box-shadow:0 14px 38px rgba(4,78,56,.38);border:1px solid rgba(255,255,255,.18);
+        }
+        #dbgMemberBottomNav button{
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+          border:0;background:transparent;color:rgba(255,255,255,.82);font-weight:800;font-size:11px;
+          padding:9px 3px;border-radius:16px;cursor:pointer;transition:.18s;min-height:58px;line-height:1.1;
+        }
+        #dbgMemberBottomNav button i,#dbgMemberBottomNav button svg{width:20px;height:20px}
+        #dbgMemberBottomNav button:hover{background:rgba(255,255,255,.12);color:#fff}
+        #dbgMemberBottomNav button.active{background:#fff;color:#065f46;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+        @media (max-width:360px){#dbgMemberBottomNav button{font-size:10px;min-height:54px}}
+        /* Deposit summary: tap-friendly cards on mobile (no sideways scrolling) */
+        @media (max-width:820px){
+          #dbgMemberPortalRoot .dbg-deposit-table-wrap{overflow:visible !important}
+          #dbgMemberPortalRoot .dbg-deposit-table,#dbgMemberPortalRoot .dbg-deposit-table tbody,
+          #dbgMemberPortalRoot .dbg-deposit-table tr,#dbgMemberPortalRoot .dbg-deposit-table td{display:block;width:100%}
+          #dbgMemberPortalRoot .dbg-deposit-table{border:0 !important}
+          #dbgMemberPortalRoot .dbg-deposit-table thead{display:none}
+          #dbgMemberPortalRoot .dbg-deposit-table tr{
+            margin-bottom:12px;border:1px solid #d1fae5;border-radius:16px;overflow:hidden;
+            background:linear-gradient(180deg,#ffffff,#f0fdf4);box-shadow:0 6px 18px rgba(4,120,87,.08);
+          }
+          #dbgMemberPortalRoot .dbg-deposit-table td{
+            display:flex;align-items:center;justify-content:space-between;gap:12px;
+            border:0 !important;border-bottom:1px dashed #d1fae5 !important;
+            padding:10px 13px !important;text-align:right !important;font-size:12.5px;
+          }
+          #dbgMemberPortalRoot .dbg-deposit-table td:last-child{border-bottom:0 !important}
+          #dbgMemberPortalRoot .dbg-deposit-table td::before{
+            content:attr(data-label);font-weight:800;color:#065f46;font-size:11px;
+            text-align:left;flex:0 0 46%;opacity:.9;
+          }
+          #dbgMemberPortalRoot .dbg-deposit-table td[colspan]{justify-content:center}
+          #dbgMemberPortalRoot .dbg-deposit-table td[colspan]::before{content:''}
         }
         #dbgMemberPortalRoot .dbg-member-portal-menu{
           position:relative;
@@ -5748,29 +5800,22 @@ function installMemberPortalStylesAndRoot() {
         </div>
       </div>
       <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
-      <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-5 md:p-7 flex flex-wrap justify-between items-center gap-4">
-        <div><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center"><i data-lucide="user-round" class="w-7 h-7"></i></div><div><h1 class="text-2xl md:text-3xl font-bold">Member Profile</h1><p class="text-emerald-50 text-sm">আপনার ব্যক্তিগত তথ্য ও ডিপোজিট আপডেট</p></div></div></div>
-        <button id="dbgMemberLogout" class="px-4 py-2.5 rounded-xl border border-white/40 bg-white/10 hover:bg-white/20 font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> লগআউট</button>
-      </div>
       <div class="p-5 md:p-7"><div id="dbgMemberPortalStatus" class="text-sm text-slate-500 mb-4">তথ্য লোড হচ্ছে...</div>
       <div class="no-print mb-4 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-center shadow-sm">
         <div class="text-sm font-extrabold text-slate-800">আপনার Member Space-এ স্বাগতম</div>
-        <div class="mt-0.5 text-[11px] text-slate-500">নিচের মেনু থেকে যেটি দেখতে চান সেটিতে ক্লিক করুন</div>
+        <div class="mt-0.5 text-[11px] text-slate-500">নিচের বাটন থেকে যেটি দেখতে চান সেটিতে ক্লিক করুন</div>
       </div>
       <div id="dbgMemberPortalError" class="dbg-member-error mb-4"></div>
-      <button type="button" id="dbgMemberDashboardCard" class="dbg-member-dashboard-card no-print" data-member-menu="dashboard" role="tab" aria-selected="false">
-        <span class="dbg-dashboard-card-icon"><i data-lucide="layout-dashboard" class="w-7 h-7"></i></span>
-        <span class="dbg-dashboard-card-copy"><span class="dbg-dashboard-card-title">মেম্বার ড্যাশবোর্ড</span><span class="dbg-dashboard-card-sub">আপনার সঞ্চয়, ডিপোজিট ও বকেয়ার সংক্ষিপ্ত তথ্য</span></span>
-        <i data-lucide="chevron-right" class="dbg-dashboard-card-arrow w-5 h-5"></i>
-      </button>
-      <div id="dbgMemberPortalMenu" class="dbg-member-portal-menu no-print" role="tablist" aria-label="Member Portal Menu">
-        <button type="button" class="active" data-member-menu="profile" role="tab" aria-selected="true"><i data-lucide="user-round" class="w-5 h-5"></i><span class="dbg-menu-title">মেম্বার প্রোফাইল</span><span class="dbg-menu-sub">Personal Details</span></button>
-        <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards" class="w-5 h-5"></i><span class="dbg-menu-title">ডিপোজিট সামারি</span><span class="dbg-menu-sub">Savings Overview</span></button>
-        <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check" class="w-5 h-5"></i><span class="dbg-menu-title">ডিজিটাল ID কার্ড</span><span class="dbg-menu-sub">Digital Identity</span></button>
-      </div>
       <div id="dbgMemberPortalContent"></div></div>
       </div>
-    </div></div>`;
+      <div class="dbg-member-bottom-spacer"></div>
+    </div></div>
+    <nav id="dbgMemberBottomNav" class="dbg-member-bottomnav no-print" role="tablist" aria-label="Member Menu">
+      <button type="button" class="active" data-member-menu="dashboard" role="tab" aria-selected="true"><i data-lucide="layout-dashboard"></i><span>ড্যাশবোর্ড</span></button>
+      <button type="button" data-member-menu="profile" role="tab" aria-selected="false"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
+      <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards"></i><span>ডিপোজিট</span></button>
+      <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check"></i><span>ID কার্ড</span></button>
+    </nav>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
     document.getElementById('dbgMemberLogout')?.addEventListener('click',()=>signOut(firebaseAuth));
     return root;
@@ -6153,13 +6198,13 @@ if (outstanding > 0) {
     memberDeposits.forEach(d => {
         depositSummaryRows += `
             <tr>
-                <td class="p-2 border text-center">${escapeHtml(formatDateDDMMYY(d.date))}</td>
-                <td class="p-2 border font-bold text-indigo-700 text-center">${escapeHtml(formatDepositMonthYear(d.month))} ${d.scheme ? '('+escapeHtml(d.scheme)+')' : ''}</td>
-                <td class="p-2 border text-right font-bold text-emerald-600">৳${escapeHtml(d.amount || 0)}</td>
-                <td class="p-2 border text-right font-bold text-purple-700">৳${escapeHtml(d.expenseAmount || 0)}</td>
-                <td class="p-2 border text-right font-bold text-emerald-700">৳${escapeHtml(d.dreamProsperityAmount || 0)}</td>
-                <td class="p-2 border text-right font-bold text-amber-700">৳${escapeHtml(d.dreamDevelopmentAmount || 0)}</td>
-                <td class="p-2 border text-center">${escapeHtml(d.method || 'ক্যাশ')}</td>
+                <td data-label="তারিখ" class="p-2 border text-center">${escapeHtml(formatDateDDMMYY(d.date))}</td>
+                <td data-label="জমার মাস / স্কিম" class="p-2 border font-bold text-indigo-700 text-center">${escapeHtml(formatDepositMonthYear(d.month))} ${d.scheme ? '('+escapeHtml(d.scheme)+')' : ''}</td>
+                <td data-label="মূল ডিপোজিট" class="p-2 border text-right font-bold text-emerald-600">৳${escapeHtml(d.amount || 0)}</td>
+                <td data-label="খরচ বাবদ জমা" class="p-2 border text-right font-bold text-purple-700">৳${escapeHtml(d.expenseAmount || 0)}</td>
+                <td data-label="স্বপ্ন সমৃদ্ধি (অর্ধ-বার্ষিক)" class="p-2 border text-right font-bold text-emerald-700">৳${escapeHtml(d.dreamProsperityAmount || 0)}</td>
+                <td data-label="স্বপ্ন উন্নয়ন (বার্ষিক)" class="p-2 border text-right font-bold text-amber-700">৳${escapeHtml(d.dreamDevelopmentAmount || 0)}</td>
+                <td data-label="মেথড" class="p-2 border text-center">${escapeHtml(d.method || 'ক্যাশ')}</td>
             </tr>`;
     });
 
@@ -6234,7 +6279,7 @@ if (outstanding > 0) {
           </div>
         </div>
         </div>
-        <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel" data-member-panel="dashboard">
+        <div id="dbgMemberPortalDashboardPanel" class="dbg-member-portal-panel active" data-member-panel="dashboard">
         ${memberAlertHtml}
         <!-- UNIQUE MEMBER DASHBOARD -->
         <div class="dbg-profile-section-title">
@@ -6267,7 +6312,7 @@ if (outstanding > 0) {
         </div>
 
         </div>
-        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel active" data-member-panel="profile">
+        <div id="dbgMemberPortalProfilePanel" class="dbg-member-portal-panel" data-member-panel="profile">
         ${memberAlertHtml}
 
         <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print">
@@ -6345,8 +6390,8 @@ if (outstanding > 0) {
                     <span><i data-lucide="wallet" class="inline w-4 h-4 mr-1"></i> সদস্য ডিপোজিট সামারি (Deposit Summary)</span>
                     <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
                 </h4>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left border">
+                <div class="overflow-x-auto dbg-deposit-table-wrap">
+                    <table class="w-full text-xs text-left border dbg-deposit-table">
                         <thead class="bg-indigo-900 text-white font-bold">
                             <tr>
                                 <th class="p-2 border text-center">তারিখ</th>
