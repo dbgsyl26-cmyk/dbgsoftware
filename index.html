@@ -3,9 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#047857">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Dreams Business Group (DBG) - ERP & Fund Management</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -923,25 +920,24 @@
 </style>
 
 
-<style id="oasis-edge-green">
-:root{--g1:#065f46;--g2:#047857;--g3:#10b981;}
-html,body{margin:0!important;padding:0!important;background:#e8f7ef!important;overflow-x:hidden;}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-background:
-radial-gradient(circle at 12% 10%,rgba(16,185,129,.18),transparent 28%),
-radial-gradient(circle at 90% 20%,rgba(5,150,105,.15),transparent 26%),
-radial-gradient(circle at 30% 80%,rgba(34,197,94,.12),transparent 30%);}
-#dbgMemberPortalRoot{background:linear-gradient(180deg,#dff7ea,#eefbf4)!important;position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;}
-#dbgMemberPortalRoot>.min-h-screen{padding:0 0 84px!important;max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .dbg-member-app-top{border-radius:0 0 24px 24px!important;margin:0 0 8px!important;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3))!important;}
-#dbgMemberPortalRoot .dbg-member-panel-shell,#dbgMemberPortalRoot .dbg-profile-shell{border-radius:0!important;width:100%!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(10px);}
-.dbg-notice-marquee,.dbg-notice-board,#memberNoticeBoard{width:100vw!important;max-width:100vw!important;margin-left:calc(50% - 50vw)!important;border-radius:0!important;}
-#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;max-width:100vw!important;border-radius:22px 22px 0 0!important;padding:8px 10px calc(env(safe-area-inset-bottom)+8px)!important;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3))!important;}
-#dbgMemberBottomNav button{border-radius:14px!important;}
-#dbgMemberBottomNav button.active{background:#fff!important;color:#047857!important;}
-h1,h2,h3,h4,p,span,td,th,label{letter-spacing:.1px;}
+<style id="chatgpt-edge-green-patch">
+html,body{margin:0!important;padding:0!important;width:100%;overflow-x:hidden;background:#e8f7ef}
+body{background:
+ radial-gradient(circle at 10% 10%,rgba(34,197,94,.18),transparent 26%),
+ radial-gradient(circle at 90% 30%,rgba(16,185,129,.15),transparent 24%),
+ linear-gradient(180deg,#dff5e9,#eef8f2 55%,#f7fbf8)!important;}
+#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important}
+#dbgMemberPortalRoot>.min-h-screen{padding:0 0 88px!important}
+#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important}
+#dbgMemberPortalRoot .dbg-member-app-top{margin:0!important;border-radius:0 0 22px 22px!important}
+#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;border-radius:18px 18px 0 0!important}
+#dbgMemberBottomNav+*{display:none!important}
+.dbg-notice-wrap,.notice-board,#dbgNoticeBoard,.dbg-notice-board{width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-radius:0!important}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{content:'';position:fixed;pointer-events:none;filter:blur(14px);opacity:.55}
+#dbgMemberPortalRoot::before{width:220px;height:120px;left:-60px;top:140px;background:rgba(5,150,105,.22);border-radius:100% 0 100% 0;transform:rotate(-28deg)}
+#dbgMemberPortalRoot::after{width:240px;height:130px;right:-70px;bottom:120px;background:rgba(16,185,129,.18);border-radius:0 100% 0 100%;transform:rotate(28deg)}
 </style>
+<meta name="theme-color" content="#047857">
 
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
@@ -4403,25 +4399,24 @@ function changeDepPage(direction) {
             const source = document.getElementById('accountVoucherContent');
             if (!source) return;
             const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style>
-<style id="oasis-edge-green">
-:root{--g1:#065f46;--g2:#047857;--g3:#10b981;}
-html,body{margin:0!important;padding:0!important;background:#e8f7ef!important;overflow-x:hidden;}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-background:
-radial-gradient(circle at 12% 10%,rgba(16,185,129,.18),transparent 28%),
-radial-gradient(circle at 90% 20%,rgba(5,150,105,.15),transparent 26%),
-radial-gradient(circle at 30% 80%,rgba(34,197,94,.12),transparent 30%);}
-#dbgMemberPortalRoot{background:linear-gradient(180deg,#dff7ea,#eefbf4)!important;position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;}
-#dbgMemberPortalRoot>.min-h-screen{padding:0 0 84px!important;max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
-#dbgMemberPortalRoot .dbg-member-app-top{border-radius:0 0 24px 24px!important;margin:0 0 8px!important;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3))!important;}
-#dbgMemberPortalRoot .dbg-member-panel-shell,#dbgMemberPortalRoot .dbg-profile-shell{border-radius:0!important;width:100%!important;background:rgba(255,255,255,.96)!important;backdrop-filter:blur(10px);}
-.dbg-notice-marquee,.dbg-notice-board,#memberNoticeBoard{width:100vw!important;max-width:100vw!important;margin-left:calc(50% - 50vw)!important;border-radius:0!important;}
-#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;max-width:100vw!important;border-radius:22px 22px 0 0!important;padding:8px 10px calc(env(safe-area-inset-bottom)+8px)!important;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3))!important;}
-#dbgMemberBottomNav button{border-radius:14px!important;}
-#dbgMemberBottomNav button.active{background:#fff!important;color:#047857!important;}
-h1,h2,h3,h4,p,span,td,th,label{letter-spacing:.1px;}
+<style id="chatgpt-edge-green-patch">
+html,body{margin:0!important;padding:0!important;width:100%;overflow-x:hidden;background:#e8f7ef}
+body{background:
+ radial-gradient(circle at 10% 10%,rgba(34,197,94,.18),transparent 26%),
+ radial-gradient(circle at 90% 30%,rgba(16,185,129,.15),transparent 24%),
+ linear-gradient(180deg,#dff5e9,#eef8f2 55%,#f7fbf8)!important;}
+#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important}
+#dbgMemberPortalRoot>.min-h-screen{padding:0 0 88px!important}
+#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important}
+#dbgMemberPortalRoot .dbg-member-app-top{margin:0!important;border-radius:0 0 22px 22px!important}
+#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;border-radius:18px 18px 0 0!important}
+#dbgMemberBottomNav+*{display:none!important}
+.dbg-notice-wrap,.notice-board,#dbgNoticeBoard,.dbg-notice-board{width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-radius:0!important}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{content:'';position:fixed;pointer-events:none;filter:blur(14px);opacity:.55}
+#dbgMemberPortalRoot::before{width:220px;height:120px;left:-60px;top:140px;background:rgba(5,150,105,.22);border-radius:100% 0 100% 0;transform:rotate(-28deg)}
+#dbgMemberPortalRoot::after{width:240px;height:130px;right:-70px;bottom:120px;background:rgba(16,185,129,.18);border-radius:0 100% 0 100%;transform:rotate(28deg)}
 </style>
+<meta name="theme-color" content="#047857">
 
 </head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
             const blob = new Blob([html], {type:'text/html;charset=utf-8'});
