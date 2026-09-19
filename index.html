@@ -4152,6 +4152,363 @@ function changeDepPage(direction) {
 }
 </style>
 
+
+<style id="dbg-reference-green-app-ui">
+/* =========================================================
+   DBG MEMBER PANEL — REFERENCE GREEN APP UI
+   Design-only layer. Existing data, Firebase queries,
+   calculations, buttons and member information remain.
+   ========================================================= */
+
+#dbgMemberPortalRoot{
+  background:
+    radial-gradient(circle at 12% 0%,rgba(16,185,129,.14),transparent 26%),
+    linear-gradient(180deg,#eaf7ef 0%,#f5fbf7 52%,#eaf7ef 100%) !important;
+  color:#15382c !important;
+}
+
+#dbgMemberPortalRoot > div{
+  padding:10px 10px 104px !important;
+}
+
+#dbgMemberPortalRoot > div > div{
+  max-width:520px !important;
+  margin:0 auto !important;
+}
+
+/* Green app header */
+#dbgMemberPortalRoot .dbg-member-app-top{
+  position:relative !important;
+  min-height:82px !important;
+  margin:0 0 9px !important;
+  padding:14px 14px !important;
+  border-radius:22px !important;
+  background:
+    radial-gradient(circle at 92% 25%,rgba(255,255,255,.10),transparent 24%),
+    linear-gradient(135deg,#063f2e 0%,#006b43 48%,#008c52 100%) !important;
+  border:2px solid rgba(4,78,59,.9) !important;
+  box-shadow:0 9px 22px rgba(4,78,59,.22),inset 0 0 0 1px rgba(251,191,36,.26) !important;
+  overflow:hidden !important;
+}
+#dbgMemberPortalRoot .dbg-member-app-top::after{
+  content:"";
+  position:absolute;
+  right:-38px; top:-42px;
+  width:150px;height:150px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 0 0 18px rgba(255,255,255,.025),0 0 0 38px rgba(255,255,255,.02);
+}
+#dbgMemberPortalRoot .dbg-member-brand-row{
+  position:relative !important;
+  z-index:2 !important;
+  gap:9px !important;
+}
+#dbgMemberPortalRoot .dbg-member-brand-mark{
+  width:47px !important;height:47px !important;flex-basis:47px !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  border:2px solid #f7d45c !important;
+  box-shadow:0 4px 12px rgba(0,0,0,.18) !important;
+}
+#dbgMemberPortalRoot .dbg-member-brand-mark img{
+  width:100% !important;height:100% !important;
+  object-fit:contain !important;border-radius:50% !important;
+}
+#dbgMemberPortalRoot .dbg-member-brand-title{
+  font-size:17px !important;
+  font-weight:900 !important;
+  color:#fff !important;
+}
+#dbgMemberPortalRoot .dbg-member-brand-sub{
+  margin-top:1px !important;
+  font-size:9px !important;
+  font-weight:800 !important;
+  color:#fef3c7 !important;
+}
+
+/* Logout sits in the top-right exactly as requested */
+#dbgMemberPortalRoot #dbgMemberLogout{
+  position:absolute !important;
+  top:10px !important; right:10px !important;
+  z-index:100001 !important;
+  min-height:28px !important;
+  padding:5px 8px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.13) !important;
+  border:1px solid rgba(255,255,255,.38) !important;
+  color:#fff !important;
+  font-size:9px !important;
+  font-weight:900 !important;
+  box-shadow:none !important;
+}
+#dbgMemberPortalRoot #dbgMemberLogout:hover{
+  background:#fff !important;color:#047857 !important;
+}
+
+/* Remove the old status/welcome visual clutter from the middle. */
+#dbgMemberPortalRoot #dbgMemberPortalStatus{
+  display:none !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalError{
+  margin:0 !important;
+}
+
+/* All main content becomes the reference-style white app cards. */
+#dbgMemberPortalRoot .dbg-member-panel-shell{
+  padding:9px !important;
+  border-radius:21px !important;
+  background:rgba(255,255,255,.94) !important;
+  border:1px solid #cfe9dc !important;
+  box-shadow:0 8px 24px rgba(4,78,59,.10) !important;
+}
+#dbgMemberPortalRoot .dbg-profile-section-title{
+  padding:9px 8px !important;
+  margin:0 !important;
+  color:#064e3b !important;
+  font-size:14px !important;
+  font-weight:900 !important;
+  border:0 !important;
+}
+#dbgMemberPortalRoot .dbg-profile-section-icon{
+  background:#dcfce7 !important;
+  color:#047857 !important;
+}
+
+/* Dashboard */
+#dbgMemberPortalRoot .dbg-member-unique-dashboard{
+  display:block !important;
+}
+#dbgMemberPortalRoot .dbg-member-hero-strip{
+  border-radius:17px !important;
+  padding:12px !important;
+  background:
+    radial-gradient(circle at 95% 5%,rgba(245,158,11,.18),transparent 28%),
+    linear-gradient(135deg,#effcf4,#d8f5e4) !important;
+  border:1px solid #b9e6ca !important;
+}
+#dbgMemberPortalRoot .dbg-member-hero-name{
+  font-size:18px !important;
+  color:#064e3b !important;
+}
+#dbgMemberPortalRoot .dbg-member-hero-meta{
+  font-size:9px !important;
+  color:#557568 !important;
+}
+#dbgMemberPortalRoot .dbg-member-hero-badge{
+  padding:5px 8px !important;
+  border-radius:999px !important;
+  background:#16a34a !important;
+  color:#fff !important;
+  border:0 !important;
+  font-size:8px !important;
+}
+#dbgMemberPortalRoot .dbg-member-hero-badge small{
+  color:#dcfce7 !important;
+}
+#dbgMemberPortalRoot .dbg-member-stat-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:7px !important;
+  margin-top:8px !important;
+}
+#dbgMemberPortalRoot .dbg-member-stat-card{
+  min-height:66px !important;
+  padding:9px !important;
+  border-radius:15px !important;
+  border:1px solid #d8eee1 !important;
+  background:linear-gradient(180deg,#fff,#f7fcf9) !important;
+  box-shadow:0 4px 12px rgba(4,78,59,.06) !important;
+}
+#dbgMemberPortalRoot .dbg-member-stat-icon{
+  width:31px !important;height:31px !important;
+  border-radius:50% !important;
+  background:#dcfce7 !important;
+  color:#047857 !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  font-weight:900 !important;
+}
+#dbgMemberPortalRoot .dbg-member-stat-card span{
+  font-size:8px !important;color:#6b8278 !important;
+}
+#dbgMemberPortalRoot .dbg-member-stat-card strong{
+  font-size:14px !important;color:#064e3b !important;
+}
+#dbgMemberPortalRoot .dbg-member-progress-card{
+  margin-top:8px !important;
+  padding:10px !important;
+  border-radius:15px !important;
+  background:#f0fdf4 !important;
+  border:1px solid #bbf7d0 !important;
+}
+#dbgMemberPortalRoot .dbg-member-progress-head,
+#dbgMemberPortalRoot .dbg-member-progress-foot{
+  font-size:9px !important;
+}
+#dbgMemberPortalRoot .dbg-member-progress-fill{
+  background:linear-gradient(90deg,#059669,#10b981,#fbbf24) !important;
+}
+
+/* Profile */
+#dbgMemberPortalRoot .dbg-profile-info-card{
+  border:1px solid #d8eee1 !important;
+  border-radius:15px !important;
+  background:#fbfffc !important;
+  padding:10px !important;
+  box-shadow:none !important;
+}
+#dbgMemberPortalRoot .dbg-profile-info-card h4{
+  color:#064e3b !important;
+  font-size:11px !important;
+}
+#dbgMemberPortalRoot .dbg-profile-info-card p{
+  padding:6px 0 !important;
+  border-bottom:1px solid #edf5ef !important;
+  font-size:9px !important;
+}
+#dbgMemberPortalRoot .dbg-profile-info-card p strong{
+  color:#527066 !important;
+}
+
+/* Deposit summary — compact vertical records, no horizontal scrolling */
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap{
+  border:1px solid #cfe9dc !important;
+  border-radius:17px !important;
+  padding:8px !important;
+  background:#fbfffc !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap .overflow-x-auto{
+  overflow:visible !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap table{
+  min-width:0 !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap thead{
+  display:none !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody{
+  display:grid !important;
+  gap:7px !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody tr{
+  display:block !important;
+  padding:8px 9px !important;
+  border:1px solid #d6eee0 !important;
+  border-radius:13px !important;
+  background:linear-gradient(180deg,#fff,#f5fcf8) !important;
+  box-shadow:0 3px 10px rgba(4,78,59,.05) !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  padding:4px 0 !important;
+  border:0 !important;
+  border-bottom:1px dashed #e1eee7 !important;
+  text-align:right !important;
+  font-size:9px !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:last-child{
+  border-bottom:0 !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td::before{
+  flex:0 0 42% !important;
+  text-align:left !important;
+  color:#087f52 !important;
+  font-weight:900 !important;
+  font-size:8px !important;
+}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(1)::before{content:"তারিখ";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(2)::before{content:"জমার মাস / স্কিম";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(3)::before{content:"মূল ডিপোজিট";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(4)::before{content:"খরচ বাবদ জমা";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(5)::before{content:"স্বপ্ন সমৃদ্ধি";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(6)::before{content:"স্বপ্ন উন্নয়ন";}
+#dbgMemberPortalRoot .dbg-profile-deposit-wrap tbody td:nth-child(7)::before{content:"মেথড";}
+
+/* ID card page gets the reference green/gold treatment */
+#dbgMemberPortalRoot .dbg-id-card{
+  border-radius:18px !important;
+  box-shadow:0 10px 25px rgba(4,78,59,.22) !important;
+}
+#dbgMemberPortalRoot .dbg-id-card-download{
+  background:#059669 !important;
+  color:#fff !important;
+}
+
+/* Four-button bottom navigation */
+#dbgMemberPortalRoot #dbgMemberPortalMenu{
+  position:fixed !important;
+  left:50% !important;
+  bottom:7px !important;
+  transform:translateX(-50%) !important;
+  z-index:100000 !important;
+  width:min(520px,calc(100vw - 14px)) !important;
+  padding:5px !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:repeat(4,1fr) !important;
+  gap:3px !important;
+  border-radius:19px !important;
+  background:linear-gradient(135deg,#064e3b,#006b43) !important;
+  border:2px solid #064e3b !important;
+  box-shadow:0 10px 30px rgba(4,78,59,.30) !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalMenu button{
+  min-height:53px !important;
+  padding:5px 2px !important;
+  border-radius:14px !important;
+  color:#d1fae5 !important;
+  background:transparent !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:2px !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalMenu button.active{
+  color:#064e3b !important;
+  background:#fff !important;
+  border:1px solid #f4d35e !important;
+  box-shadow:0 4px 12px rgba(0,0,0,.15) !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalMenu button i{
+  width:18px !important;height:18px !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalMenu .dbg-menu-title{
+  font-size:8px !important;
+  line-height:1.1 !important;
+  font-weight:900 !important;
+}
+#dbgMemberPortalRoot #dbgMemberPortalMenu .dbg-menu-sub{
+  display:none !important;
+}
+
+/* Keep all content within the phone width. */
+@media(max-width:560px){
+  #dbgMemberPortalRoot > div{padding:7px 7px 99px !important}
+  #dbgMemberPortalRoot .dbg-member-app-top{
+    min-height:76px !important;
+    padding:12px !important;
+    border-radius:20px !important;
+  }
+  #dbgMemberPortalRoot .dbg-member-brand-mark{
+    width:42px !important;height:42px !important;flex-basis:42px !important;
+  }
+  #dbgMemberPortalRoot .dbg-member-brand-title{font-size:14px !important}
+  #dbgMemberPortalRoot .dbg-member-brand-sub{font-size:8px !important}
+  #dbgMemberPortalRoot .dbg-member-stat-card{min-height:62px !important}
+  #dbgMemberPortalRoot #dbgMemberLogout{top:8px !important;right:8px !important}
+}
+@media(max-width:360px){
+  #dbgMemberPortalRoot #dbgMemberLogout span{display:none !important}
+  #dbgMemberPortalRoot #dbgMemberLogout{width:28px !important;height:28px !important;padding:0 !important}
+  #dbgMemberPortalRoot #dbgMemberPortalMenu button{min-height:50px !important}
+  #dbgMemberPortalRoot #dbgMemberPortalMenu .dbg-menu-title{font-size:7px !important}
+}
+</style>
+
 </body></html>`;
             const blob = new Blob([html], {type:'text/html;charset=utf-8'});
             const url = URL.createObjectURL(blob);
@@ -6488,7 +6845,7 @@ if (outstanding > 0) {
     });
 
     return `
-    <div id="memberPortalProfileCard" class="dbg-member-panel-shell class="dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+    <div id="memberPortalProfileCard" class="dbg-member-panel-shell dbg-profile-shell bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
         <!-- DIGITAL MEMBER ID CARD -->
         <div id="dbgMemberPortalIdCardPanel" class="dbg-member-portal-panel" data-member-panel="idcard">
         <div class="dbg-profile-section-title">
