@@ -690,6 +690,89 @@
 }
 </style>
 
+
+<style id="dbg-member-final-ui">
+/* Final member-app polish: reference-style green mobile UI + zero horizontal overflow */
+#dbgMemberPortalRoot{
+  background:linear-gradient(180deg,#e8f7ef 0%,#f5fbf7 48%,#eef8f2 100%) !important;
+  overflow-x:hidden !important;
+}
+#dbgMemberPortalRoot > .min-h-screen{padding:10px 10px 105px !important;}
+#dbgMemberPortalRoot > .min-h-screen > .max-w-6xl{max-width:760px !important;width:100% !important;}
+#dbgMemberPortalRoot .dbg-member-app-top{
+  margin:0 0 10px !important;padding:12px 14px !important;border-radius:20px !important;
+  background:linear-gradient(145deg,#043d2c 0%,#075f43 46%,#078a5a 100%) !important;
+  box-shadow:0 10px 26px rgba(3,88,60,.24) !important;border:1px solid rgba(167,243,208,.35) !important;
+}
+#dbgMemberPortalRoot .dbg-member-brand-mark{width:48px !important;height:48px !important;flex-basis:48px !important;border-radius:15px !important;}
+#dbgMemberPortalRoot .dbg-member-brand-title{font-size:17px !important;font-weight:900 !important;}
+#dbgMemberPortalRoot .dbg-member-brand-sub{font-size:9px !important;color:#d1fae5 !important;}
+#dbgMemberPortalRoot .dbg-member-status-pill{display:none !important;}
+#dbgMemberPortalRoot .dbg-member-logout-top{padding:7px 9px !important;border-radius:11px !important;font-size:10px !important;}
+#dbgMemberPortalRoot .dbg-member-panel-shell{border-radius:20px !important;box-shadow:0 10px 28px rgba(4,120,87,.09) !important;}
+#dbgMemberPortalRoot .dbg-profile-shell{background:#fff !important;border:1px solid #d7f2e2 !important;box-shadow:0 12px 35px rgba(4,120,87,.10) !important;}
+#dbgMemberPortalRoot .dbg-member-hero-strip{background:linear-gradient(135deg,#effbf4,#d8f4e5) !important;border-color:#b8e8cc !important;}
+#dbgMemberPortalRoot .dbg-member-stat-card{background:#fff !important;border-color:#d6eee1 !important;}
+#dbgMemberPortalRoot .dbg-member-stat-card.stat-green,#dbgMemberPortalRoot .dbg-member-stat-card.stat-teal{background:linear-gradient(135deg,#effbf4,#d9f5e6) !important;}
+#dbgMemberPortalRoot .dbg-member-progress-card{background:linear-gradient(135deg,#f0fbf5,#e3f7eb) !important;border-color:#c3ead2 !important;}
+#dbgMemberPortalRoot .dbg-profile-section-title{color:#075c40 !important;}
+#dbgMemberPortalRoot .dbg-profile-section-icon{background:#dff5e8 !important;color:#078a5a !important;border-color:#b9e7cb !important;}
+
+/* Deposit list: never a table, never horizontally scrollable. */
+#dbgMemberPortalRoot .dbg-deposit-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;width:100%;min-width:0;}
+#dbgMemberPortalRoot .dbg-deposit-card{min-width:0;width:100%;box-sizing:border-box;border:1px solid #ccebd9;border-radius:15px;background:linear-gradient(180deg,#fff,#f5fcf7);box-shadow:0 6px 18px rgba(4,120,87,.07);overflow:hidden;}
+#dbgMemberPortalRoot .dbg-deposit-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px;background:linear-gradient(135deg,#e8f8ee,#d7f1e1);border-bottom:1px solid #c9ead7;}
+#dbgMemberPortalRoot .dbg-deposit-date{font-size:9px;color:#64748b;font-weight:700;}
+#dbgMemberPortalRoot .dbg-deposit-month{font-size:12px;color:#064e3b;font-weight:900;margin-top:2px;white-space:normal;overflow-wrap:anywhere;}
+#dbgMemberPortalRoot .dbg-deposit-scheme{font-size:9px;color:#047857;font-weight:700;}
+#dbgMemberPortalRoot .dbg-deposit-method{flex:0 0 auto;border-radius:999px;padding:4px 8px;background:#087f53;color:#fff;font-size:9px;font-weight:900;}
+#dbgMemberPortalRoot .dbg-deposit-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+#dbgMemberPortalRoot .dbg-deposit-item{min-width:0;padding:9px 10px;border-bottom:1px dashed #dcefe4;}
+#dbgMemberPortalRoot .dbg-deposit-item:nth-child(odd){border-right:1px dashed #dcefe4;}
+#dbgMemberPortalRoot .dbg-deposit-item:nth-last-child(-n+2){border-bottom:0;}
+#dbgMemberPortalRoot .dbg-deposit-item span{display:block;font-size:8.5px;line-height:1.3;color:#64748b;font-weight:700;white-space:normal;overflow-wrap:anywhere;}
+#dbgMemberPortalRoot .dbg-deposit-item strong{display:block;margin-top:2px;font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#dbgMemberPortalRoot .dbg-deposit-item.primary strong{color:#047857;}
+#dbgMemberPortalRoot .dbg-deposit-item.expense strong{color:#7c3aed;}
+#dbgMemberPortalRoot .dbg-deposit-item.prosperity strong{color:#059669;}
+#dbgMemberPortalRoot .dbg-deposit-item.development strong{color:#b45309;}
+#dbgMemberPortalRoot .dbg-deposit-empty{min-height:130px;border:1px dashed #b7dfc7;border-radius:15px;background:#f4fbf6;color:#64748b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;}
+#dbgMemberPortalRoot .dbg-summary-actions{display:flex;align-items:center;gap:8px;margin-left:auto;}
+#dbgMemberPortalRoot .dbg-member-inline-print{display:inline-flex;align-items:center;gap:5px;border:1px solid #9ed9b5;background:#eaf8ef;color:#06764e;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:900;cursor:pointer;}
+#dbgMemberPortalRoot .dbg-member-inline-print:hover{background:#d8f2e2;}
+
+#dbgMemberBottomNav{width:min(560px,calc(100% - 14px)) !important;bottom:7px !important;border-radius:19px !important;padding:6px !important;background:linear-gradient(145deg,#043d2c,#067348 58%,#078b5a) !important;box-shadow:0 10px 28px rgba(4,78,56,.30) !important;}
+#dbgMemberBottomNav button{min-height:51px !important;border-radius:14px !important;font-size:9px !important;}
+#dbgMemberBottomNav button.active{color:#057047 !important;background:#fff !important;}
+
+@media(max-width:700px){
+  #dbgMemberPortalRoot > .min-h-screen{padding:8px 7px 100px !important;}
+  #dbgMemberPortalRoot .dbg-member-app-top{padding:11px !important;border-radius:18px !important;}
+  #dbgMemberPortalRoot .dbg-member-brand-title{font-size:15px !important;}
+  #dbgMemberPortalRoot .dbg-member-brand-sub{font-size:8px !important;}
+  #dbgMemberPortalRoot .dbg-member-brand-mark{width:43px !important;height:43px !important;flex-basis:43px !important;border-radius:13px !important;}
+  #dbgMemberPortalRoot .dbg-deposit-list{grid-template-columns:1fr !important;gap:8px !important;}
+  #dbgMemberPortalRoot .dbg-deposit-card-head{padding:9px 10px !important;}
+  #dbgMemberPortalRoot .dbg-deposit-item{padding:8px 9px !important;}
+  #dbgMemberPortalRoot .dbg-summary-actions{gap:6px;}
+  #dbgMemberPortalRoot .dbg-summary-actions > span:first-child{font-size:9px !important;}
+  #dbgMemberPortalRoot .dbg-member-inline-print{padding:6px 8px !important;}
+}
+@media(max-width:380px){
+  #dbgMemberPortalRoot .dbg-member-logout-top span{display:none;}
+  #dbgMemberPortalRoot .dbg-member-logout-top{padding:7px !important;}
+  #dbgMemberPortalRoot .dbg-deposit-item span{font-size:8px !important;}
+  #dbgMemberPortalRoot .dbg-deposit-item strong{font-size:11px !important;}
+}
+
+/* Print only the selected Member section; never print app navigation. */
+@media print{
+  #dbgMemberPortalRoot .dbg-deposit-list{grid-template-columns:1fr 1fr !important;}
+  #dbgMemberPortalRoot .dbg-deposit-card{break-inside:avoid;box-shadow:none !important;}
+  #dbgMemberPortalRoot .dbg-deposit-item{font-size:11px;}
+}
+</style>
+
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
 
@@ -6642,9 +6725,6 @@ if (outstanding > 0) {
         ${memberAlertHtml}
 
         <div id="dbgMemberPortalActions" class="flex flex-wrap gap-2 mb-5 no-print">
-          <button id="dbgMemberDownload" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2">
-            <i data-lucide="download" class="w-4 h-4"></i> Profile Download
-          </button>
           <button id="dbgMemberPrint" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold flex items-center gap-2">
             <i data-lucide="printer" class="w-4 h-4"></i> Print / PDF
           </button>
@@ -6714,25 +6794,34 @@ if (outstanding > 0) {
             <div class="dbg-profile-deposit-wrap">
                 <h4 class="font-bold text-indigo-900 border-b pb-2 flex justify-between items-center">
                     <span><i data-lucide="wallet" class="inline w-4 h-4 mr-1"></i> সদস্য ডিপোজিট সামারি (Deposit Summary)</span>
-                    <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
+                    <span class="dbg-summary-actions">
+                        <span class="text-xs font-normal text-gray-500">মোট জমার রেকর্ড: ${memberDeposits.length}টি</span>
+                        <button id="dbgMemberDepositPrint" type="button" class="dbg-member-inline-print no-print">
+                            <i data-lucide="printer" class="w-4 h-4"></i> প্রিন্ট
+                        </button>
+                    </span>
                 </h4>
-                <div class="overflow-x-auto dbg-deposit-table-wrap">
-                    <table class="w-full text-xs text-left border dbg-deposit-table">
-                        <thead class="bg-indigo-900 text-white font-bold">
-                            <tr>
-                                <th class="p-2 border text-center">তারিখ</th>
-                                <th class="p-2 border text-center">জমার মাস / স্কিম</th>
-                                <th class="p-2 border text-right">মূল ডিপোজিট (৳)</th>
-                                <th class="p-2 border text-right">খরচ বাবদ জমা (৳)</th>
-                                <th class="p-2 border text-right">স্বপ্ন সমৃদ্ধি ডিপোজিট (অর্ধ-বার্ষিক)</th>
-                                <th class="p-2 border text-right">স্বপ্ন উন্নয়ন ডিপোজিট (বার্ষিক)</th>
-                                <th class="p-2 border text-center">মেথড</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${depositSummaryRows || '<tr><td colspan="7" class="p-4 text-center text-gray-400">এখনো কোনো ডিপোজিট জমা হয়নি</td></tr>'}
-                        </tbody>
-                    </table>
+                <div class="dbg-deposit-list">
+                    ${memberDeposits.length ? memberDeposits.map(d => `
+                        <article class="dbg-deposit-card">
+                            <div class="dbg-deposit-card-head">
+                                <div>
+                                    <div class="dbg-deposit-date">${escapeHtml(formatDateDDMMYY(d.date))}</div>
+                                    <div class="dbg-deposit-month">${escapeHtml(formatDepositMonthYear(d.month))}${d.scheme ? ` <span class="dbg-deposit-scheme">(${escapeHtml(d.scheme)})</span>` : ''}</div>
+                                </div>
+                                <div class="dbg-deposit-method">${escapeHtml(d.method || 'ক্যাশ')}</div>
+                            </div>
+                            <div class="dbg-deposit-card-grid">
+                                <div class="dbg-deposit-item primary"><span>মূল ডিপোজিট</span><strong>৳${escapeHtml(d.amount || 0)}</strong></div>
+                                <div class="dbg-deposit-item expense"><span>খরচ বাবদ জমা</span><strong>৳${escapeHtml(d.expenseAmount || 0)}</strong></div>
+                                <div class="dbg-deposit-item prosperity"><span>স্বপ্ন সমৃদ্ধি (অর্ধ-বার্ষিক)</span><strong>৳${escapeHtml(d.dreamProsperityAmount || 0)}</strong></div>
+                                <div class="dbg-deposit-item development"><span>স্বপ্ন উন্নয়ন (বার্ষিক)</span><strong>৳${escapeHtml(d.dreamDevelopmentAmount || 0)}</strong></div>
+                            </div>
+                        </article>`).join('') : `
+                        <div class="dbg-deposit-empty">
+                            <i data-lucide="wallet-cards" class="w-7 h-7"></i>
+                            <span>এখনো কোনো ডিপোজিট জমা হয়নি</span>
+                        </div>`}
                 </div>
             </div>
             </div>
@@ -6754,6 +6843,33 @@ function printMemberPortalProfile() {
     const companyHeader = document.createElement('div');
     companyHeader.className = 'dbg-print-company-header';
     companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p>';
+    printRoot.appendChild(companyHeader);
+    printRoot.appendChild(clone);
+    document.body.appendChild(printRoot);
+    document.body.classList.add('dbg-printing');
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('dbg-printing');
+            printRoot.remove();
+        }, 300);
+    }, 50);
+}
+
+function printMemberPortalDepositSummary() {
+    const source = document.querySelector('#dbgMemberPortalSummaryPanel');
+    if (!source) {
+        alert('Deposit Summary পাওয়া যায়নি।');
+        return;
+    }
+    const printRoot = document.createElement('div');
+    printRoot.id = 'dbg-print-root';
+    printRoot.setAttribute('data-print-title', 'DBG Deposit Summary');
+    const companyHeader = document.createElement('div');
+    companyHeader.className = 'dbg-print-company-header';
+    companyHeader.innerHTML = '<h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p><h2>Member Deposit Summary</h2>';
+    const clone = source.cloneNode(true);
+    clone.querySelectorAll('.no-print, button').forEach(el => el.remove());
     printRoot.appendChild(companyHeader);
     printRoot.appendChild(clone);
     document.body.appendChild(printRoot);
@@ -6815,8 +6931,8 @@ async function loadMemberPortalData(user) {
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
         startMemberPortalClock();
-        document.getElementById('dbgMemberDownload')?.addEventListener('click',()=>downloadMemberPortal(member,deposits));
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
+        document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
 
         // Member Portal: show details only after the member selects a menu item.
