@@ -2,11 +2,7 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dreams Business Group (DBG) - ERP & Fund Management</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -923,208 +919,6 @@
 }
 </style>
 
-
-<style id="dbg-member-final-edge-leaf-tree-fix">
-/* FINAL REQUESTED MEMBER-APP PATCH — visual only */
-#dbgMemberPortalRoot{
-  background:
-    radial-gradient(ellipse 170px 90px at 3% 16%,rgba(22,163,74,.28),transparent 70%),
-    radial-gradient(ellipse 210px 110px at 98% 34%,rgba(5,150,105,.24),transparent 70%),
-    radial-gradient(ellipse 190px 100px at 8% 78%,rgba(34,197,94,.18),transparent 72%),
-    radial-gradient(ellipse 180px 95px at 95% 88%,rgba(16,185,129,.18),transparent 72%),
-    linear-gradient(180deg,#dff5e9 0%,#eef9f3 46%,#f7fbf8 100%) !important;
-}
-
-/* Stronger blurred leaf silhouettes so the green foliage is actually visible */
-#dbgMemberPortalRoot::before{
-  width:240px !important;
-  height:145px !important;
-  left:-70px !important;
-  top:135px !important;
-  opacity:.72 !important;
-  filter:blur(10px) !important;
-  background:
-    radial-gradient(ellipse at 45% 50%,rgba(22,163,74,.34) 0 48%,transparent 52%),
-    radial-gradient(ellipse at 85% 18%,rgba(5,150,105,.24) 0 34%,transparent 40%) !important;
-  border-radius:65% 15% 65% 15% !important;
-  transform:rotate(-25deg) !important;
-  box-shadow:
-    130px 120px 0 -20px rgba(34,197,94,.22),
-    360px 70px 0 -35px rgba(5,150,105,.18),
-    520px 300px 0 -25px rgba(22,163,74,.16) !important;
-}
-#dbgMemberPortalRoot::after{
-  width:270px !important;
-  height:155px !important;
-  right:-85px !important;
-  bottom:95px !important;
-  opacity:.68 !important;
-  filter:blur(11px) !important;
-  background:
-    radial-gradient(ellipse at 55% 45%,rgba(5,150,105,.30) 0 48%,transparent 53%),
-    radial-gradient(ellipse at 18% 82%,rgba(34,197,94,.22) 0 30%,transparent 37%) !important;
-  border-radius:15% 65% 15% 65% !important;
-  transform:rotate(25deg) !important;
-  box-shadow:
-    -150px -90px 0 -20px rgba(16,185,129,.20),
-    -330px 35px 0 -32px rgba(34,197,94,.17),
-    -65px -270px 0 -36px rgba(5,150,105,.16) !important;
-}
-
-/* Green tree decoration, tied to the slogan: "ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ" */
-#dbgMemberPortalRoot .dbg-member-app-top{
-  position:relative !important;
-  overflow:hidden !important;
-}
-#dbgMemberPortalRoot .dbg-member-app-top::after{
-  content:"" !important;
-  position:absolute !important;
-  z-index:0 !important;
-  pointer-events:none !important;
-  right:76px !important;
-  bottom:-9px !important;
-  width:92px !important;
-  height:104px !important;
-  opacity:.82 !important;
-  background:
-    linear-gradient(#5b3a1f,#5b3a1f) 50% 100% / 12px 46px no-repeat,
-    radial-gradient(ellipse at 50% 30%,#8ee36b 0 24%,#36b24f 25% 46%,transparent 48%),
-    radial-gradient(ellipse at 25% 44%,#4fc45a 0 25%,transparent 28%),
-    radial-gradient(ellipse at 76% 44%,#62cf63 0 25%,transparent 28%),
-    radial-gradient(ellipse at 48% 57%,#2e9f45 0 28%,transparent 31%) !important;
-  filter:drop-shadow(0 5px 8px rgba(0,0,0,.14)) !important;
-}
-#dbgMemberPortalRoot .dbg-member-brand-row{
-  position:relative !important;
-  z-index:2 !important;
-}
-
-/* Notice board: remove the surrounding side whitespace on phones */
-@media(max-width:700px){
-  #dbgMemberPortalRoot #dbgMemberPortalContent > .bg-white.rounded-2xl{
-    width:100vw !important;
-    max-width:none !important;
-    margin-left:calc(50% - 50vw) !important;
-    margin-right:0 !important;
-    border-left:0 !important;
-    border-right:0 !important;
-    border-radius:0 !important;
-  }
-
-  /* Bottom navigation: true edge-to-edge; no left/right/bottom gap */
-  #dbgMemberBottomNav{
-    left:0 !important;
-    right:0 !important;
-    bottom:0 !important;
-    width:100vw !important;
-    max-width:none !important;
-    margin:0 !important;
-    border-radius:0 !important;
-    border-left:0 !important;
-    border-right:0 !important;
-    border-bottom:0 !important;
-    padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px)) !important;
-    box-sizing:border-box !important;
-  }
-  #dbgMemberBottomNav button{
-    flex:1 1 0 !important;
-  }
-}
-
-/* Fullscreen presentation */
-:fullscreen #dbgMemberPortalRoot{
-  width:100vw !important;
-  height:100vh !important;
-}
-</style>
-
-
-<style id="dbg-member-final-edge-leaf-tree-fix">
-/* FINAL MOBILE EDGE-TO-EDGE OVERRIDE — only the requested visual fixes */
-#dbgMemberPortalRoot #dbgMemberBottomNav{
-  position:fixed !important;
-  left:0 !important;
-  right:0 !important;
-  bottom:0 !important;
-  width:100vw !important;
-  max-width:none !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  border-radius:20px 20px 0 0 !important;
-  padding:7px 8px max(7px, env(safe-area-inset-bottom)) !important;
-  z-index:999999 !important;
-}
-#dbgMemberPortalRoot .dbg-member-notice-board{
-  width:calc(100% + 40px) !important;
-  max-width:none !important;
-  margin-left:-20px !important;
-  margin-right:-20px !important;
-  border-left:0 !important;
-  border-right:0 !important;
-  border-radius:0 0 18px 18px !important;
-  box-sizing:border-box !important;
-}
-#dbgMemberPortalRoot .dbg-member-notice-board > .dbg-notice-marquee{
-  width:100% !important;
-  box-sizing:border-box !important;
-}
-/* Make the requested green leaves visibly sit above the page surfaces. */
-#dbgMemberPortalRoot::before{
-  z-index:3 !important;
-  opacity:.30 !important;
-  filter:blur(9px) !important;
-}
-#dbgMemberPortalRoot::after{
-  z-index:3 !important;
-  opacity:.26 !important;
-  filter:blur(9px) !important;
-}
-/* Green tree matching the slogan: “ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ” */
-#dbgMemberPortalRoot .dbg-member-app-top{
-  position:relative !important;
-  overflow:hidden !important;
-}
-#dbgMemberPortalRoot .dbg-member-app-top::after{
-  content:"🌳";
-  position:absolute !important;
-  right:14px !important;
-  bottom:7px !important;
-  z-index:3 !important;
-  font-size:54px !important;
-  line-height:1 !important;
-  opacity:.92 !important;
-  filter:drop-shadow(0 5px 8px rgba(0,80,45,.18)) !important;
-  pointer-events:none !important;
-}
-#dbgMemberPortalRoot .dbg-member-app-top > *{
-  position:relative !important;
-  z-index:4 !important;
-}
-@media(max-width:700px){
-  #dbgMemberPortalRoot .dbg-member-notice-board{
-    width:calc(100% + 16px) !important;
-    margin-left:-8px !important;
-    margin-right:-8px !important;
-  }
-  #dbgMemberPortalRoot #dbgMemberBottomNav{
-    border-radius:18px 18px 0 0 !important;
-    padding-left:6px !important;
-    padding-right:6px !important;
-  }
-  #dbgMemberPortalRoot .dbg-member-app-top::after{
-    right:8px !important;
-    bottom:5px !important;
-    font-size:46px !important;
-  }
-}
-@media(max-width:380px){
-  #dbgMemberPortalRoot .dbg-member-notice-board{
-    width:calc(100% + 12px) !important;
-    margin-left:-6px !important;
-    margin-right:-6px !important;
-  }
-}
-</style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
 
@@ -5207,9 +5001,9 @@ function initAdminNoticeBoard(){
     document.getElementById('dbgNoticeCancelEdit')?.addEventListener('click',resetNoticeForm); renderAdminNotices();
 }
 function buildMemberNoticeBoardHtml(notices){
-    const items=sortNotices(notices); if(!items.length)return `<div class="dbg-member-notice-board bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3></div><div class="px-4 py-3 text-sm text-slate-400">বর্তমানে কোনো নোটিশ নেই।</div></div>`;
+    const items=sortNotices(notices); if(!items.length)return `<div class="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3></div><div class="px-4 py-3 text-sm text-slate-400">বর্তমানে কোনো নোটিশ নেই।</div></div>`;
     const content=items.map(n=>`<span class="dbg-notice-item"><strong class="text-yellow-300 font-bold">${escapeHtml(n.title||'নোটিশ')}:</strong><span class="text-white font-bold">${escapeHtml(n.message||'')}</span><span class="dbg-notice-separator text-white">✦</span></span>`).join('');
-    return `<div class="dbg-member-notice-board bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3><span class="ml-auto text-[11px] text-amber-700 font-semibold">Admin Notice</span></div><div class="dbg-notice-marquee px-4 py-3"><div class="dbg-notice-marquee-track">${content}${content}</div></div></div>`;
+    return `<div class="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden mb-5"><div class="flex items-center gap-2 bg-amber-50 px-4 py-3 border-b border-amber-100"><i data-lucide="megaphone" class="w-5 h-5 text-amber-600"></i><h3 class="font-bold text-amber-900">নোটিশ বোর্ড</h3><span class="ml-auto text-[11px] text-amber-700 font-semibold">Admin Notice</span></div><div class="dbg-notice-marquee px-4 py-3"><div class="dbg-notice-marquee-track">${content}${content}</div></div></div>`;
 }
 
 function buildFirebasePayload() {
@@ -7532,12 +7326,6 @@ async function dbgBiometricLogin(){
 }
 
 document.getElementById('dbgMemberBiometricButton')?.addEventListener('click',async()=>{
-    try{
-        if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-            const fs=document.documentElement.requestFullscreen({navigationUI:'hide'});
-            if(fs && typeof fs.catch==='function') fs.catch(()=>{});
-        }
-    }catch(_){}
     const btn=document.getElementById('dbgMemberBiometricButton');
     if(!btn) return;
     btn.disabled=true;
@@ -7560,16 +7348,7 @@ document.getElementById('dbgMemberBiometricButton')?.addEventListener('click',as
 });
 
 document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e=>{
-    e.preventDefault();
-    /* Hide the browser URL/share chrome where the browser supports Fullscreen API.
-       The call is made directly from the login-button gesture for mobile browsers. */
-    try{
-        if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-            const fs=document.documentElement.requestFullscreen({navigationUI:'hide'});
-            if(fs && typeof fs.catch==='function') fs.catch(()=>{});
-        }
-    }catch(_){}
-    setMemberMsg('dbgMemberLoginError',''); setMemberStatus('dbgMemberLoginStatus','লগইন হচ্ছে...');
+    e.preventDefault(); setMemberMsg('dbgMemberLoginError',''); setMemberStatus('dbgMemberLoginStatus','লগইন হচ্ছে...');
     const id=document.getElementById('dbgMemberLoginId').value.trim().toUpperCase(); const pw=document.getElementById('dbgMemberLoginPassword').value; const btn=document.getElementById('dbgMemberLoginButton'); btn.disabled=true;
     try{ const cred=await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw); const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`)); if(!map.exists()||!['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase())||String(map.val()?.memberId||'').toUpperCase()!==id) throw new Error('Member account mapping সঠিক নয়।'); setMemberStatus('dbgMemberLoginStatus','সফল হয়েছে...'); }
     catch(error){ console.error('DBG Member Login Error:',error); setMemberMsg('dbgMemberLoginError',memberErrorText(error)); setMemberStatus('dbgMemberLoginStatus',''); }
