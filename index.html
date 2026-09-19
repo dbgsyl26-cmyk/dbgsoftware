@@ -920,24 +920,52 @@
 </style>
 
 
-<style id="chatgpt-edge-green-patch">
-html,body{margin:0!important;padding:0!important;width:100%;overflow-x:hidden;background:#e8f7ef}
-body{background:
- radial-gradient(circle at 10% 10%,rgba(34,197,94,.18),transparent 26%),
- radial-gradient(circle at 90% 30%,rgba(16,185,129,.15),transparent 24%),
- linear-gradient(180deg,#dff5e9,#eef8f2 55%,#f7fbf8)!important;}
-#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important}
-#dbgMemberPortalRoot>.min-h-screen{padding:0 0 88px!important}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important}
-#dbgMemberPortalRoot .dbg-member-app-top{margin:0!important;border-radius:0 0 22px 22px!important}
-#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;border-radius:18px 18px 0 0!important}
-#dbgMemberBottomNav+*{display:none!important}
-.dbg-notice-wrap,.notice-board,#dbgNoticeBoard,.dbg-notice-board{width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-radius:0!important}
-#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{content:'';position:fixed;pointer-events:none;filter:blur(14px);opacity:.55}
-#dbgMemberPortalRoot::before{width:220px;height:120px;left:-60px;top:140px;background:rgba(5,150,105,.22);border-radius:100% 0 100% 0;transform:rotate(-28deg)}
-#dbgMemberPortalRoot::after{width:240px;height:130px;right:-70px;bottom:120px;background:rgba(16,185,129,.18);border-radius:0 100% 0 100%;transform:rotate(28deg)}
+<!-- ChatGPT UI PATCH: Member edge-to-edge green leaf (UI only) -->
+<style id="chatgpt-member-ui-patch">
+/* Admin/Accountant data untouched */
+html,body{margin:0!important;padding:0!important;overflow-x:hidden;background:#e7f8ef;}
+body{
+ background:
+ radial-gradient(circle at 10% 8%,rgba(34,197,94,.18),transparent 22%),
+ radial-gradient(circle at 90% 20%,rgba(16,185,129,.14),transparent 24%),
+ linear-gradient(180deg,#dff5e8,#eef9f2 55%,#f7fcf9)!important;
+}
+#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important;}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
+ content:"";position:fixed;pointer-events:none;filter:blur(18px);opacity:.55;z-index:0;
+}
+#dbgMemberPortalRoot::before{
+ left:-60px;top:120px;width:230px;height:120px;border-radius:100% 0 100% 0;
+ background:rgba(5,150,105,.18);transform:rotate(-28deg);
+}
+#dbgMemberPortalRoot::after{
+ right:-70px;bottom:120px;width:250px;height:130px;border-radius:0 100% 0 100%;
+ background:rgba(34,197,94,.16);transform:rotate(28deg);
+}
+#dbgMemberPortalRoot>.min-h-screen{position:relative;z-index:1;padding:0 0 90px!important;}
+#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
+#dbgMemberPortalRoot .dbg-member-app-top{
+ margin:0!important;border-radius:0 0 24px 24px!important;
+ background:linear-gradient(135deg,#064e3b,#047857 60%,#10b981)!important;
+}
+/* Notice board full width */
+.dbg-notice-marquee,#dbgNoticeBoard,.notice-board,.dbg-notice-wrap{
+ width:100vw!important;max-width:none!important;
+ margin-left:calc(50% - 50vw)!important;
+ margin-right:calc(50% - 50vw)!important;
+ border-radius:0!important;
+}
+/* Single full-width bottom nav */
+#dbgMemberBottomNav{
+ left:0!important;right:0!important;bottom:0!important;
+ width:100vw!important;max-width:none!important;
+ margin:0!important;border-radius:22px 22px 0 0!important;
+ padding:8px 6px!important;
+ background:linear-gradient(135deg,#064e3b,#047857,#059669)!important;
+}
+#dbgMemberBottomNav~#dbgMemberBottomNav{display:none!important;}
+#dbgMemberPortalRoot *{word-break:break-word;}
 </style>
-<meta name="theme-color" content="#047857">
 
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
@@ -4399,24 +4427,52 @@ function changeDepPage(direction) {
             const source = document.getElementById('accountVoucherContent');
             if (!source) return;
             const html = `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><title>DBG আয়-ব্যয় ভাউচার</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#111}.voucher{max-width:650px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px}.center{text-align:center}.right{text-align:right}</style>
-<style id="chatgpt-edge-green-patch">
-html,body{margin:0!important;padding:0!important;width:100%;overflow-x:hidden;background:#e8f7ef}
-body{background:
- radial-gradient(circle at 10% 10%,rgba(34,197,94,.18),transparent 26%),
- radial-gradient(circle at 90% 30%,rgba(16,185,129,.15),transparent 24%),
- linear-gradient(180deg,#dff5e9,#eef8f2 55%,#f7fbf8)!important;}
-#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important}
-#dbgMemberPortalRoot>.min-h-screen{padding:0 0 88px!important}
-#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important}
-#dbgMemberPortalRoot .dbg-member-app-top{margin:0!important;border-radius:0 0 22px 22px!important}
-#dbgMemberBottomNav{left:0!important;right:0!important;bottom:0!important;width:100vw!important;border-radius:18px 18px 0 0!important}
-#dbgMemberBottomNav+*{display:none!important}
-.dbg-notice-wrap,.notice-board,#dbgNoticeBoard,.dbg-notice-board{width:100vw!important;max-width:none!important;margin-left:calc(50% - 50vw)!important;margin-right:calc(50% - 50vw)!important;border-radius:0!important}
-#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{content:'';position:fixed;pointer-events:none;filter:blur(14px);opacity:.55}
-#dbgMemberPortalRoot::before{width:220px;height:120px;left:-60px;top:140px;background:rgba(5,150,105,.22);border-radius:100% 0 100% 0;transform:rotate(-28deg)}
-#dbgMemberPortalRoot::after{width:240px;height:130px;right:-70px;bottom:120px;background:rgba(16,185,129,.18);border-radius:0 100% 0 100%;transform:rotate(28deg)}
+<!-- ChatGPT UI PATCH: Member edge-to-edge green leaf (UI only) -->
+<style id="chatgpt-member-ui-patch">
+/* Admin/Accountant data untouched */
+html,body{margin:0!important;padding:0!important;overflow-x:hidden;background:#e7f8ef;}
+body{
+ background:
+ radial-gradient(circle at 10% 8%,rgba(34,197,94,.18),transparent 22%),
+ radial-gradient(circle at 90% 20%,rgba(16,185,129,.14),transparent 24%),
+ linear-gradient(180deg,#dff5e8,#eef9f2 55%,#f7fcf9)!important;
+}
+#dbgMemberPortalRoot{position:fixed!important;inset:0!important;width:100vw!important;overflow-y:auto!important;overflow-x:hidden!important;}
+#dbgMemberPortalRoot::before,#dbgMemberPortalRoot::after{
+ content:"";position:fixed;pointer-events:none;filter:blur(18px);opacity:.55;z-index:0;
+}
+#dbgMemberPortalRoot::before{
+ left:-60px;top:120px;width:230px;height:120px;border-radius:100% 0 100% 0;
+ background:rgba(5,150,105,.18);transform:rotate(-28deg);
+}
+#dbgMemberPortalRoot::after{
+ right:-70px;bottom:120px;width:250px;height:130px;border-radius:0 100% 0 100%;
+ background:rgba(34,197,94,.16);transform:rotate(28deg);
+}
+#dbgMemberPortalRoot>.min-h-screen{position:relative;z-index:1;padding:0 0 90px!important;}
+#dbgMemberPortalRoot .max-w-6xl{max-width:none!important;width:100%!important;}
+#dbgMemberPortalRoot .dbg-member-app-top{
+ margin:0!important;border-radius:0 0 24px 24px!important;
+ background:linear-gradient(135deg,#064e3b,#047857 60%,#10b981)!important;
+}
+/* Notice board full width */
+.dbg-notice-marquee,#dbgNoticeBoard,.notice-board,.dbg-notice-wrap{
+ width:100vw!important;max-width:none!important;
+ margin-left:calc(50% - 50vw)!important;
+ margin-right:calc(50% - 50vw)!important;
+ border-radius:0!important;
+}
+/* Single full-width bottom nav */
+#dbgMemberBottomNav{
+ left:0!important;right:0!important;bottom:0!important;
+ width:100vw!important;max-width:none!important;
+ margin:0!important;border-radius:22px 22px 0 0!important;
+ padding:8px 6px!important;
+ background:linear-gradient(135deg,#064e3b,#047857,#059669)!important;
+}
+#dbgMemberBottomNav~#dbgMemberBottomNav{display:none!important;}
+#dbgMemberPortalRoot *{word-break:break-word;}
 </style>
-<meta name="theme-color" content="#047857">
 
 </head><body><div class="voucher">${source.outerHTML.replace(/ class="no-print"/g,'')}</div></body></html>`;
             const blob = new Blob([html], {type:'text/html;charset=utf-8'});
