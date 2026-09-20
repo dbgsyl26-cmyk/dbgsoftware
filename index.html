@@ -6697,6 +6697,8 @@ async function downloadMemberIdCardJPEG(member){
     }
 }
 
+let dbgMemberPortalClockTimer = null;
+
 function updateMemberPortalDateTime() {
     const dateEl = document.getElementById('dbgMemberPortalDate');
     const timeEl = document.getElementById('dbgMemberPortalTime');
