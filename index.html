@@ -957,15 +957,21 @@
   left:248px;
   top:71.8%;
   width:670px;
-  font-size:38px;
-  color:#e5bb3f;
+  font-size:42px;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#d9b43a;
+  text-shadow:1px 1px 0 #9a741d, 2px 2px 0 #7b5a12, 3px 3px 0 #62470d, 0 4px 7px rgba(0,0,0,.32);
 }
 #dbgMemberPortalRoot .dbg-master-front .dbg-master-id{
   left:390px;
   top:83.1%;
   width:470px;
-  font-size:36px;
-  color:#e5bb3f;
+  font-size:40px;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#d9b43a;
+  text-shadow:1px 1px 0 #9a741d, 2px 2px 0 #7b5a12, 3px 3px 0 #62470d, 0 4px 7px rgba(0,0,0,.32);
 }
 #dbgMemberPortalRoot .dbg-master-back .dbg-master-signature{
   left:53.5%;
@@ -6732,13 +6738,32 @@ async function downloadMemberIdCardJPEG(member){
         await drawRoundedCardImage(cards[0],0);
         await drawRoundedCardImage(cards[1],654);
 
-        // Front: member name + ID
-        ctx.textBaseline='top';
-        ctx.font='800 38px Arial, Helvetica, sans-serif';
-        ctx.fillStyle='#e5bb3f';
-        ctx.fillText(String(member.nameEn || member.name || '-'),248,458);
-        ctx.font='800 36px Arial, Helvetica, sans-serif';
-        ctx.fillText(String(member.code || '-'),390,530);
+        // Front: member name + ID — ATM-style gold / embossed 3D typography
+        const drawAtmGoldText=(text,x,y,fontSize)=>{
+            ctx.save();
+            ctx.font=`900 ${fontSize}px Arial, Helvetica, sans-serif`;
+            ctx.textBaseline='top';
+            ctx.shadowColor='rgba(0,0,0,.32)';
+            ctx.shadowBlur=7;
+            ctx.shadowOffsetX=0;
+            ctx.shadowOffsetY=4;
+            ctx.fillStyle='#62470d';
+            ctx.fillText(String(text),x+3,y+3);
+            ctx.shadowColor='transparent';
+            ctx.fillStyle='#7b5a12';
+            ctx.fillText(String(text),x+2,y+2);
+            const gold=ctx.createLinearGradient(0,y,0,y+fontSize);
+            gold.addColorStop(0,'#ffe7a0');
+            gold.addColorStop(.18,'#f3d26b');
+            gold.addColorStop(.48,'#c99a2e');
+            gold.addColorStop(.72,'#f0c957');
+            gold.addColorStop(1,'#a97816');
+            ctx.fillStyle=gold;
+            ctx.fillText(String(text),x,y);
+            ctx.restore();
+        };
+        drawAtmGoldText(member.nameEn || member.name || '-',248,458,42);
+        drawAtmGoldText(member.code || '-',390,530,40);
 
         // Back: signature + blood group
         ctx.save();
