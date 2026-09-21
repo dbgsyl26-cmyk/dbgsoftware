@@ -1310,6 +1310,44 @@
 }
 </style>
 
+<style id="dbg-hasana-profit-cashbook-integration">
+/* =========================================================
+   DBG ADD-ON: Qard-e-Hasana + Profit Distribution + Cash Book
+   Additive styles only. Existing selectors/design are untouched.
+   ========================================================= */
+.dbg-hasana-status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800;line-height:1;white-space:nowrap}
+.dbg-hasana-status-pending{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.dbg-hasana-status-approved{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.dbg-hasana-status-rejected{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.dbg-hasana-card{background:linear-gradient(135deg,#faf5ff,#f5f3ff);border:1px solid #ddd6fe;border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(91,33,182,.07)}
+.dbg-hasana-alert{border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55}
+.dbg-hasana-alert.locked{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+.dbg-hasana-alert.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.dbg-hasana-alert.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.dbg-hasana-table th,.dbg-hasana-table td{vertical-align:middle}
+.dbg-profit-card{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-color:#ddd6fe!important}
+.dbg-profit-card .dbg-profit-value{color:#6d28d9!important}
+.dbg-cashbook-summary-card{border-radius:14px;padding:13px 15px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 5px 14px rgba(15,23,42,.05)}
+.dbg-cashbook-summary-income{border-left:4px solid #059669}
+.dbg-cashbook-summary-expense{border-left:4px solid #e11d48}
+.dbg-cashbook-print-header{display:none}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  body.dbg-cashbook-printing > *:not(#dbg-cashbook-print-root){display:none!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root{display:block!important;width:100%!important;color:#111!important;background:#fff!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-header{display:block!important;text-align:center!important;margin-bottom:12px!important;padding-bottom:8px!important;border-bottom:1px solid #111!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-header h1{margin:0!important;font-size:22px!important;font-weight:800!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-header p{margin:2px 0!important;font-size:12px!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-title{font-size:15px!important;font-weight:800!important;margin:8px 0 10px!important;text-align:center!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-meta{font-size:11px!important;text-align:center!important;margin-bottom:10px!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root table{width:100%!important;border-collapse:collapse!important;font-size:11px!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root th,body.dbg-cashbook-printing #dbg-cashbook-print-root td{border:1px solid #888!important;padding:5px 7px!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root th{font-weight:800!important;background:#f3f4f6!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-totals{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin:10px 0!important}
+  body.dbg-cashbook-printing #dbg-cashbook-print-root .dbg-cashbook-print-total{border:1px solid #aaa!important;padding:7px!important;font-weight:800!important}
+}
+</style>
+
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
 
@@ -1526,6 +1564,9 @@
                 </button>
                 <button onclick="switchTab('accounts')" id="tab-accounts" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
                     <i data-lucide="receipt-text" class="w-5 h-5"></i> আয়-ব্যয় হিসাব
+                </button>
+                <button onclick="switchTab('hasana')" id="tab-hasana" class="nav-tab dbg-admin-only w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="hand-coins" class="w-5 h-5"></i> করজে হাসানা
                 </button>
             </nav>
         </div>
@@ -2351,11 +2392,36 @@
                 </div>
 
                 <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-3">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2">
                             <i data-lucide="book-open" class="w-5 h-5 text-indigo-600"></i> আয় ও ব্যয় ক্যাশ বই (Cash Book)
                         </h3>
-                        <button onclick="printReport()" class="bg-slate-700 text-white px-3 py-1 rounded text-xs hover:bg-slate-600 no-print">প্রিন্ট</button>
+                        <button onclick="printCashBookReport()" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs hover:bg-slate-600 no-print flex items-center gap-1.5">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i> রিপোর্ট প্রিন্ট করুন
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 no-print">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">মাস</label>
+                            <select id="cashBookMonth" onchange="renderAccounts()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="ALL">সকল মাস</option>
+                                <option value="01">জানুয়ারি</option><option value="02">ফেব্রুয়ারি</option><option value="03">মার্চ</option><option value="04">এপ্রিল</option>
+                                <option value="05">মে</option><option value="06">জুন</option><option value="07">জুলাই</option><option value="08">আগস্ট</option>
+                                <option value="09">সেপ্টেম্বর</option><option value="10">অক্টোবর</option><option value="11">নভেম্বর</option><option value="12">ডিসেম্বর</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">বছর</label>
+                            <select id="cashBookYear" onchange="renderAccounts()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+                        </div>
+                        <div class="dbg-cashbook-summary-card dbg-cashbook-summary-income">
+                            <span class="block text-xs text-gray-500">মোট আয়</span>
+                            <strong id="cashBookTotalIncome" class="block text-lg text-emerald-700">৳0</strong>
+                        </div>
+                        <div class="dbg-cashbook-summary-card dbg-cashbook-summary-expense">
+                            <span class="block text-xs text-gray-500">মোট ব্যয়</span>
+                            <strong id="cashBookTotalExpense" class="block text-lg text-rose-700">৳0</strong>
+                        </div>
                     </div>
                     <div class="overflow-x-auto max-h-[450px] overflow-y-auto">
                         <table class="w-full text-sm text-left">
@@ -2372,6 +2438,39 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+        </section>
+
+        <!-- ================= 8. QARD-E-HASANA VIEW ================= -->
+        <section id="view-hasana" class="tab-content hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3 mb-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="hand-coins" class="w-5 h-5 text-violet-600"></i> করজে হাসানা লোন আবেদন
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">সদস্যদের আবেদন রিয়েল-টাইমে দেখুন এবং অনুমোদন/বাতিল করুন।</p>
+                    </div>
+                    <div class="text-xs text-gray-500">মোট আবেদন: <span id="hasanaTotalCount" class="font-bold text-violet-700">0</span></div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left dbg-hasana-table">
+                        <thead class="bg-violet-50 text-violet-900 text-xs uppercase">
+                            <tr>
+                                <th class="p-2.5">মেম্বার আইডি</th>
+                                <th class="p-2.5">নাম</th>
+                                <th class="p-2.5 text-right">মোট জমা ডিপোজিট</th>
+                                <th class="p-2.5 text-right">Requested Amount</th>
+                                <th class="p-2.5">আবেদনের তারিখ</th>
+                                <th class="p-2.5">স্ট্যাটাস</th>
+                                <th class="p-2.5 text-center no-print">অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hasanaApplicationsTableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+                <div id="hasanaEmptyState" class="hidden text-center text-sm text-gray-500 py-10">এখনো কোনো করজে হাসানা আবেদন পাওয়া যায়নি।</div>
             </div>
         </section>
 
@@ -2792,7 +2891,8 @@
             investorProfiles: 'dbg_investor_profiles',
             accounts: 'dbg_accounts'
         ,
-            notices: 'dbg_notices'};
+            notices: 'dbg_notices',
+            hasanaLoans: 'dbg_hasana_loans'};
 
         const MEMBER_DB_NAME = 'DBG_Member_Storage';
         const MEMBER_DB_VERSION = 1;
@@ -2816,8 +2916,10 @@
             investments: readJSON(LOCAL_KEYS.investments, []),
             investorProfiles: readJSON(LOCAL_KEYS.investorProfiles, []),
             accounts: readJSON(LOCAL_KEYS.accounts, []),
-            notices: readJSON(LOCAL_KEYS.notices, [])
+            notices: readJSON(LOCAL_KEYS.notices, []),
+            hasanaLoans: readJSON(LOCAL_KEYS.hasanaLoans, [])
         };
+        if (!Array.isArray(db.hasanaLoans)) db.hasanaLoans = [];
 
         function openMemberDB() {
             if (memberStoragePromise) return memberStoragePromise;
@@ -2905,6 +3007,7 @@
             localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
             localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
             localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
+            localStorage.setItem(LOCAL_KEYS.hasanaLoans, JSON.stringify(db.hasanaLoans || []));
         }
 
         function saveData() {
@@ -2954,6 +3057,7 @@
                 this.value = v;
             });
             populateYearDropdowns();
+            populateCashBookYearDropdown();
             if(db.logo) {
                 document.getElementById('groupLogoImg').src = db.logo;
             }
@@ -2961,6 +3065,8 @@
             const today = new Date();
             const currentMonthStr = today.toISOString().slice(0, 7);
             const todayStr = today.toISOString().slice(0, 10);
+            const cashMonth = document.getElementById('cashBookMonth');
+            if (cashMonth) cashMonth.value = String(today.getMonth() + 1).padStart(2, '0');
             
             document.getElementById('dashboardMonth').value = currentMonthStr;
             document.getElementById('depMonthSelect').value = String(today.getMonth() + 1).padStart(2, '0');
@@ -2975,6 +3081,69 @@
             lucide.createIcons();
             // Firebase/Local storage status is handled by the authentication sync module.
         });
+
+
+        // ================= QARD-E-HASANA / KORJE HASANA =================
+        function normalizeHasanaStatus(status) {
+            const s = String(status || 'pending').toLowerCase();
+            return ['approved','অনুমোদিত'].includes(s) ? 'approved' : ['rejected','বাতিল'].includes(s) ? 'rejected' : 'pending';
+        }
+        function hasanaStatusHtml(status) {
+            const s = normalizeHasanaStatus(status);
+            const map = {
+                pending: ['pending','পেন্ডিং (Pending)','dbg-hasana-status-pending'],
+                approved: ['approved','অনুমোদিত (Approved)','dbg-hasana-status-approved'],
+                rejected: ['rejected','বাতিল (Rejected)','dbg-hasana-status-rejected']
+            };
+            const x = map[s];
+            return `<span class="dbg-hasana-status-badge ${x[2]}">${x[0]==='pending'?'⏳':x[0]==='approved'?'✓':'✕'} ${x[1]}</span>`;
+        }
+        function getMemberTotalDepositForHasana(memberCode, deposits = db.deposits) {
+            return deposits.filter(d => d.memberCode === memberCode).reduce((sum,d)=>sum + Math.max(0, Number.parseFloat(d.amount || 0) || 0), 0);
+        }
+        function renderHasanaLoans() {
+            const tbody = document.getElementById('hasanaApplicationsTableBody');
+            if (!tbody) return;
+            const list = Array.isArray(db.hasanaLoans) ? db.hasanaLoans.slice().sort((a,b)=>String(b.applicationDate||b.createdAt||'').localeCompare(String(a.applicationDate||a.createdAt||''))) : [];
+            const countEl = document.getElementById('hasanaTotalCount');
+            const empty = document.getElementById('hasanaEmptyState');
+            if (countEl) countEl.innerText = list.length.toLocaleString('bn-BD');
+            if (empty) empty.classList.toggle('hidden', list.length > 0);
+            tbody.innerHTML = list.map(loan => {
+                const member = db.members.find(m => m.code === loan.memberCode);
+                const totalDeposit = Number(loan.totalDeposit ?? getMemberTotalDepositForHasana(loan.memberCode));
+                const status = normalizeHasanaStatus(loan.status);
+                const actions = status === 'pending' ? `
+                    <div class="flex flex-wrap items-center justify-center gap-1.5">
+                        <button onclick="approveHasanaLoan('${escapeHtml(String(loan.id))}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold no-print">অনুমোদন দিন</button>
+                        <button onclick="rejectHasanaLoan('${escapeHtml(String(loan.id))}')" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold no-print">বাতিল করুন</button>
+                    </div>` : '<span class="text-xs text-gray-400">কোনো অ্যাকশন নেই</span>';
+                return `<tr class="hover:bg-violet-50/40 transition"><td class="p-2.5 font-mono text-xs font-bold text-indigo-700">${escapeHtml(loan.memberCode||'-')}</td><td class="p-2.5 font-semibold">${escapeHtml(loan.memberName || member?.name || '-')}</td><td class="p-2.5 text-right font-bold text-indigo-700">৳${totalDeposit.toLocaleString('bn-BD')}</td><td class="p-2.5 text-right font-bold text-violet-700">৳${Number(loan.requestedAmount||0).toLocaleString('bn-BD')}</td><td class="p-2.5 text-xs text-gray-500">${escapeHtml(formatDateDDMMYY(loan.applicationDate || loan.createdAt))}</td><td class="p-2.5">${hasanaStatusHtml(status)}</td><td class="p-2.5 text-center">${actions}</td></tr>`;
+            }).join('');
+            lucide.createIcons();
+        }
+        async function approveHasanaLoan(id) {
+            const loan = (db.hasanaLoans || []).find(x => String(x.id) === String(id));
+            if (!loan || normalizeHasanaStatus(loan.status) !== 'pending') return;
+            if (!confirm(`মেম্বার ${loan.memberCode} এর ৳${Number(loan.requestedAmount||0).toLocaleString('bn-BD')} করজে হাসানা আবেদন অনুমোদন করবেন?`)) return;
+            try {
+                if (typeof window.dbgUpdateHasanaLoan !== 'function') throw new Error('Hasana Firebase module প্রস্তুত হয়নি।');
+                await window.dbgUpdateHasanaLoan(id, {status:'approved', approvedAt:new Date().toISOString()});
+                loan.status='approved'; loan.approvedAt=new Date().toISOString();
+                saveLocalData(); renderHasanaLoans();
+            } catch(e) { alert('আবেদন অনুমোদন করা যায়নি।\n\n' + (e?.message || e)); }
+        }
+        async function rejectHasanaLoan(id) {
+            const loan = (db.hasanaLoans || []).find(x => String(x.id) === String(id));
+            if (!loan || normalizeHasanaStatus(loan.status) !== 'pending') return;
+            if (!confirm(`মেম্বার ${loan.memberCode} এর করজে হাসানা আবেদন বাতিল করবেন?`)) return;
+            try {
+                if (typeof window.dbgUpdateHasanaLoan !== 'function') throw new Error('Hasana Firebase module প্রস্তুত হয়নি।');
+                await window.dbgUpdateHasanaLoan(id, {status:'rejected', rejectedAt:new Date().toISOString()});
+                loan.status='rejected'; loan.rejectedAt=new Date().toISOString();
+                saveLocalData(); renderHasanaLoans();
+            } catch(e) { alert('আবেদন বাতিল করা যায়নি।\n\n' + (e?.message || e)); }
+        }
 
         function switchTab(tabId) {
             // Role restriction: Accountant may open Dashboard, Deposit Collection and Accounts.
@@ -2991,6 +3160,7 @@
 
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
             const activeNav = document.getElementById(`tab-${tabId}`);
+            if (!activeNav) return;
             activeNav.classList.add('bg-indigo-800', 'text-white', 'font-semibold');
             activeNav.classList.remove('text-indigo-200');
 
@@ -3006,7 +3176,10 @@
             renderInvestments();
             renderInvestorProfiles();
             renderSelectedInvestorProfile();
+            populateCashBookYearDropdown();
             renderAccounts();
+            renderHasanaLoans();
+            updateCashBookSummary();
             populateMemberDropdowns();
             renderIndividualProfile();
             lucide.createIcons();
@@ -3388,6 +3561,10 @@ function changeMemPage(direction) {
                             <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                                 <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                                 <span class="text-xl font-bold text-rose-700">৳${dbgGetMemberCumulativeArrears(member, new Date().toISOString().slice(0, 7)).toLocaleString()}</span>
+                            </div>
+                            <div class="dbg-profit-card p-3 rounded-lg text-center border min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                                <span id="memberTotalProfit" class="dbg-profit-value text-xl font-bold">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD')}</span>
                             </div>
                         </div>
                     </div>
@@ -4331,23 +4508,42 @@ function changeDepPage(direction) {
         }
 
         // INVESTMENTS LOGIC
-        function saveInvestment(e) {
+        async function saveInvestment(e) {
             e.preventDefault();
-            db.investments.push({
+            const profit = Math.max(0, Number.parseFloat(document.getElementById('invProfit').value || 0) || 0);
+            const status = document.getElementById('invStatus').value;
+            const investment = {
                 id: Date.now(),
                 title: document.getElementById('invTitle').value,
                 category: document.getElementById('invCategory').value,
                 amount: parseFloat(document.getElementById('invAmount').value),
-                profit: parseFloat(document.getElementById('invProfit').value || 0),
+                profit,
                 date: document.getElementById('invDate').value,
-                status: document.getElementById('invStatus').value
-            });
-            saveData();
-            document.getElementById('investForm').reset();
+                status,
+                profitDistributed: false
+            };
+
+            try {
+                // Existing project UI is preserved; only the profit distribution is added.
+                if (status === 'চলমান' && profit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
+                    await window.dbgDistributeInvestmentProfit(profit, investment.id);
+                    investment.profitDistributed = true;
+                    investment.distributedAt = new Date().toISOString();
+                }
+                db.investments.push(investment);
+                saveData();
+                document.getElementById('investForm').reset();
+                const invDate = document.getElementById('invDate');
+                if (invDate) invDate.value = new Date().toISOString().slice(0,10);
+            } catch (error) {
+                console.error('DBG investment/profit distribution failed:', error);
+                alert('ইনভেস্টমেন্ট সেভ করা হয়নি।\n\nকারণ: ' + (error?.message || error));
+            }
         }
 
         function renderInvestments() {
             const tbody = document.getElementById('investmentsTableBody');
+            if (!tbody) return;
             tbody.innerHTML = '';
             let totalProfitSum = 0;
 
@@ -4355,24 +4551,23 @@ function changeDepPage(direction) {
                 totalProfitSum += parseFloat(inv.profit || 0);
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-2.5 font-bold text-gray-800">${inv.title} <span class="text-xs text-gray-400 block font-normal">${inv.category || ''}</span></td>
+                        <td class="p-2.5 font-bold text-gray-800">${escapeHtml(inv.title)} <span class="text-xs text-gray-400 block font-normal">${escapeHtml(inv.category || '')}</span></td>
                         <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(inv.date)}</td>
-                        <td class="p-2.5 text-right font-semibold">৳${inv.amount}</td>
-                        <td class="p-2.5 text-right font-bold text-emerald-600">৳${inv.profit || 0}</td>
-                        <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}">${inv.status}</span></td>
+                        <td class="p-2.5 text-right font-semibold">৳${Number(inv.amount || 0).toLocaleString()}</td>
+                        <td class="p-2.5 text-right font-bold text-emerald-600">৳${Number(inv.profit || 0).toLocaleString()}</td>
+                        <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}">${escapeHtml(inv.status || '')}</span></td>
                         <td class="p-2.5 text-center no-print">
                             <button onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
 
-            const totalUnits = db.members.reduce((sum, m) => sum + parseInt(m.units || 1), 0);
+            const totalUnits = db.members.reduce((sum, m) => sum + Number(m.depositCount ?? m.units ?? 0), 0);
             const profitPerUnit = totalUnits > 0 ? (totalProfitSum / totalUnits) : 0;
 
-            document.getElementById('calcTotalProfit').innerText = totalProfitSum.toLocaleString();
+            document.getElementById('calcTotalProfit').innerText = totalProfitSum.toLocaleString('bn-BD');
             document.getElementById('calcProfitPerUnit').innerText = profitPerUnit.toFixed(2);
             document.getElementById('calc2UnitProfit').innerText = (profitPerUnit * 2).toFixed(2);
             document.getElementById('calc3UnitProfit').innerText = (profitPerUnit * 3).toFixed(2);
@@ -4696,17 +4891,40 @@ function changeDepPage(direction) {
             }
         }
 
+        function getFilteredCashBookAccounts() {
+            const month = document.getElementById('cashBookMonth')?.value || 'ALL';
+            const year = document.getElementById('cashBookYear')?.value || 'ALL';
+            return db.accounts.filter(a => {
+                const raw = String(a.date || '');
+                const m = raw.match(/^(\d{4})-(\d{2})/);
+                if (!m) return month === 'ALL' && year === 'ALL';
+                return (year === 'ALL' || m[1] === year) && (month === 'ALL' || m[2] === month);
+            });
+        }
+
+        function updateCashBookSummary(list = getFilteredCashBookAccounts()) {
+            const income = list.filter(a => a.type === 'INCOME').reduce((sum,a) => sum + Number(a.amount || 0), 0);
+            const expense = list.filter(a => a.type === 'EXPENSE').reduce((sum,a) => sum + Number(a.amount || 0), 0);
+            const incomeEl = document.getElementById('cashBookTotalIncome');
+            const expenseEl = document.getElementById('cashBookTotalExpense');
+            if (incomeEl) incomeEl.innerText = '৳' + income.toLocaleString('bn-BD');
+            if (expenseEl) expenseEl.innerText = '৳' + expense.toLocaleString('bn-BD');
+            return {income, expense};
+        }
+
         function renderAccounts() {
             const tbody = document.getElementById('accountsTableBody');
+            if (!tbody) return;
+            const list = getFilteredCashBookAccounts();
             tbody.innerHTML = '';
-            db.accounts.slice().reverse().forEach(a => {
+            list.slice().reverse().forEach(a => {
                 const isExpense = a.type === 'EXPENSE';
                 tbody.innerHTML += `
                     <tr>
                         <td class="p-2.5 text-xs text-gray-500 font-mono">${formatDateDDMMYY(a.date)}</td>
                         <td class="p-2.5 text-xs font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${isExpense ? 'ব্যয়/খরচ' : 'অন্যান্য আয়'}</td>
-                        <td class="p-2.5 font-medium text-gray-800">${a.title}</td>
-                        <td class="p-2.5 text-right font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${isExpense ? '-' : '+'}${a.amount}</td>
+                        <td class="p-2.5 font-medium text-gray-800">${escapeHtml(a.title || '')}</td>
+                        <td class="p-2.5 text-right font-bold ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">${isExpense ? '-' : '+'}${Number(a.amount || 0).toLocaleString('bn-BD')}</td>
                         <td class="p-2.5 text-center no-print">
                             <button onclick="showAccountVoucher(${a.id})" class="text-indigo-600 hover:text-indigo-800 mr-2" title="রশিদ / ভাউচার">
                                 <i data-lucide="receipt-text" class="w-4 h-4"></i>
@@ -4715,10 +4933,41 @@ function changeDepPage(direction) {
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
+            updateCashBookSummary(list);
             lucide.createIcons();
+        }
+
+        function populateCashBookYearDropdown() {
+            const select = document.getElementById('cashBookYear');
+            if (!select) return;
+            const current = select.value || String(new Date().getFullYear());
+            const years = new Set([String(new Date().getFullYear())]);
+            db.accounts.forEach(a => {
+                const m = String(a.date || '').match(/^(\d{4})-/);
+                if (m) years.add(m[1]);
+            });
+            select.innerHTML = '<option value="ALL">সকল বছর</option>' + [...years].sort((a,b)=>Number(b)-Number(a)).map(y=>`<option value="${y}">${y}</option>`).join('');
+            select.value = [...years].has(current) ? current : String(new Date().getFullYear());
+        }
+
+        function printCashBookReport() {
+            const list = getFilteredCashBookAccounts();
+            const month = document.getElementById('cashBookMonth')?.value || 'ALL';
+            const year = document.getElementById('cashBookYear')?.value || 'ALL';
+            const monthNames = {ALL:'সকল মাস','01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল','05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট','09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'};
+            const totals = updateCashBookSummary(list);
+            const root = document.createElement('div');
+            root.id = 'dbg-cashbook-print-root';
+            const rows = list.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))).map((a,i)=>{
+                const expense = a.type === 'EXPENSE';
+                return `<tr><td>${i+1}</td><td>${escapeHtml(formatDateDDMMYY(a.date))}</td><td>${expense?'ব্যয়/খরচ':'অন্যান্য আয়'}</td><td>${escapeHtml(a.title||'')}</td><td style="text-align:right">${expense?'-':'+'}৳${Number(a.amount||0).toLocaleString('bn-BD')}</td></tr>`;
+            }).join('') || '<tr><td colspan="5" style="text-align:center">এই সময়ের কোনো লেনদেন নেই।</td></tr>';
+            root.innerHTML = `<div class="dbg-cashbook-print-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p></div><div class="dbg-cashbook-print-title">আয় ও ব্যয় ক্যাশ বই</div><div class="dbg-cashbook-print-meta">সময়কাল: ${monthNames[month] || month}${year !== 'ALL' ? ' ' + year : ''}</div><div class="dbg-cashbook-print-totals"><div class="dbg-cashbook-print-total">মোট আয়: ৳${totals.income.toLocaleString('bn-BD')}</div><div class="dbg-cashbook-print-total">মোট ব্যয়: ৳${totals.expense.toLocaleString('bn-BD')}</div></div><table><thead><tr><th>ক্রমিক</th><th>তারিখ</th><th>ধরন</th><th>বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>${rows}</tbody></table>`;
+            document.body.appendChild(root);
+            document.body.classList.add('dbg-cashbook-printing');
+            setTimeout(()=>{ window.print(); setTimeout(()=>{ document.body.classList.remove('dbg-cashbook-printing'); root.remove(); },350); },50);
         }
 
         function showAccountVoucher(id) {
@@ -5091,7 +5340,8 @@ import {
     set,
     update,
     push,
-    onValue
+    onValue,
+    increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -5254,6 +5504,8 @@ function setLoggedOutUI() {
     dbgFirebasePendingSync = false;
     if (dbgFirebaseUnsubscribe) { try { dbgFirebaseUnsubscribe(); } catch (_) {} dbgFirebaseUnsubscribe = null; }
     document.body.classList.remove('dbg-member-mode');
+    if (dbgMemberHasanaUnsubscribe) { try { dbgMemberHasanaUnsubscribe(); } catch (_) {} dbgMemberHasanaUnsubscribe = null; }
+    if (dbgMemberProfileUnsubscribe) { try { dbgMemberProfileUnsubscribe(); } catch (_) {} dbgMemberProfileUnsubscribe = null; }
     document.getElementById('dbgMemberPortalRoot')?.remove();
     document.body.classList.add('dbg-logged-out');
     overlay?.classList.remove('hidden');
@@ -5323,6 +5575,82 @@ function isAdminRole(role) {
     const r = String(role || '').trim().toLowerCase();
     return ['admin','super_admin','superadmin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(r);
 }
+
+
+// ================= DBG HASANA + PROFIT FIREBASE APIs =================
+window.dbgSubmitHasanaLoan = async function (loan) {
+    if (!loan?.memberCode) throw new Error('Member ID পাওয়া যায়নি।');
+    if (!firebaseAuth.currentUser) throw new Error('Member Firebase login পাওয়া যায়নি।');
+    const record = {
+        id: 'HL-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+        memberCode: String(loan.memberCode).toUpperCase(),
+        memberName: loan.memberName || '',
+        totalDeposit: Number(loan.totalDeposit || 0),
+        requestedAmount: Number(loan.requestedAmount || 0),
+        applicationDate: new Date().toISOString(),
+        status: 'pending',
+        createdAt: new Date().toISOString()
+    };
+    const r = push(ref(firebaseDB,'dbg_erp/hasanaLoans'));
+    await set(r, record);
+    return record;
+};
+
+window.dbgUpdateHasanaLoan = async function (id, patch) {
+    if (!id) throw new Error('Loan ID পাওয়া যায়নি।');
+    if (!dbgFirebaseSyncReady && dbgFirebaseInitPromise) { try { await dbgFirebaseInitPromise; } catch (_) {} }
+    if (!dbgFirebaseSyncReady) throw new Error('Firebase সংযোগ প্রস্তুত হয়নি।');
+    const snap = await get(ref(firebaseDB,'dbg_erp/hasanaLoans'));
+    if (!snap.exists()) throw new Error('Loan application পাওয়া যায়নি।');
+    const raw = snap.val();
+    let key = null;
+    if (Array.isArray(raw)) {
+        const index = raw.findIndex(x => x && String(x.id) === String(id));
+        if (index >= 0) key = String(index);
+    } else if (raw && typeof raw === 'object') {
+        const entry = Object.entries(raw).find(([_,x]) => x && String(x.id) === String(id));
+        if (entry) key = entry[0];
+    }
+    if (key == null) throw new Error('Loan application record পাওয়া যায়নি।');
+    await update(ref(firebaseDB,`dbg_erp/hasanaLoans/${key}`), patch || {});
+    return true;
+};
+
+window.dbgDistributeInvestmentProfit = async function (profit, investmentId) {
+    const amount = Math.max(0, Number(profit || 0));
+    if (!amount) return {totalDepositCount:0, distributed:0};
+    const activeMembers = (db.members || []).filter(m => {
+        const status = String(m?.status || m?.memberStatus || '').trim().toLowerCase();
+        return !['inactive','deactivated','disabled','blocked','বন্ধ','নিষ্ক্রিয়','inactive member'].includes(status);
+    });
+    const totalDepositCount = activeMembers.reduce((sum,m)=>sum + Math.max(0,Number(m.depositCount ?? m.units ?? 0)),0);
+    if (!totalDepositCount) throw new Error('সক্রিয় সদস্যদের কোনো depositCount পাওয়া যায়নি।');
+    const perDeposit = amount / totalDepositCount;
+    dbgFirebaseWriteInProgress = true;
+    try {
+        // Atomically increment each member's totalProfitReceived at its existing
+        // array/object child path. This preserves the current member data model.
+        const membersSnap = await get(ref(firebaseDB,'dbg_erp/members'));
+        const raw = membersSnap.exists() ? membersSnap.val() : [];
+        const entries = Array.isArray(raw) ? raw.map((m,i)=>[String(i),m]) : Object.entries(raw || {});
+        for (const [key, cloudMember] of entries) {
+            if (!cloudMember) continue;
+            const status = String(cloudMember?.status || cloudMember?.memberStatus || '').trim().toLowerCase();
+            if (['inactive','deactivated','disabled','blocked','বন্ধ','নিষ্ক্রিয়','inactive member'].includes(status)) continue;
+            const count = Math.max(0, Number(cloudMember.depositCount ?? cloudMember.units ?? 0));
+            if (!count) continue;
+            await update(ref(firebaseDB,`dbg_erp/members/${key}`), { totalProfitReceived: increment(perDeposit * count) });
+            const localMember = db.members.find(m => String(m?.code||'').toUpperCase() === String(cloudMember?.code||'').toUpperCase());
+            if (localMember) localMember.totalProfitReceived = Number(localMember.totalProfitReceived || 0) + perDeposit * count;
+        }
+        if (memberStorageReady) await replaceAllMembersInIDB(db.members);
+        try { localStorage.setItem(LOCAL_KEYS.members, JSON.stringify(db.members)); } catch (_) {}
+        renderAll();
+        return {totalDepositCount, perDeposit, distributed:amount, investmentId};
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+};
 
 function clearRealtimeListeners() {
     if (dbgFirebaseAdminDepositUnsub) { try { dbgFirebaseAdminDepositUnsub(); } catch (_) {} dbgFirebaseAdminDepositUnsub = null; }
@@ -5408,6 +5736,7 @@ function buildFirebasePayload() {
         investments: Array.isArray(db.investments) ? db.investments : [],
         investorProfiles: Array.isArray(db.investorProfiles) ? db.investorProfiles : [],
         accounts: Array.isArray(db.accounts) ? db.accounts : [],
+        hasanaLoans: Array.isArray(db.hasanaLoans) ? db.hasanaLoans : [],
         notices: Array.isArray(db.notices) ? db.notices : [],
         updatedAt: Date.now()
     };
@@ -5625,7 +5954,10 @@ async function applyFirebasePayload(payload) {
         // receives Accountant income/expense entries without changing any data.
         if (Array.isArray(payload.accounts)) db.accounts = payload.accounts.filter(Boolean);
         else if (payload.accounts && typeof payload.accounts === 'object') db.accounts = Object.values(payload.accounts).filter(Boolean);
+        if (Array.isArray(payload.hasanaLoans)) db.hasanaLoans = payload.hasanaLoans.filter(Boolean);
+        else if (payload.hasanaLoans && typeof payload.hasanaLoans === 'object') db.hasanaLoans = Object.values(payload.hasanaLoans).filter(Boolean);
         if (Array.isArray(payload.notices)) db.notices = payload.notices;
+        localStorage.setItem(LOCAL_KEYS.hasanaLoans, JSON.stringify(db.hasanaLoans || []));
         renderAdminNotices();
 
         // Update the local offline cache without triggering another Firebase write.
@@ -6764,6 +7096,7 @@ function installMemberPortalStylesAndRoot() {
       <button type="button" data-member-menu="profile" role="tab" aria-selected="false"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
       <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards"></i><span>ডিপোজিট</span></button>
       <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check"></i><span>ID কার্ড</span></button>
+      <button type="button" data-member-menu="hasana" role="tab" aria-selected="false"><i data-lucide="hand-coins"></i><span>করজে হাসানা</span></button>
     </nav>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
     document.getElementById('dbgMemberLogout')?.addEventListener('click',()=>signOut(firebaseAuth));
@@ -7081,6 +7414,8 @@ async function downloadMemberIdCardJPEG(member){
 }
 
 let dbgMemberPortalClockTimer = null;
+let dbgMemberHasanaUnsubscribe = null;
+let dbgMemberProfileUnsubscribe = null;
 /* dbgIndividualProfileClockTimer is declared in the main classic script. */
 
 function updateMemberPortalDateTime() {
@@ -7302,6 +7637,10 @@ if (outstanding > 0) {
                         <span class="text-xs text-gray-500 block">মোট জমা খরচ</span>
                         <span class="text-xl font-bold text-purple-700">৳${totalExpensePaid.toLocaleString()}</span>
                     </div>
+                    <div class="dbg-profit-card p-3 rounded-lg text-center border min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                        <span id="memberPortalTotalProfit" class="dbg-profit-value text-xl font-bold">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD')}</span>
+                    </div>
                     <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                         <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                         <span class="text-xl font-bold text-rose-700">৳${outstanding.toLocaleString()}</span>
@@ -7377,6 +7716,82 @@ if (outstanding > 0) {
             </div>
             </div>
         </div>`;
+}
+
+
+function buildMemberHasanaPanelHtml(member, memberDeposits) {
+    const totalDeposit = memberDeposits.reduce((sum,d)=>sum + Math.max(0, Number.parseFloat(d.amount || 0) || 0), 0);
+    const maxLoan = totalDeposit * 0.70;
+    const eligible = totalDeposit >= 30000;
+    return `
+      <div id="dbgMemberHasanaPanel" class="dbg-member-portal-panel dbg-hasana-card" data-member-panel="hasana">
+        <div class="dbg-profile-section-title">
+          <span class="dbg-profile-section-icon"><i data-lucide="hand-coins" class="w-4 h-4"></i></span>
+          <span>করজে হাসানা</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <div class="bg-white border border-violet-100 rounded-xl p-3"><span class="block text-xs text-gray-500">মোট জমা ডিপোজিট</span><strong id="memberHasanaTotalDeposit" class="block text-lg text-indigo-700">৳${totalDeposit.toLocaleString('bn-BD')}</strong></div>
+          <div class="bg-white border border-violet-100 rounded-xl p-3"><span class="block text-xs text-gray-500">সর্বোচ্চ আবেদন (৭০%)</span><strong id="memberHasanaMaxLoan" class="block text-lg text-violet-700">৳${maxLoan.toLocaleString('bn-BD',{maximumFractionDigits:2})}</strong></div>
+          <div class="bg-white border border-violet-100 rounded-xl p-3"><span class="block text-xs text-gray-500">যোগ্যতা</span><strong id="memberHasanaEligibility" class="block text-sm ${eligible?'text-emerald-700':'text-rose-700'}">${eligible?'আবেদন করা যাবে':'এখনো যোগ্য নন'}</strong></div>
+        </div>
+        <div id="dbgMemberHasanaMessage" class="dbg-hasana-alert ${eligible?'success':'locked'} mt-4">${eligible?'আপনি করজে হাসানার জন্য আবেদন করতে পারবেন।':'করজে হাসানার আবেদনের জন্য ন্যূনতম ৩০,০০০ টাকা জমা থাকতে হবে'}</div>
+        <form id="dbgMemberHasanaForm" class="mt-4 space-y-3 ${eligible?'':'opacity-70'}" onsubmit="submitMemberHasanaApplication(event)">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 mb-1">Requested Amount (৳)</label>
+            <input id="dbgMemberHasanaAmount" type="number" min="1" step="1" ${eligible?'':'disabled'} required class="w-full border border-violet-200 rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-violet-500" placeholder="যেমন: 10000">
+            <div id="dbgMemberHasanaLimitText" class="text-xs text-gray-500 mt-1">সর্বোচ্চ: ৳${maxLoan.toLocaleString('bn-BD',{maximumFractionDigits:2})}</div>
+            <div id="dbgMemberHasanaError" class="dbg-hasana-alert error mt-2 hidden"></div>
+          </div>
+          <button id="dbgMemberHasanaSubmit" type="submit" ${eligible?'':'disabled'} class="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> করজে হাসানা আবেদন করুন</button>
+        </form>
+        <div class="mt-6">
+          <h4 class="font-bold text-violet-900 border-b pb-2">আমার করজে হাসানা আবেদন</h4>
+          <div id="dbgMemberHasanaApplications" class="space-y-2 mt-3"><div class="text-sm text-gray-500">আবেদনের তথ্য লোড হচ্ছে...</div></div>
+        </div>
+      </div>`;
+}
+
+function renderMemberHasanaApplications(loans) {
+    const box = document.getElementById('dbgMemberHasanaApplications');
+    if (!box) return;
+    const list = Array.isArray(loans) ? loans.slice().sort((a,b)=>String(b.applicationDate||b.createdAt||'').localeCompare(String(a.applicationDate||a.createdAt||''))) : [];
+    if (!list.length) { box.innerHTML='<div class="text-sm text-gray-500 bg-slate-50 rounded-xl p-4">এখনো কোনো আবেদন করা হয়নি।</div>'; return; }
+    box.innerHTML = list.map(loan => `<div class="bg-white border border-violet-100 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2"><div><div class="text-xs text-gray-500">আবেদনের তারিখ: ${escapeHtml(formatDateDDMMYY(loan.applicationDate||loan.createdAt))}</div><div class="font-bold text-violet-800 mt-1">৳${Number(loan.requestedAmount||0).toLocaleString('bn-BD')}</div></div><div>${hasanaStatusHtml(loan.status)}</div></div>`).join('');
+    try{lucide.createIcons();}catch(_){ }
+}
+
+async function submitMemberHasanaApplication(event) {
+    event.preventDefault();
+    const member = window.dbgCurrentMemberPortal;
+    if (!member) return;
+    const amountEl = document.getElementById('dbgMemberHasanaAmount');
+    const errorEl = document.getElementById('dbgMemberHasanaError');
+    const totalDeposit = Number(window.dbgCurrentMemberTotalDeposit || 0);
+    const requested = Number.parseFloat(amountEl?.value || 0) || 0;
+    const maxLoan = totalDeposit * 0.70;
+    errorEl?.classList.add('hidden');
+    if (totalDeposit < 30000) {
+        if (errorEl) { errorEl.textContent='করজে হাসানার আবেদনের জন্য ন্যূনতম ৩০,০০০ টাকা জমা থাকতে হবে'; errorEl.classList.remove('hidden'); }
+        return;
+    }
+    if (requested <= 0) {
+        if (errorEl) { errorEl.textContent='অনুগ্রহ করে সঠিক Requested Amount দিন।'; errorEl.classList.remove('hidden'); }
+        return;
+    }
+    if (requested > maxLoan) {
+        if (errorEl) { errorEl.textContent='দুঃখিত, আপনি আপনার মোট জমার ৭০% এর বেশি করজে হাসানা আবেদন করতে পারবেন না!'; errorEl.classList.remove('hidden'); }
+        return;
+    }
+    const btn=document.getElementById('dbgMemberHasanaSubmit'); if(btn) btn.disabled=true;
+    try {
+        if (typeof window.dbgSubmitHasanaLoan !== 'function') throw new Error('Firebase Hasana module প্রস্তুত হয়নি।');
+        await window.dbgSubmitHasanaLoan({memberCode:String(member.code||'').toUpperCase(),memberName:member.name||member.nameEn||'',totalDeposit,requestedAmount:requested});
+        if (amountEl) amountEl.value='';
+        const msg=document.getElementById('dbgMemberHasanaMessage');
+        if (msg) { msg.className='dbg-hasana-alert success mt-4'; msg.textContent='আপনার করজে হাসানা আবেদন সফলভাবে জমা হয়েছে। স্ট্যাটাস: পেন্ডিং (Pending)'; }
+    } catch(e) {
+        if (errorEl) { errorEl.textContent=e?.message || 'আবেদন জমা দেওয়া যায়নি।'; errorEl.classList.remove('hidden'); }
+    } finally { if(btn) btn.disabled=false; }
 }
 
 function printMemberPortalProfile() {
@@ -7479,7 +7894,9 @@ async function loadMemberPortalData(user) {
             console.warn('DBG Notice Board read unavailable for Member:', noticeError?.code || noticeError?.message || noticeError);
         }
 
-        content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
+        window.dbgCurrentMemberPortal = member;
+        window.dbgCurrentMemberTotalDeposit = deposits.reduce((sum,d)=>sum + Math.max(0, Number.parseFloat(d.amount || 0) || 0), 0);
+        content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits) + buildMemberHasanaPanelHtml(member,deposits);
         startMemberPortalClock();
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
@@ -7500,6 +7917,31 @@ async function loadMemberPortalData(user) {
                 try{lucide.createIcons();}catch(_){}
             });
         });
+
+        // Real-time Member Profile + Hasana listeners. The current project stores ERP data in
+        // Firebase Realtime Database, so onValue() is the equivalent realtime listener here.
+        if (dbgMemberProfileUnsubscribe) { try { dbgMemberProfileUnsubscribe(); } catch (_) {} }
+        if (dbgMemberHasanaUnsubscribe) { try { dbgMemberHasanaUnsubscribe(); } catch (_) {} }
+        const membersRef = ref(firebaseDB, 'dbg_erp/members');
+        dbgMemberProfileUnsubscribe = onValue(membersRef, snap => {
+            const raw = snap.exists() ? snap.val() : [];
+            const list = Array.isArray(raw) ? raw.filter(Boolean) : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
+            const liveMember = list.find(m => String(m?.code || '').trim().toUpperCase() === memberId);
+            if (!liveMember) return;
+            window.dbgCurrentMemberPortal = liveMember;
+            const profitEl = document.getElementById('memberPortalTotalProfit');
+            if (profitEl) profitEl.innerText = '৳' + Number(liveMember.totalProfitReceived || 0).toLocaleString('bn-BD');
+            const adminProfitEl = document.getElementById('memberTotalProfit');
+            if (adminProfitEl && document.getElementById('profileSelect')?.value === memberId) adminProfitEl.innerText = '৳' + Number(liveMember.totalProfitReceived || 0).toLocaleString('bn-BD');
+            const hasanaDeposit = Number(window.dbgCurrentMemberTotalDeposit || 0);
+            const maxLoanEl = document.getElementById('memberHasanaMaxLoan');
+            if (maxLoanEl) maxLoanEl.innerText = '৳' + (hasanaDeposit * 0.70).toLocaleString('bn-BD',{maximumFractionDigits:2});
+        }, error => console.warn('DBG member realtime listener:', error));
+        dbgMemberHasanaUnsubscribe = onValue(query(ref(firebaseDB,'dbg_erp/hasanaLoans'),orderByChild('memberCode'),equalTo(memberId)), snap => {
+            const raw = snap.exists() ? snap.val() : {};
+            const loans = Array.isArray(raw) ? raw.filter(Boolean) : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
+            renderMemberHasanaApplications(loans);
+        }, error => console.warn('DBG member Hasana realtime listener:', error));
 
         try{lucide.createIcons();}catch(_){ }
         renderMemberIdQr(member);
