@@ -2296,7 +2296,7 @@
                             </select>
                         </div>
                         <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-700 transition">
-                            ইনভেস্টমেন্ট সেভ করুন
+                            ইনভেস্টমেন্ট সেট করুন
                         </button>
                     </form>
                 </div>
@@ -2412,7 +2412,11 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">বছর</label>
-                            <select id="cashBookYear" onchange="renderAccounts()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></select>
+                            <input id="cashBookYear" type="text" inputmode="numeric" autocomplete="off" list="cashBookYearList"
+                                   placeholder="যে কোনো বছর / খালি = সকল বছর"
+                                   onchange="renderAccounts()" oninput="renderAccounts()"
+                                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <datalist id="cashBookYearList"></datalist>
                         </div>
                         <div class="dbg-cashbook-summary-card dbg-cashbook-summary-income">
                             <span class="block text-xs text-gray-500">মোট আয়</span>
@@ -4525,7 +4529,7 @@ function changeDepPage(direction) {
 
             try {
                 // Existing project UI is preserved; only the profit distribution is added.
-                if (status === 'চলমান' && profit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
+                if (profit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
                     await window.dbgDistributeInvestmentProfit(profit, investment.id);
                     investment.profitDistributed = true;
                     investment.distributedAt = new Date().toISOString();
@@ -4893,7 +4897,8 @@ function changeDepPage(direction) {
 
         function getFilteredCashBookAccounts() {
             const month = document.getElementById('cashBookMonth')?.value || 'ALL';
-            const year = document.getElementById('cashBookYear')?.value || 'ALL';
+            const rawYear = String(document.getElementById('cashBookYear')?.value || '').trim();
+            const year = /^\d{4}$/.test(rawYear) ? rawYear : 'ALL';
             return db.accounts.filter(a => {
                 const raw = String(a.date || '');
                 const m = raw.match(/^(\d{4})-(\d{2})/);
@@ -4940,22 +4945,26 @@ function changeDepPage(direction) {
         }
 
         function populateCashBookYearDropdown() {
-            const select = document.getElementById('cashBookYear');
-            if (!select) return;
-            const current = select.value || String(new Date().getFullYear());
-            const years = new Set([String(new Date().getFullYear())]);
+            const input = document.getElementById('cashBookYear');
+            const list = document.getElementById('cashBookYearList');
+            if (!input || !list) return;
+            const current = String(input.value || '').trim();
+            const years = new Set();
             db.accounts.forEach(a => {
                 const m = String(a.date || '').match(/^(\d{4})-/);
                 if (m) years.add(m[1]);
             });
-            select.innerHTML = '<option value="ALL">সকল বছর</option>' + [...years].sort((a,b)=>Number(b)-Number(a)).map(y=>`<option value="${y}">${y}</option>`).join('');
-            select.value = [...years].has(current) ? current : String(new Date().getFullYear());
+            const nowYear = new Date().getFullYear();
+            years.add(String(nowYear));
+            list.innerHTML = [...years].sort((a,b)=>Number(b)-Number(a)).map(y=>`<option value="${y}"></option>`).join('');
+            if (current && /^\d{4}$/.test(current)) input.value = current;
         }
 
         function printCashBookReport() {
             const list = getFilteredCashBookAccounts();
             const month = document.getElementById('cashBookMonth')?.value || 'ALL';
-            const year = document.getElementById('cashBookYear')?.value || 'ALL';
+            const rawYear = String(document.getElementById('cashBookYear')?.value || '').trim();
+            const year = /^\d{4}$/.test(rawYear) ? rawYear : 'ALL';
             const monthNames = {ALL:'সকল মাস','01':'জানুয়ারি','02':'ফেব্রুয়ারি','03':'মার্চ','04':'এপ্রিল','05':'মে','06':'জুন','07':'জুলাই','08':'আগস্ট','09':'সেপ্টেম্বর','10':'অক্টোবর','11':'নভেম্বর','12':'ডিসেম্বর'};
             const totals = updateCashBookSummary(list);
             const root = document.createElement('div');
@@ -4964,10 +4973,20 @@ function changeDepPage(direction) {
                 const expense = a.type === 'EXPENSE';
                 return `<tr><td>${i+1}</td><td>${escapeHtml(formatDateDDMMYY(a.date))}</td><td>${expense?'ব্যয়/খরচ':'অন্যান্য আয়'}</td><td>${escapeHtml(a.title||'')}</td><td style="text-align:right">${expense?'-':'+'}৳${Number(a.amount||0).toLocaleString('bn-BD')}</td></tr>`;
             }).join('') || '<tr><td colspan="5" style="text-align:center">এই সময়ের কোনো লেনদেন নেই।</td></tr>';
-            root.innerHTML = `<div class="dbg-cashbook-print-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p></div><div class="dbg-cashbook-print-title">আয় ও ব্যয় ক্যাশ বই</div><div class="dbg-cashbook-print-meta">সময়কাল: ${monthNames[month] || month}${year !== 'ALL' ? ' ' + year : ''}</div><div class="dbg-cashbook-print-totals"><div class="dbg-cashbook-print-total">মোট আয়: ৳${totals.income.toLocaleString('bn-BD')}</div><div class="dbg-cashbook-print-total">মোট ব্যয়: ৳${totals.expense.toLocaleString('bn-BD')}</div></div><table><thead><tr><th>ক্রমিক</th><th>তারিখ</th><th>ধরন</th><th>বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>${rows}</tbody></table>`;
+            root.innerHTML = `<div class="dbg-cashbook-print-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>ক্ষুদ্র সঞ্চয়ে গড়ি স্বপ্নের ভবিষ্যৎ</p></div><div class="dbg-cashbook-print-title">আয় ও ব্যয় ক্যাশ বই</div><div class="dbg-cashbook-print-meta">সময়কাল: ${monthNames[month] || month}${year !== 'ALL' ? ' ' + year : ' সকল বছর'}</div><div class="dbg-cashbook-print-totals"><div class="dbg-cashbook-print-total">মোট আয়: ৳${totals.income.toLocaleString('bn-BD')}</div><div class="dbg-cashbook-print-total">মোট ব্যয়: ৳${totals.expense.toLocaleString('bn-BD')}</div></div><table><thead><tr><th>ক্রমিক</th><th>তারিখ</th><th>ধরন</th><th>বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>${rows}</tbody></table>`;
             document.body.appendChild(root);
             document.body.classList.add('dbg-cashbook-printing');
-            setTimeout(()=>{ window.print(); setTimeout(()=>{ document.body.classList.remove('dbg-cashbook-printing'); root.remove(); },350); },50);
+            let cleaned = false;
+            const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                window.removeEventListener('afterprint', cleanup);
+                document.body.classList.remove('dbg-cashbook-printing');
+                root.remove();
+            };
+            window.addEventListener('afterprint', cleanup, {once:true});
+            window.print();
+            setTimeout(cleanup, 3000);
         }
 
         function showAccountVoucher(id) {
@@ -5938,43 +5957,37 @@ async function applyFirebasePayload(payload) {
     if (!payload || typeof payload !== 'object') return;
     dbgFirebaseApplyingRemote = true;
     try {
-        if (typeof payload.logo === 'string') db.logo = payload.logo;
-        if (Array.isArray(payload.members)) {
-            db.members = payload.members;
-            if (memberStorageReady) await replaceAllMembersInIDB(db.members);
-        }
-        // Firebase deposits may be stored as an Array (legacy data) or as an
-        // object keyed by push IDs (new transaction-safe writes). Normalize both.
-        if (Array.isArray(payload.deposits)) db.deposits = payload.deposits.filter(Boolean);
-        else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
-        if (Array.isArray(payload.investments)) db.investments = payload.investments;
-        if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
-        // Firebase push() stores accounts as an object keyed by push IDs.
-        // Normalize both legacy arrays and push-keyed objects so Admin Dashboard
-        // receives Accountant income/expense entries without changing any data.
-        if (Array.isArray(payload.accounts)) db.accounts = payload.accounts.filter(Boolean);
-        else if (payload.accounts && typeof payload.accounts === 'object') db.accounts = Object.values(payload.accounts).filter(Boolean);
-        if (Array.isArray(payload.hasanaLoans)) db.hasanaLoans = payload.hasanaLoans.filter(Boolean);
-        else if (payload.hasanaLoans && typeof payload.hasanaLoans === 'object') db.hasanaLoans = Object.values(payload.hasanaLoans).filter(Boolean);
-        if (Array.isArray(payload.notices)) db.notices = payload.notices;
-        localStorage.setItem(LOCAL_KEYS.hasanaLoans, JSON.stringify(db.hasanaLoans || []));
-        renderAdminNotices();
-
-        // Update the local offline cache without triggering another Firebase write.
-        if (db.logo) localStorage.setItem(LOCAL_KEYS.logo, db.logo);
-        else localStorage.removeItem(LOCAL_KEYS.logo);
+        const normalizeList = value => {
+            if (Array.isArray(value)) return value.filter(Boolean);
+            if (value && typeof value === 'object') return Object.values(value).filter(Boolean);
+            return [];
+        };
+        const preserveIfRemoteEmpty = (remoteValue, localValue) => {
+            const remoteList = normalizeList(remoteValue);
+            const localList = normalizeList(localValue);
+            return remoteList.length ? remoteList : localList;
+        };
+        if (typeof payload.logo === 'string' && payload.logo) db.logo = payload.logo;
+        db.members = preserveIfRemoteEmpty(payload.members, db.members);
+        db.deposits = preserveIfRemoteEmpty(payload.deposits, db.deposits);
+        db.investments = preserveIfRemoteEmpty(payload.investments, db.investments);
+        db.investorProfiles = preserveIfRemoteEmpty(payload.investorProfiles, db.investorProfiles);
+        db.accounts = preserveIfRemoteEmpty(payload.accounts, db.accounts);
+        db.hasanaLoans = preserveIfRemoteEmpty(payload.hasanaLoans, db.hasanaLoans);
+        db.notices = preserveIfRemoteEmpty(payload.notices, db.notices);
+        if (memberStorageReady && db.members.length) await replaceAllMembersInIDB(db.members);
         localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
         localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
         localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
         localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
-        if (db.logo) {
-            const logoEl = document.getElementById('groupLogoImg');
-            if (logoEl) logoEl.src = db.logo;
-        }
+        localStorage.setItem(LOCAL_KEYS.hasanaLoans, JSON.stringify(db.hasanaLoans || []));
+        localStorage.setItem(LOCAL_KEYS.notices, JSON.stringify(db.notices || []));
+        if (db.logo) localStorage.setItem(LOCAL_KEYS.logo, db.logo); else localStorage.removeItem(LOCAL_KEYS.logo);
+        const logoEl = document.getElementById('groupLogoImg');
+        if (logoEl && db.logo) logoEl.src = db.logo;
+        renderAdminNotices();
         renderAll();
-    } finally {
-        dbgFirebaseApplyingRemote = false;
-    }
+    } finally { dbgFirebaseApplyingRemote = false; }
 }
 
 async function initializeFirebaseERPData(role) {
@@ -5983,213 +5996,42 @@ async function initializeFirebaseERPData(role) {
     dbgFirebaseSyncReady = false;
     window.dbgFirebaseSyncReady = false;
     dbgFirebaseInitError = null;
-
     try {
-        if (!memberStorageReady && typeof initMemberStorage === 'function') {
-            await initMemberStorage();
-        }
-
-        if (!(isAccountantRole(normalizedRole) || isAdminRole(normalizedRole))) {
-            throw new Error('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
-        }
-
-        /*
-         * IMPORTANT:
-         * Admin can read the complete /dbg_erp tree.
-         * Accountant must NOT read /dbg_erp as a whole because the Firebase
-         * Rules intentionally restrict Accountant access to child branches.
-         * Therefore Accountant uses separate realtime listeners for members,
-         * deposits and accounts.
-         */
+        if (!memberStorageReady && typeof initMemberStorage === 'function') await initMemberStorage();
+        if (!(isAccountantRole(normalizedRole) || isAdminRole(normalizedRole))) throw new Error('এই User-এর কোনো অনুমোদিত ERP Role পাওয়া যায়নি।');
+        const asList = value => Array.isArray(value) ? value.filter(Boolean) : (value && typeof value === 'object' ? Object.values(value).filter(Boolean) : []);
         if (isAccountantRole(normalizedRole)) {
-            const memberRef = ref(firebaseDB, 'dbg_erp/members');
-            const depositRef = ref(firebaseDB, 'dbg_erp/deposits');
-            const accountRef = ref(firebaseDB, 'dbg_erp/accounts');
-
-            // Firebase may return either an Array or an object with numeric keys.
-            // Always normalize both forms so one malformed/legacy branch cannot
-            // prevent Deposit Collection from becoming ready.
-            const asList = value => {
-                if (Array.isArray(value)) return value.filter(Boolean);
-                if (value && typeof value === 'object') return Object.values(value).filter(Boolean);
-                return [];
-            };
-
-            const attach = (dbRef, key) => onValue(dbRef, snapshot => {
-                if (dbgFirebaseWriteInProgress) return;
-                const value = asList(snapshot.exists() ? snapshot.val() : []);
-                if (key === 'members') {
-                    db.members = value;
-                    if (memberStorageReady) replaceAllMembersInIDB(db.members).catch(() => {});
-                } else if (key === 'deposits') {
-                    db.deposits = value;
-                } else if (key === 'accounts') {
-                    db.accounts = value;
-                }
-                saveLocalData();
-                renderAll();
-            }, error => {
-                // An Accountant does not need the accounts branch in order to
-                // record a deposit. A denied/optional branch must NOT block the
-                // Deposit Collection Firebase connection.
-                console.error(`DBG Accountant realtime listener failed (${key}):`, error);
-                if (key === 'deposits') {
-                    setAuthStatus(`Firebase deposits সংযোগে সমস্যা: ${error?.code || error?.message || 'unknown error'}`);
-                }
-            });
-
-            // Attach each branch independently. Do not let /accounts permission
-            // errors stop /deposits from working.
-            dbgFirebaseAccountantUnsubs.push(
-                attach(memberRef, 'members'),
-                attach(depositRef, 'deposits'),
-                attach(accountRef, 'accounts')
-            );
-
-            // Read branches independently. Promise.all() previously meant that
-            // ONE denied branch could reject the whole Accountant initialization,
-            // leaving dbgFirebaseSyncReady=false and blocking every deposit save.
-            const results = await Promise.allSettled([
-                get(memberRef),
-                get(depositRef),
-                get(accountRef)
-            ]);
-
-            const ms = results[0];
-            const ds = results[1];
-            const as = results[2];
-
-            if (ms.status === 'fulfilled' && ms.value.exists()) db.members = asList(ms.value.val());
-            if (ds.status === 'fulfilled' && ds.value.exists()) db.deposits = asList(ds.value.val());
-            if (as.status === 'fulfilled' && as.value.exists()) db.accounts = asList(as.value.val());
-
-            if (memberStorageReady) await replaceAllMembersInIDB(db.members);
-            saveLocalData();
-            renderAll();
-
-            // Deposit Collection is the critical Accountant function. Mark the
-            // Firebase module ready after the independent branch setup completes.
-            // A denied optional branch must not produce the old "connection not
-            // ready" error on deposit entry.
-            dbgFirebaseSyncReady = true;
-            window.dbgFirebaseSyncReady = true;
-            setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Accountant Deposit ready');
-
-            // Do NOT flush a queued whole-collection sync for Accountant here.
-            // Accountant is restricted to child-path writes, and flushing a stale
-            // local deposits array could overwrite a newer cloud deposit.
-            dbgFirebasePendingSync = false;
-            clearTimeout(dbgFirebaseSyncTimer);
-            return true;
+            const memberRef=ref(firebaseDB,'dbg_erp/members'), depositRef=ref(firebaseDB,'dbg_erp/deposits'), accountRef=ref(firebaseDB,'dbg_erp/accounts');
+            const attach=(dbRef,key)=>onValue(dbRef,snapshot=>{
+                if(dbgFirebaseWriteInProgress)return;
+                const v=asList(snapshot.exists()?snapshot.val():[]);
+                if(v.length || !Array.isArray(db[key]) || !db[key].length) db[key]=v;
+                if(key==='members' && memberStorageReady && db.members.length) replaceAllMembersInIDB(db.members).catch(()=>{});
+                saveLocalData(); renderAll();
+            },error=>console.error(`DBG Accountant realtime listener failed (${key}):`,error));
+            dbgFirebaseAccountantUnsubs.push(attach(memberRef,'members'),attach(depositRef,'deposits'),attach(accountRef,'accounts'));
+            const results=await Promise.allSettled([get(memberRef),get(depositRef),get(accountRef)]);
+            const [ms,ds,as]=results;
+            if(ms.status==='fulfilled'&&ms.value.exists()){const v=asList(ms.value.val());if(v.length||!db.members.length)db.members=v;}
+            if(ds.status==='fulfilled'&&ds.value.exists()){const v=asList(ds.value.val());if(v.length||!db.deposits.length)db.deposits=v;}
+            if(as.status==='fulfilled'&&as.value.exists()){const v=asList(as.value.val());if(v.length||!db.accounts.length)db.accounts=v;}
+            if(memberStorageReady&&db.members.length)await replaceAllMembersInIDB(db.members);
+            saveLocalData();renderAll();dbgFirebaseSyncReady=true;window.dbgFirebaseSyncReady=true;setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Accountant ready');dbgFirebasePendingSync=false;clearTimeout(dbgFirebaseSyncTimer);return true;
         }
-
-        // ================= ADMIN: FULL ERP TREE + DEDICATED DEPOSIT LISTENER =================
-        const dataRef = ref(firebaseDB, 'dbg_erp');
-
-        // Keep the full ERP listener for members/accounts/settings, but also
-        // listen directly to /deposits. This guarantees that an Accountant's
-        // push() is reflected in the Admin panel immediately, even when the
-        // parent snapshot is delayed or another local sync is in progress.
-        dbgFirebaseUnsubscribe = onValue(dataRef, async snapshot => {
-            if (!snapshot.exists()) return;
-            try {
-                const payload = snapshot.val() || {};
-                // Apply the complete payload, including deposits. Firebase now stores
-                // Accountant deposits under push keys, and applyFirebasePayload() normalizes
-                // both the legacy array format and push-keyed object format. Keeping deposits
-                // in this realtime path ensures the Admin dashboard is refreshed immediately.
-                await applyFirebasePayload(payload);
-            } catch (e) {
-                console.error('DBG Firebase parent payload apply failed:', e);
-            }
-        }, error => {
-            console.error('DBG Firebase realtime listener failed:', error);
-            setAuthStatus(`Firebase Realtime Database সংযোগে সমস্যা হয়েছে: ${error?.code || error?.message || 'unknown error'}`);
-        });
-
-        const adminDepositRef = ref(firebaseDB, 'dbg_erp/deposits');
-        const adminDepositUnsub = onValue(adminDepositRef, snapshot => {
-            try {
-                const value = snapshot.exists() ? snapshot.val() : [];
-                if (Array.isArray(value)) {
-                    db.deposits = value.filter(Boolean);
-                } else if (value && typeof value === 'object') {
-                    db.deposits = Object.values(value).filter(Boolean);
-                } else {
-                    db.deposits = [];
-                }
-                localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
-                renderAll();
-            } catch (e) {
-                console.error('DBG Admin deposit realtime update failed:', e);
-            }
-        }, error => {
-            console.error('DBG Admin deposit listener failed:', error);
-        });
-        dbgFirebaseAdminDepositUnsub = adminDepositUnsub;
-
-        const snap = await get(dataRef);
-        const remote = snap.exists() ? (snap.val() || {}) : {};
-
-        // Existing Admin browser data migration.
-        const localPayload = buildFirebasePayload();
-        const migrationUpdates = {};
-        const keys = ['logo','members','deposits','investments','investorProfiles','accounts','notices'];
-
-        keys.forEach(key => {
-            const remoteValue = remote[key];
-            const localValue = localPayload[key];
-            const remoteMissing = remoteValue === undefined || remoteValue === null;
-            const remoteEmptyArray = Array.isArray(remoteValue) && remoteValue.length === 0;
-            const localHasData = key === 'logo'
-                ? !!localValue
-                : Array.isArray(localValue) && localValue.length > 0;
-
-            if (localHasData && (remoteMissing || remoteEmptyArray)) {
-                migrationUpdates[`dbg_erp/${key}`] = localValue;
-            }
-        });
-
-        if (Object.keys(migrationUpdates).length) {
-            migrationUpdates['dbg_erp/updatedAt'] = Date.now();
-            dbgFirebaseWriteInProgress = true;
-            try {
-                await update(ref(firebaseDB), migrationUpdates);
-            } finally {
-                dbgFirebaseWriteInProgress = false;
-            }
-        } else if (!snap.exists()) {
-            dbgFirebaseWriteInProgress = true;
-            try {
-                await set(dataRef, localPayload);
-            } finally {
-                dbgFirebaseWriteInProgress = false;
-            }
-        }
-
-        const latestSnap = await get(dataRef);
-        if (latestSnap.exists()) {
-            await applyFirebasePayload(latestSnap.val(), { accountantOnly: false });
-        }
-
-        dbgFirebaseSyncReady = true;
-        window.dbgFirebaseSyncReady = true;
-        setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Cloud data loaded');
-
-        if (dbgFirebasePendingSync) {
-            dbgFirebasePendingSync = false;
-            try { window.dbgSyncToFirebase(); } catch (_) {}
-        }
+        const dataRef=ref(firebaseDB,'dbg_erp');
+        const snap=await get(dataRef); const remote=snap.exists()?(snap.val()||{}):{}; const localPayload=buildFirebasePayload(); const migrationUpdates={};
+        const keys=['logo','members','deposits','investments','investorProfiles','accounts','hasanaLoans','notices'];
+        keys.forEach(key=>{const rv=remote[key],lv=localPayload[key];const rl=key==='logo'?(rv?[rv]:[]):asList(rv);const ll=key==='logo'?(lv?[lv]:[]):asList(lv);if(rl.length===0&&ll.length>0)migrationUpdates[`dbg_erp/${key}`]=lv;});
+        if(Object.keys(migrationUpdates).length){dbgFirebaseWriteInProgress=true;try{migrationUpdates['dbg_erp/updatedAt']=Date.now();await update(ref(firebaseDB),migrationUpdates);}finally{dbgFirebaseWriteInProgress=false;}}
+        else if(!snap.exists()){dbgFirebaseWriteInProgress=true;try{await set(dataRef,localPayload);}finally{dbgFirebaseWriteInProgress=false;}}
+        const latest=await get(dataRef); if(latest.exists())await applyFirebasePayload(latest.val());
+        dbgFirebaseUnsubscribe=onValue(dataRef,async snapshot=>{if(!snapshot.exists())return;try{await applyFirebasePayload(snapshot.val());}catch(e){console.error('DBG Firebase parent payload apply failed:',e);}},error=>{console.error('DBG Firebase realtime listener failed:',error);setAuthStatus(`Firebase Realtime Database সংযোগে সমস্যা হয়েছে: ${error?.code||error?.message||'unknown error'}`);});
+        const adminDepositRef=ref(firebaseDB,'dbg_erp/deposits');
+        dbgFirebaseAdminDepositUnsub=onValue(adminDepositRef,snapshot=>{if(dbgFirebaseWriteInProgress)return;const v=asList(snapshot.exists()?snapshot.val():[]);if(v.length||!db.deposits.length)db.deposits=v;localStorage.setItem(LOCAL_KEYS.deposits,JSON.stringify(db.deposits));renderAll();},error=>console.error('DBG Admin deposit listener failed:',error));
+        dbgFirebaseSyncReady=true;window.dbgFirebaseSyncReady=true;setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Cloud data loaded');
+        if(dbgFirebasePendingSync){dbgFirebasePendingSync=false;try{window.dbgSyncToFirebase();}catch(_){} }
         return true;
-    } catch (e) {
-        dbgFirebaseSyncReady = false;
-        window.dbgFirebaseSyncReady = false;
-        dbgFirebaseInitError = e;
-        console.error('DBG Firebase ERP initialization failed:', e);
-        console.error('DBG Firebase ERP error details:', e?.code || '', e?.message || e);
-        setAuthStatus(`Firebase Database সংযোগ/ডাটা Sync ব্যর্থ: ${e?.code || e?.message || 'unknown error'}`);
-        return false;
-    }
+    }catch(e){dbgFirebaseSyncReady=false;window.dbgFirebaseSyncReady=false;dbgFirebaseInitError=e;console.error('DBG Firebase ERP initialization failed:',e);setAuthStatus(`Firebase Database সংযোগ/ডাটা Sync ব্যর্থ: ${e?.code||e?.message||'unknown error'}`);return false;}
 }
 
 /* ================= MEMBER PORTAL ================= */
