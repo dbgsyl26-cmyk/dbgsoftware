@@ -4691,12 +4691,12 @@ function changeDepPage(direction) {
                                     <button type="button" onclick="dbgAddProfitToInvestment(${inv.id})" class="text-purple-700 hover:text-purple-900 font-semibold text-xs whitespace-nowrap" title="লভ্যাংশ যোগ করুন">
                                         + লভ্যাংশ যোগ করুন
                                     </button>
-                                    <button type="button" onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
+                                    <button type="button" onclick="deleteInvestment(${JSON.stringify(String(inv.id))})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             ` : `
-                                <button type="button" onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
+                                <button type="button" onclick="deleteInvestment(${JSON.stringify(String(inv.id))})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             `}
