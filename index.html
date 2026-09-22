@@ -4489,9 +4489,6 @@ function changeDepPage(direction) {
                     // write this investment back to the old RTDB collection.
                     const savedInvestment = await window.dbgCreateInvestmentProject(investment);
 
-                    // Use the Firestore-generated document id locally as well.
-                    // This prevents the temporary Date.now() id from remaining
-                    // in the UI cache after a new project is created.
                     db.investments.push(savedInvestment);
                     try {
                         localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
@@ -4743,7 +4740,7 @@ function changeDepPage(direction) {
                 } catch (_) {}
 
                 renderAll();
-                alert('ইনভেস্টমেন্ট প্রজেক্ট, সংশ্লিষ্ট লভ্যাংশ ইতিহাস এবং সদস্যদের প্রোফাইলের বিতরণকৃত লাভ সফলভাবে রোলব্যাক করে ডিলিট হয়েছে।');
+                alert('ইনভেস্টমেন্ট প্রজেক্টটি Firestore থেকে স্থায়ীভাবে ডিলিট হয়েছে।');
             } catch (error) {
                 console.error('DBG investment delete failed:', error);
                 alert('ইনভেস্টমেন্ট প্রজেক্ট ডিলিট করা যায়নি।\n\n' + (error?.message || error));
@@ -5583,10 +5580,6 @@ window.dbgCreateInvestmentProject = async function (investment) {
     }
     await window.dbgInitializeInvestmentFirestore();
 
-    // CRITICAL BUG-1 FIX:
-    // Never use a fixed/application-generated document id for a NEW project.
-    // Firestore addDoc() creates a genuinely unique document id, so saving a
-    // second project can never overwrite the previous project.
     const payload = dbgInvestmentSafeCopy({
         title: String(investment.title || ''),
         category: String(investment.category || ''),
@@ -5599,10 +5592,6 @@ window.dbgCreateInvestmentProject = async function (investment) {
     });
 
     const newProjectRef = await addDoc(collection(firebaseFirestore, 'investments'), payload);
-
-    // The generated Firestore id becomes the application's stable project id.
-    // This keeps the existing UI/delete/dividend code working without changing
-    // any other ERP module.
     return { ...payload, id: newProjectRef.id };
 };
 
@@ -5655,15 +5644,8 @@ window.dbgDeleteInvestmentFirestore = async function (investmentId) {
     const projectId = String(investmentId);
     const investmentRef = doc(firebaseFirestore, 'investments', projectId);
     const investmentSnap = await getDoc(investmentRef);
-    if (!investmentSnap.exists()) {
-        throw new Error('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি Firestore-এ পাওয়া যায়নি।');
-    }
+    if (!investmentSnap.exists()) throw new Error('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি Firestore-এ পাওয়া যায়নি।');
 
-    // CRITICAL BUG-3 FIX:
-    // Before deleting the project, find every profit-history record belonging
-    // to this exact project and reverse the exact historical member shares.
-    // The existing history deletion function uses an idempotency ledger, so a
-    // retry after a network interruption cannot subtract a member twice.
     const historySnap = await getDocs(collection(firebaseFirestore, 'profit_distributions'));
     const projectHistories = historySnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
@@ -5673,12 +5655,8 @@ window.dbgDeleteInvestmentFirestore = async function (investmentId) {
         await window.dbgRollbackProfitDistributionHistory(history);
     }
 
-    // Delete the exact Firestore project only after all linked distributions
-    // have been reversed successfully.
     await deleteDoc(investmentRef);
 
-    // If this was the last investment project, there can be no valid project
-    // profit left in the system. Clear any stale/legacy member profit residue.
     const remainingProjects = await getDocs(collection(firebaseFirestore, 'investments'));
     if (remainingProjects.empty) {
         const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
@@ -5686,23 +5664,17 @@ window.dbgDeleteInvestmentFirestore = async function (investmentId) {
         const entries = Array.isArray(rawMembers)
             ? rawMembers.map((member, index) => [String(index), member])
             : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
-
         const resetUpdates = {};
         entries.forEach(([key, member]) => {
-            if (!member || typeof member !== 'object') return;
-            resetUpdates[`dbg_erp/members/${key}/totalProfitReceived`] = 0;
+            if (member && typeof member === 'object') {
+                resetUpdates[`dbg_erp/members/${key}/totalProfitReceived`] = 0;
+            }
         });
-        if (Object.keys(resetUpdates).length) {
-            await update(ref(firebaseDB), resetUpdates);
-        }
-
+        if (Object.keys(resetUpdates).length) await update(ref(firebaseDB), resetUpdates);
         if (Array.isArray(db?.members)) {
-            db.members.forEach(member => {
-                if (member && typeof member === 'object') member.totalProfitReceived = 0;
-            });
+            db.members.forEach(member => { if (member && typeof member === 'object') member.totalProfitReceived = 0; });
         }
     }
-
     return true;
 };
 
@@ -5876,14 +5848,8 @@ window.dbgSaveProfitDistributionHistory = async function ({ projectId, projectNa
     });
     return result.id;
 };
-// ==========================================================
-// PROFIT HISTORY ROLLBACK HELPER
-// Reverses one exact history record without requiring UI confirmation.
-// Used by both History Delete and Project Delete.
-// ==========================================================
 window.dbgRollbackProfitDistributionHistory = async function (history) {
     if (!history || !history.id) return false;
-
     const historyId = String(history.id);
     const memberShares = history.memberShares || {};
     const projectId = String(history.projectId || '');
@@ -5892,114 +5858,76 @@ window.dbgRollbackProfitDistributionHistory = async function (history) {
 
     const ledgerRef = ref(firebaseDB, `dbg_erp/profitReversalLedger/${historyId}`);
     const ledgerSnap = await get(ledgerRef);
-    const ledger = ledgerSnap.exists() && ledgerSnap.val() && typeof ledgerSnap.val() === 'object'
-        ? ledgerSnap.val()
-        : {};
-
+    const ledger = ledgerSnap.exists() && ledgerSnap.val() && typeof ledgerSnap.val() === 'object' ? ledgerSnap.val() : {};
     const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
     const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
-    const memberEntries = Array.isArray(rawMembers)
+    const entries = Array.isArray(rawMembers)
         ? rawMembers.map((member, index) => [String(index), member])
         : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
-
     const byMemberId = new Map();
-    memberEntries.forEach(([key, member]) => {
-        if (!member || typeof member !== 'object') return;
-        byMemberId.set(String(member.code || member.id || key), key);
+    entries.forEach(([key, member]) => {
+        if (member && typeof member === 'object') byMemberId.set(String(member.code || member.id || key), key);
     });
 
     const updates = {};
-    const missingMembers = [];
-    Object.entries(memberShares).forEach(([memberId, shareAmount]) => {
-        const amount = Number(shareAmount || 0);
-        if (!Number.isFinite(amount) || amount === 0) return;
-        if (ledger[String(memberId)] === true) return;
-
+    const missing = [];
+    Object.entries(memberShares).forEach(([memberId, share]) => {
+        const amount = Number(share || 0);
+        if (!Number.isFinite(amount) || amount === 0 || ledger[String(memberId)] === true) return;
         const key = byMemberId.get(String(memberId));
-        if (!key) {
-            missingMembers.push(String(memberId));
-            return;
-        }
-
+        if (!key) { missing.push(String(memberId)); return; }
         updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(-amount);
         updates[`dbg_erp/profitReversalLedger/${historyId}/${String(memberId)}`] = true;
     });
+    if (missing.length) throw new Error('রিভার্স করার জন্য কিছু সদস্য পাওয়া যায়নি: ' + missing.join(', '));
+    if (Object.keys(updates).length) await update(ref(firebaseDB), updates);
 
-    if (missingMembers.length) {
-        throw new Error('রিভার্স করার জন্য কিছু সদস্য পাওয়া যায়নি: ' + missingMembers.join(', '));
-    }
-    if (Object.keys(updates).length) {
-        await update(ref(firebaseDB), updates);
-    }
-
-    // Remove this exact profit entry from the project's monthly history and
-    // reduce its accumulated profit, but only when the project still exists.
     if (projectId) {
         const investmentRef = doc(firebaseFirestore, 'investments', projectId);
         await runTransaction(firebaseFirestore, async transaction => {
-            const investmentSnap = await transaction.get(investmentRef);
-            if (!investmentSnap.exists()) return;
-
-            const investment = investmentSnap.data() || {};
-            const reversalMap = investment.profitHistoryReversals &&
-                typeof investment.profitHistoryReversals === 'object'
-                ? investment.profitHistoryReversals
-                : {};
+            const snap = await transaction.get(investmentRef);
+            if (!snap.exists()) return;
+            const investment = snap.data() || {};
+            const reversalMap = investment.profitHistoryReversals && typeof investment.profitHistoryReversals === 'object' ? investment.profitHistoryReversals : {};
             if (reversalMap[historyId] === true) return;
-
-            let monthlyProfits = Array.isArray(investment.monthlyProfits)
-                ? investment.monthlyProfits.map(item => ({ ...item }))
-                : [];
-
+            let monthlyProfits = Array.isArray(investment.monthlyProfits) ? investment.monthlyProfits.map(x => ({...x})) : [];
             if (profitEntryId) {
-                monthlyProfits = monthlyProfits.filter(
-                    entry => String(entry?.id || '') !== profitEntryId
-                );
+                monthlyProfits = monthlyProfits.filter(entry => String(entry?.id || '') !== profitEntryId);
             } else {
                 let removed = false;
                 monthlyProfits = monthlyProfits.filter(entry => {
                     if (removed) return true;
                     const sameAmount = Math.abs(Number(entry?.amount || 0) - totalAmount) < 0.000001;
                     const sameDate = !history.date || String(entry?.date || '') === String(history.date);
-                    if (sameAmount && sameDate) {
-                        removed = true;
-                        return false;
-                    }
+                    if (sameAmount && sameDate) { removed = true; return false; }
                     return true;
                 });
             }
-
             transaction.update(investmentRef, {
                 profit: Math.max(0, Number(investment.profit || 0) - totalAmount),
                 monthlyProfits,
-                profitHistoryReversals: { ...reversalMap, [historyId]: true },
+                profitHistoryReversals: {...reversalMap, [historyId]: true},
                 updatedAt: Date.now()
             });
         });
     }
 
-    // Keep local member cache consistent without invoking the normal ERP save.
     if (Array.isArray(db?.members)) {
         Object.entries(memberShares).forEach(([memberId, amount]) => {
-            const localMember = db.members.find(member =>
-                String(member.code || member.id || '') === String(memberId)
-            );
-            if (localMember) {
-                localMember.totalProfitReceived = Math.max(0,
-                    Number(localMember.totalProfitReceived || 0) - Number(amount || 0)
-                );
-            }
+            const member = db.members.find(m => String(m.code || m.id || '') === String(memberId));
+            if (member) member.totalProfitReceived = Math.max(0, Number(member.totalProfitReceived || 0) - Number(amount || 0));
         });
     }
-
-    // Delete the history only after the member/project rollback succeeds.
     await deleteDoc(doc(firebaseFirestore, 'profit_distributions', historyId));
     return true;
 };
 
 window.dbgDeleteProfitDistributionHistoryDocument = async function (historyId) {
     if (!historyId) return false;
-    await deleteDoc(doc(firebaseFirestore, 'profit_distributions', String(historyId)));
+    const historyRef = doc(firebaseFirestore, 'profit_distributions', String(historyId));
+    const historySnap = await getDoc(historyRef);
+    if (!historySnap.exists()) return false;
+    await window.dbgRollbackProfitDistributionHistory({ id: String(historyId), ...historySnap.data() });
     return true;
 };
 window.dbgReverseProfitDistributionMembers = async function (memberShares) {
@@ -6033,27 +5961,17 @@ window.dbgReverseProfitDistributionMembers = async function (memberShares) {
 window.dbgDeleteProfitDistribution = async function (historyId) {
     if (!historyId) return;
     if (!confirm('আপনি কি নিশ্চিতভাবে এই লভ্যাংশ বণ্টনটি ডিলিট করতে চান? এর ফলে সদস্যদের প্রোফাইল থেকে টাকা স্বয়ংক্রিয়ভাবে মাইনাস হয়ে যাবে!')) return;
-
     try {
         const historyRef = doc(firebaseFirestore, 'profit_distributions', String(historyId));
         const historySnap = await getDoc(historyRef);
-        if (!historySnap.exists()) {
-            throw new Error('লভ্যাংশের ইতিহাস রেকর্ডটি পাওয়া যায়নি।');
-        }
-
-        await window.dbgRollbackProfitDistributionHistory({
-            id: String(historyId),
-            ...historySnap.data()
-        });
-
-        try {
-            localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments || []));
-        } catch (_) {}
+        if (!historySnap.exists()) throw new Error('লভ্যাংশের ইতিহাস রেকর্ডটি পাওয়া যায়নি।');
+        await window.dbgRollbackProfitDistributionHistory({ id: String(historyId), ...historySnap.data() });
+        try { localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments || [])); } catch (_) {}
         renderAll();
         alert('লভ্যাংশের ইতিহাস ডিলিট হয়েছে এবং সদস্যদের প্রোফাইলে সংশ্লিষ্ট লাভ সম্পূর্ণ রোলব্যাক হয়েছে।');
     } catch (error) {
         console.error('DBG profit distribution delete failed:', error);
-        alert('লভ্যাংশের ইতিহাস ডিলিট করা যায়নি।\n\n' + (error?.message || error));
+        alert('লভ্যাংশের ইতিহাস ডিলিট করা যায়নি.\n\n' + (error?.message || error));
     }
 };
 
