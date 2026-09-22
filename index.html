@@ -43,67 +43,6 @@
     
         .dbg-print-company-header { display: none; }
 
-        /* ================= PROFIT HISTORY A4 PRINT ================= */
-        @media print {
-            body.dbg-profit-history-printing {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-                color: #111827 !important;
-            }
-            body.dbg-profit-history-printing > * { display: none !important; }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header {
-                display: block !important;
-                text-align: center !important;
-                margin: 0 0 16px 0 !important;
-                padding: 0 0 10px 0 !important;
-                border-bottom: 2px solid #111827 !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header h1 {
-                margin: 0 !important;
-                font-size: 23px !important;
-                line-height: 1.25 !important;
-                font-weight: 800 !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header p {
-                margin: 4px 0 0 !important;
-                font-size: 15px !important;
-                font-weight: 600 !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root table {
-                width: 100% !important;
-                max-width: 100% !important;
-                table-layout: fixed !important;
-                border-collapse: collapse !important;
-                margin: 0 !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root th,
-            body.dbg-profit-history-printing #dbg-profit-history-print-root td {
-                border: 1px solid #9ca3af !important;
-                padding: 8px 9px !important;
-                font-size: 12px !important;
-                vertical-align: middle !important;
-                word-break: break-word !important;
-                overflow-wrap: anywhere !important;
-            }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(1),
-            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(1) { width: 34% !important; }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(2),
-            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(2) { width: 22% !important; }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(3),
-            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(3) { width: 20% !important; }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(4),
-            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(4) { width: 24% !important; }
-            body.dbg-profit-history-printing #dbg-profit-history-print-root .no-print { display: none !important; }
-            @page { size: A4 portrait; margin: 12mm; }
-        }
-
         /* ================= FIREBASE AUTHENTICATION GATE ================= */
         body.dbg-logged-out > *:not(#dbg-auth-overlay) {
             visibility: hidden !important;
@@ -2338,7 +2277,7 @@
                                         <th class="p-2.5 text-right">মূলধন (৳)</th>
                                         <th class="p-2.5 text-right">লভ্যাংশ (৳)</th>
                                         <th class="p-2.5">স্ট্যাটাস</th>
-                                        <th class="p-2.5 text-center no-print">অ্যাকশন</th>
+                                        <th class="p-2.5 text-center no-print">ডিলিট</th>
                                     </tr>
                                 </thead>
                                 <tbody id="investmentsTableBody" class="divide-y divide-gray-100"></tbody>
@@ -2371,37 +2310,6 @@
                                 <span class="text-[11px] text-gray-300 block">৪ ডিপোজিটধারী:</span>
                                 <span class="font-bold text-base text-pink-300">৳<span id="calc4UnitProfit">0.00</span></span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- ================= PROFIT DISTRIBUTION HISTORY ================= -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100" id="dbgProfitHistoryCard">
-                        <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-2">
-                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                                <span class="text-lg">📊</span> লভ্যাংশ বিতরণের ইতিহাস (Profit History Book)
-                            </h3>
-                            <div class="flex items-center gap-2 no-print">
-                                <button type="button" onclick="dbgPrintProfitHistory()" class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" title="ইতিহাস প্রিন্ট করুন">
-                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> ইতিহাস প্রিন্ট করুন
-                                </button>
-                                <span id="dbgProfitHistoryStatus" class="text-[11px] text-gray-400">রিয়েল-টাইম</span>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
-                                    <tr>
-                                        <th class="p-2.5">প্রজেক্টের নাম</th>
-                                        <th class="p-2.5 text-right">লভ্যাংশের পরিমাণ (৳)</th>
-                                        <th class="p-2.5">বণ্টনের তারিখ</th>
-                                        <th class="p-2.5">বিবরণ/মাস</th>
-                                        <th class="p-2.5 text-center no-print">অ্যাকশন</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dbgProfitHistoryTableBody" class="divide-y divide-gray-100">
-                                    <tr><td colspan="5" class="p-6 text-center text-sm text-gray-400">হিস্ট্রি লোড হচ্ছে...</td></tr>
-                                </tbody>
-                            </table>
                         </div>
                     </div>
                 </div>
@@ -3481,10 +3389,6 @@ function changeMemPage(direction) {
                                 <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                                 <span class="text-xl font-bold text-rose-700">৳${dbgGetMemberCumulativeArrears(member, new Date().toISOString().slice(0, 7)).toLocaleString()}</span>
                             </div>
-                            <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
-                                <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
-                                <span id="memberTotalProfit" class="text-xl font-bold text-purple-700">৳${parseFloat(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
                         </div>
                     </div>
 
@@ -4427,248 +4331,19 @@ function changeDepPage(direction) {
         }
 
         // INVESTMENTS LOGIC
-        // Additive state: null = new project, otherwise an existing project
-        // is being given a monthly dividend entry.
-        let dbgInvestmentProfitMode = null;
-
-        window.dbgAddProfitToInvestment = function (investmentId) {
-            const inv = db.investments.find(item => String(item.id) === String(investmentId));
-            if (!inv) return;
-
-            dbgInvestmentProfitMode = { id: inv.id };
-            document.getElementById('invTitle').value = inv.title || '';
-            document.getElementById('invCategory').value = inv.category || '';
-            document.getElementById('invAmount').value = Number(inv.amount || 0);
-            document.getElementById('invProfit').value = '';
-            document.getElementById('invDate').value = new Date().toISOString().slice(0, 10);
-            document.getElementById('invStatus').value = inv.status || 'চলমান';
-
-            const profitInput = document.getElementById('invProfit');
-            profitInput?.focus();
-            profitInput?.select();
-        };
-
-        async function saveInvestment(e) {
-            const dbgProfitHistoryMonth = new Date().toLocaleString('bn-BD', { month: 'long', year: 'numeric' });
+        function saveInvestment(e) {
             e.preventDefault();
-
-            const earnedProfit = parseFloat(document.getElementById('invProfit').value || 0);
-            const investmentDate = document.getElementById('invDate').value;
-            const isDividendEntry = !!dbgInvestmentProfitMode;
-
-            // ==========================================================
-            // MODE 1: NEW INVESTMENT PROJECT
-            // Zero/blank profit is mandatory here. No member distribution
-            // and no Profit History record is created.
-            // ==========================================================
-            if (!isDividendEntry) {
-                if (earnedProfit > 0) {
-                    alert('নতুন প্রজেক্ট তৈরি করার সময় অর্জিত লভ্যাংশ ০ বা ফাঁকা রাখুন। লভ্যাংশ দিতে ডানপাশের “+ লভ্যাংশ যোগ করুন” ব্যবহার করুন।');
-                    document.getElementById('invProfit')?.focus();
-                    return;
-                }
-
-                const investment = {
-                    id: Date.now(),
-                    title: document.getElementById('invTitle').value,
-                    category: document.getElementById('invCategory').value,
-                    amount: parseFloat(document.getElementById('invAmount').value),
-                    profit: 0,
-                    date: investmentDate,
-                    status: document.getElementById('invStatus').value,
-                    monthlyProfits: [],
-                    createdAt: Date.now()
-                };
-
-                try {
-                    if (typeof window.dbgCreateInvestmentProject !== 'function') {
-                        throw new Error('Investment Firestore module পাওয়া যায়নি।');
-                    }
-
-                    // Cloud-first: do not call saveData(), because that would
-                    // write this investment back to the old RTDB collection.
-                    const savedInvestment = await window.dbgCreateInvestmentProject(investment);
-
-                    db.investments.push(savedInvestment);
-                    try {
-                        localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
-                    } catch (_) {}
-                    renderAll();
-
-                    dbgInvestmentProfitMode = null;
-                    document.getElementById('investForm').reset();
-                    alert('ইনভেস্টমেন্ট প্রজেক্ট সফলভাবে Firestore-এর investments collection-এ সংরক্ষণ হয়েছে।');
-                } catch (error) {
-                    console.error('DBG new investment save failed:', error);
-                    alert('ইনভেস্টমেন্ট প্রজেক্ট সেভ করা যায়নি।\n\n' + (error?.message || error));
-                }
-                return;
-            }
-
-            // ==========================================================
-            // MODE 2: MONTHLY DIVIDEND ENTRY
-            // This mode is reachable only through “+ লভ্যাংশ যোগ করুন”.
-            // ==========================================================
-            let targetInvestment = db.investments.find(
-                item => String(item.id) === String(dbgInvestmentProfitMode.id)
-            );
-
-            if (!targetInvestment) {
-                alert('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি পাওয়া যায়নি।');
-                dbgInvestmentProfitMode = null;
-                return;
-            }
-
-            if (targetInvestment.status !== 'চলমান') {
-                alert('শুধুমাত্র চলমান (Active) প্রজেক্টে লভ্যাংশ যোগ করা যাবে।');
-                dbgInvestmentProfitMode = null;
-                return;
-            }
-
-            if (!(earnedProfit > 0)) {
-                alert('লভ্যাংশের পরিমাণ ০-এর বেশি হতে হবে।');
-                document.getElementById('invProfit')?.focus();
-                return;
-            }
-
-            const projectId = String(targetInvestment.id);
-            const projectName = String(targetInvestment.title || '');
-            const profitEntryId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-            let profitDistributionResult = null;
-            let historyId = null;
-            let projectProfitUpdated = false;
-
-            try {
-                // 1) Credit each member using Firebase increment().
-                if (typeof window.dbgDistributeInvestmentProfit !== 'function') {
-                    throw new Error('লভ্যাংশ বণ্টন ফাংশন পাওয়া যায়নি।');
-                }
-
-                profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
-
-                if (!profitDistributionResult?.memberShares ||
-                    typeof window.dbgSaveProfitDistributionHistory !== 'function') {
-                    throw new Error('লভ্যাংশের ইতিহাস সংরক্ষণ ফাংশন পাওয়া যায়নি।');
-                }
-
-                // 2) Save the exact memberShares snapshot in Firestore history.
-                historyId = await window.dbgSaveProfitDistributionHistory({
-                    projectId,
-                    projectName,
-                    totalDistributedAmount: earnedProfit,
-                    date: investmentDate,
-                    month: dbgProfitHistoryMonth,
-                    memberShares: profitDistributionResult.memberShares,
-                    profitEntryId
-                });
-
-                // 3) Only after member credit + history save succeed, update the
-                // Firestore investment project itself.
-                if (typeof window.dbgAddInvestmentProfitFirestore !== 'function') {
-                    throw new Error('Investment Firestore update function পাওয়া যায়নি।');
-                }
-
-                const projectResult = await window.dbgAddInvestmentProfitFirestore(
-                    projectId,
-                    earnedProfit,
-                    investmentDate,
-                    profitEntryId
-                );
-                projectProfitUpdated = true;
-
-                // All cloud operations succeeded. Update the local cache only;
-                // NEVER push the investment back into the old RTDB collection.
-                targetInvestment.profit = Number(projectResult.newProfit || 0);
-                targetInvestment.monthlyProfits = Array.isArray(projectResult.monthlyProfits)
-                    ? projectResult.monthlyProfits
-                    : [...(targetInvestment.monthlyProfits || []), {
-                        id: profitEntryId,
-                        amount: earnedProfit,
-                        date: investmentDate,
-                        createdAt: Date.now()
-                    }];
-
-                try {
-                    localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
-                } catch (_) {}
-                renderAll();
-
-                const r = profitDistributionResult;
-                const fmt = value => Number(value || 0).toLocaleString('bn-BD', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                document.getElementById('calcTotalProfit')?.replaceChildren(
-                    document.createTextNode(Number(r.totalProfit || 0).toLocaleString('bn-BD'))
-                );
-                document.getElementById('calcProfitPerUnit')?.replaceChildren(
-                    document.createTextNode(fmt(r.perDeposit))
-                );
-                document.getElementById('calc2UnitProfit')?.replaceChildren(
-                    document.createTextNode(fmt(r.perDeposit * 2))
-                );
-                document.getElementById('calc3UnitProfit')?.replaceChildren(
-                    document.createTextNode(fmt(r.perDeposit * 3))
-                );
-                document.getElementById('calc4UnitProfit')?.replaceChildren(
-                    document.createTextNode(fmt(r.perDeposit * 4))
-                );
-
-                dbgInvestmentProfitMode = null;
-                document.getElementById('investForm').reset();
-                alert('লভ্যাংশ সফলভাবে সদস্যদের মধ্যে বণ্টন, Profit History Book এবং Investment Firestore-এ সংরক্ষণ হয়েছে।');
-            } catch (error) {
-                console.error('DBG profit distribution/history/investment failed:', error);
-
-                // If a history document was created, remove it.
-                try {
-                    if (historyId && typeof window.dbgDeleteProfitDistributionHistoryDocument === 'function') {
-                        await window.dbgDeleteProfitDistributionHistoryDocument(historyId);
-                    }
-                } catch (cleanupHistoryError) {
-                    console.error('DBG profit history cleanup failed:', cleanupHistoryError);
-                }
-
-                // Reverse exactly the amounts credited to each member.
-                try {
-                    if (profitDistributionResult?.memberShares &&
-                        typeof window.dbgReverseProfitDistributionMembers === 'function') {
-                        await window.dbgReverseProfitDistributionMembers(profitDistributionResult.memberShares);
-                    }
-                } catch (rollbackError) {
-                    console.error('DBG member profit rollback failed:', rollbackError);
-                }
-
-                // Normally the project update is the final cloud operation, so a
-                // failure occurs before projectProfitUpdated becomes true. Keep a
-                // defensive rollback for any future change to the sequence.
-                if (projectProfitUpdated) {
-                    try {
-                        const investmentRef = doc(firebaseFirestore, 'investments', projectId);
-                        await runTransaction(firebaseFirestore, async transaction => {
-                            const snap = await transaction.get(investmentRef);
-                            if (!snap.exists()) return;
-                            const current = snap.data() || {};
-                            const currentEntries = Array.isArray(current.monthlyProfits)
-                                ? current.monthlyProfits : [];
-                            const filtered = currentEntries.filter(
-                                entry => String(entry?.id || '') !== String(profitEntryId)
-                            );
-                            transaction.update(investmentRef, {
-                                profit: Math.max(0, Number(current.profit || 0) - earnedProfit),
-                                monthlyProfits: filtered,
-                                updatedAt: Date.now()
-                            });
-                        });
-                    } catch (projectRollbackError) {
-                        console.error('DBG investment project rollback failed:', projectRollbackError);
-                    }
-                }
-
-                alert('লভ্যাংশ সেভ করা যায়নি। সদস্যদের টাকা ও Investment/History ডাটা আগের অবস্থায় ফিরিয়ে আনার চেষ্টা করা হয়েছে।\n\n' + (error?.message || error));
-                return;
-            }
+            db.investments.push({
+                id: Date.now(),
+                title: document.getElementById('invTitle').value,
+                category: document.getElementById('invCategory').value,
+                amount: parseFloat(document.getElementById('invAmount').value),
+                profit: parseFloat(document.getElementById('invProfit').value || 0),
+                date: document.getElementById('invDate').value,
+                status: document.getElementById('invStatus').value
+            });
+            saveData();
+            document.getElementById('investForm').reset();
         }
 
         function renderInvestments() {
@@ -4686,20 +4361,9 @@ function changeDepPage(direction) {
                         <td class="p-2.5 text-right font-bold text-emerald-600">৳${inv.profit || 0}</td>
                         <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}">${inv.status}</span></td>
                         <td class="p-2.5 text-center no-print">
-                            ${inv.status === 'চলমান' ? `
-                                <div class="flex items-center justify-center gap-2">
-                                    <button type="button" onclick="dbgAddProfitToInvestment(${inv.id})" class="text-purple-700 hover:text-purple-900 font-semibold text-xs whitespace-nowrap" title="লভ্যাংশ যোগ করুন">
-                                        + লভ্যাংশ যোগ করুন
-                                    </button>
-                                    <button type="button" onclick="deleteInvestment(${JSON.stringify(String(inv.id))})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            ` : `
-                                <button type="button" onclick="deleteInvestment(${JSON.stringify(String(inv.id))})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            `}
+                            <button onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -4716,34 +4380,10 @@ function changeDepPage(direction) {
             lucide.createIcons();
         }
 
-        async function deleteInvestment(id) {
-            if (!id) return;
-            if (!confirm("ইনভেস্টমেন্ট প্রজেক্টটি স্থায়ীভাবে মুছে ফেলতে চান? এটি Firebase Firestore-এর investments collection থেকেও ডিলিট হবে।")) {
-                return;
-            }
-
-            try {
-                if (typeof window.dbgDeleteInvestmentFirestore !== 'function') {
-                    throw new Error('Investment Firestore delete function পাওয়া যায়নি।');
-                }
-
-                // Critical: delete the exact Firestore document first.
-                await window.dbgDeleteInvestmentFirestore(id);
-
-                // Update only the local investment cache. Do NOT call saveData(),
-                // because the old saveData() writes investments to RTDB.
-                db.investments = db.investments.filter(
-                    investment => String(investment.id) !== String(id)
-                );
-                try {
-                    localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
-                } catch (_) {}
-
-                renderAll();
-                alert('ইনভেস্টমেন্ট প্রজেক্টটি Firestore থেকে স্থায়ীভাবে ডিলিট হয়েছে।');
-            } catch (error) {
-                console.error('DBG investment delete failed:', error);
-                alert('ইনভেস্টমেন্ট প্রজেক্ট ডিলিট করা যায়নি।\n\n' + (error?.message || error));
+        function deleteInvestment(id) {
+            if (confirm("ইনভেস্টমেন্ট প্রজেক্টটি মুছে ফেলতে চান?")) {
+                db.investments = db.investments.filter(i => i.id !== id);
+                saveData();
             }
         }
 
@@ -5442,18 +5082,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 import {
-    getFirestore,
-    collection,
-    addDoc,
-    onSnapshot,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    deleteDoc,
-    runTransaction
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
     getDatabase,
     ref,
     get,
@@ -5463,7 +5091,6 @@ import {
     set,
     update,
     push,
-    increment,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -5480,535 +5107,6 @@ const firebaseConfig = {
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
-const firebaseFirestore = getFirestore(firebaseApp);
-
-// ==========================================================
-// DBG INVESTMENT PORTFOLIO — FIRESTORE SOURCE OF TRUTH
-// Scoped ONLY to the Investment & Profit page.
-// Existing members/deposits/accounts/notices remain untouched.
-// ==========================================================
-let dbgInvestmentFirestoreUnsubscribe = null;
-let dbgInvestmentFirestoreInitPromise = null;
-const DBG_INVESTMENT_MIGRATION_KEY = 'dbg_investments_firestore_migrated_v1';
-
-function dbgInvestmentSafeCopy(value) {
-    try { return JSON.parse(JSON.stringify(value)); }
-    catch (_) { return value; }
-}
-
-window.dbgInitializeInvestmentFirestore = async function () {
-    if (dbgInvestmentFirestoreUnsubscribe) return true;
-    if (dbgInvestmentFirestoreInitPromise) return dbgInvestmentFirestoreInitPromise;
-
-    dbgInvestmentFirestoreInitPromise = (async () => {
-        const investmentCollection = collection(firebaseFirestore, 'investments');
-        const firstSnap = await getDocs(investmentCollection);
-        const migrationDone = localStorage.getItem(DBG_INVESTMENT_MIGRATION_KEY) === '1';
-
-        // One-time migration of the existing investment portfolio.
-        // After this marker is set, an intentionally empty Firestore collection
-        // will NEVER re-import a stale deleted project from the old local/RTDB cache.
-        if (!migrationDone) {
-            const localInvestments = Array.isArray(db?.investments) ? db.investments : [];
-
-            if (firstSnap.empty && localInvestments.length) {
-                for (const investment of localInvestments) {
-                    const id = String(investment.id || Date.now());
-                    await setDoc(
-                        doc(firebaseFirestore, 'investments', id),
-                        dbgInvestmentSafeCopy({ ...investment, id: investment.id ?? id })
-                    );
-                }
-            } else if (!firstSnap.empty && localInvestments.length) {
-                const cloudIds = new Set(firstSnap.docs.map(d => String(d.id)));
-                for (const investment of localInvestments) {
-                    const id = String(investment.id || '');
-                    if (id && !cloudIds.has(id)) {
-                        await setDoc(
-                            doc(firebaseFirestore, 'investments', id),
-                            dbgInvestmentSafeCopy({ ...investment, id: investment.id ?? id })
-                        );
-                    }
-                }
-            }
-
-            localStorage.setItem(DBG_INVESTMENT_MIGRATION_KEY, '1');
-        }
-
-        // Firestore is now the sole source of truth for the Investment portfolio.
-        dbgInvestmentFirestoreUnsubscribe = onSnapshot(
-            investmentCollection,
-            snap => {
-                const rows = snap.docs
-                    .map(d => {
-                        const data = d.data() || {};
-                        return { ...data, id: data.id ?? d.id };
-                    })
-                    .sort((a, b) => Number(b.createdAt || b.id || 0) - Number(a.createdAt || a.id || 0));
-
-                db.investments = rows;
-                try {
-                    localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(rows));
-                } catch (_) {}
-                try { renderAll(); } catch (_) {}
-            },
-            err => {
-                console.error('DBG Investment Firestore listener failed:', err);
-            }
-        );
-
-        return true;
-    })();
-
-    try {
-        return await dbgInvestmentFirestoreInitPromise;
-    } finally {
-        dbgInvestmentFirestoreInitPromise = null;
-    }
-};
-
-window.dbgStopInvestmentFirestoreListener = function () {
-    if (dbgInvestmentFirestoreUnsubscribe) {
-        try { dbgInvestmentFirestoreUnsubscribe(); } catch (_) {}
-        dbgInvestmentFirestoreUnsubscribe = null;
-    }
-};
-
-window.dbgCreateInvestmentProject = async function (investment) {
-    if (!investment || typeof investment !== 'object') {
-        throw new Error('অবৈধ ইনভেস্টমেন্ট প্রজেক্ট।');
-    }
-    await window.dbgInitializeInvestmentFirestore();
-
-    const payload = dbgInvestmentSafeCopy({
-        title: String(investment.title || ''),
-        category: String(investment.category || ''),
-        amount: Number(investment.amount || 0),
-        profit: 0,
-        date: String(investment.date || ''),
-        status: String(investment.status || 'চলমান'),
-        monthlyProfits: [],
-        createdAt: Number(investment.createdAt || Date.now())
-    });
-
-    const newProjectRef = await addDoc(collection(firebaseFirestore, 'investments'), payload);
-    return { ...payload, id: newProjectRef.id };
-};
-
-window.dbgAddInvestmentProfitFirestore = async function (investmentId, earnedProfit, investmentDate, profitEntryId) {
-    const amount = Number(earnedProfit || 0);
-    if (!(amount > 0)) throw new Error('লভ্যাংশের পরিমাণ ০-এর বেশি হতে হবে।');
-
-    await window.dbgInitializeInvestmentFirestore();
-
-    const investmentRef = doc(firebaseFirestore, 'investments', String(investmentId));
-    const entryId = String(profitEntryId || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
-
-    return await runTransaction(firebaseFirestore, async transaction => {
-        const snap = await transaction.get(investmentRef);
-        if (!snap.exists()) throw new Error('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি Firestore-এ পাওয়া যায়নি।');
-
-        const current = snap.data() || {};
-        const previousProfit = Number(current.profit || 0);
-        const monthlyProfits = Array.isArray(current.monthlyProfits)
-            ? current.monthlyProfits.map(item => ({ ...item }))
-            : [];
-
-        const entry = {
-            id: entryId,
-            amount,
-            date: String(investmentDate || ''),
-            createdAt: Date.now()
-        };
-
-        monthlyProfits.push(entry);
-        transaction.update(investmentRef, {
-            profit: previousProfit + amount,
-            monthlyProfits,
-            updatedAt: Date.now()
-        });
-
-        return {
-            previousProfit,
-            newProfit: previousProfit + amount,
-            monthlyProfits,
-            entry
-        };
-    });
-};
-
-window.dbgDeleteInvestmentFirestore = async function (investmentId) {
-    if (!investmentId) return false;
-    await window.dbgInitializeInvestmentFirestore();
-
-    const projectId = String(investmentId);
-    const investmentRef = doc(firebaseFirestore, 'investments', projectId);
-    const investmentSnap = await getDoc(investmentRef);
-    if (!investmentSnap.exists()) throw new Error('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি Firestore-এ পাওয়া যায়নি।');
-
-    const historySnap = await getDocs(collection(firebaseFirestore, 'profit_distributions'));
-    const projectHistories = historySnap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(h => String(h.projectId || '') === projectId);
-
-    for (const history of projectHistories) {
-        await window.dbgRollbackProfitDistributionHistory(history);
-    }
-
-    await deleteDoc(investmentRef);
-
-    const remainingProjects = await getDocs(collection(firebaseFirestore, 'investments'));
-    if (remainingProjects.empty) {
-        const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
-        const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
-        const entries = Array.isArray(rawMembers)
-            ? rawMembers.map((member, index) => [String(index), member])
-            : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
-        const resetUpdates = {};
-        entries.forEach(([key, member]) => {
-            if (member && typeof member === 'object') {
-                resetUpdates[`dbg_erp/members/${key}/totalProfitReceived`] = 0;
-            }
-        });
-        if (Object.keys(resetUpdates).length) await update(ref(firebaseDB), resetUpdates);
-        if (Array.isArray(db?.members)) {
-            db.members.forEach(member => { if (member && typeof member === 'object') member.totalProfitReceived = 0; });
-        }
-    }
-    return true;
-};
-
-// ==========================================================
-// DBG PROFIT DISTRIBUTION — additive feature only
-// Reads the current member collection from Firebase Realtime Database,
-// calculates the per-deposit share, updates the Profit Share UI, and
-// increments each active member's totalProfitReceived field.
-// ==========================================================
-window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
-    const totalProfit = Number(earnedProfit) || 0;
-    if (totalProfit <= 0) return { totalProfit: 0, totalDeposits: 0, perDeposit: 0 };
-
-    if (!firebaseDB) throw new Error('Firebase Realtime Database সংযোগ পাওয়া যায়নি।');
-
-    const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
-    if (!membersSnap.exists()) {
-        throw new Error('Firebase members collection-এ কোনো সদস্য পাওয়া যায়নি।');
-    }
-
-    const rawMembers = membersSnap.val();
-    const isActiveMember = member => {
-        const status = String(member?.status ?? member?.memberStatus ?? 'active').trim().toLowerCase();
-        return !['inactive', 'disabled', 'deactivated', 'বন্ধ', 'নিষ্ক্রিয়', 'নিষ্ক্রিয়'].includes(status);
-    };
-
-    const memberEntries = Array.isArray(rawMembers)
-        ? rawMembers.map((member, index) => [String(index), member]).filter(([, member]) => member && typeof member === 'object')
-        : (rawMembers && typeof rawMembers === 'object'
-            ? Object.entries(rawMembers).filter(([, member]) => member && typeof member === 'object')
-            : []);
-
-    const activeMembers = memberEntries.filter(([, member]) => isActiveMember(member));
-    const totalDeposits = activeMembers.reduce((sum, [, member]) => {
-        const depositCount = Number(member.depositCount ?? member.units ?? 0);
-        return sum + (Number.isFinite(depositCount) && depositCount > 0 ? depositCount : 0);
-    }, 0);
-
-    if (totalDeposits <= 0) {
-        throw new Error('সক্রিয় সদস্যদের মোট ডিপোজিট সংখ্যা ০।');
-    }
-
-    const perDeposit = totalProfit / totalDeposits;
-    const memberShares = {};
-
-    // Existing Profit Share cards — no existing UI/style is replaced.
-    const totalEl = document.getElementById('calcTotalProfit');
-    const perEl = document.getElementById('calcProfitPerUnit');
-    const twoEl = document.getElementById('calc2UnitProfit');
-    const threeEl = document.getElementById('calc3UnitProfit');
-    const fourEl = document.getElementById('calc4UnitProfit');
-    if (totalEl) totalEl.innerText = totalProfit.toLocaleString('bn-BD');
-    if (perEl) perEl.innerText = perDeposit.toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (twoEl) twoEl.innerText = (perDeposit * 2).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (threeEl) threeEl.innerText = (perDeposit * 3).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (fourEl) fourEl.innerText = (perDeposit * 4).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    // Increment, rather than overwrite, each member's accumulated profit.
-    const updates = {};
-    activeMembers.forEach(([key, member]) => {
-        const depositCount = Number(member.depositCount ?? member.units ?? 0);
-        if (!Number.isFinite(depositCount) || depositCount <= 0) return;
-        const memberProfit = perDeposit * depositCount;
-        const memberId = String(member.code || member.id || key);
-        memberShares[memberId] = Number(memberShares[memberId] || 0) + memberProfit;
-        updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(memberProfit);
-    });
-
-    if (Object.keys(updates).length) {
-        await update(ref(firebaseDB), updates);
-
-        // Keep the existing local member model aligned with the Firebase
-        // increment so the next normal save cannot overwrite the new profit.
-        if (Array.isArray(db?.members)) {
-            activeMembers.forEach(([key, member]) => {
-                const depositCount = Number(member.depositCount ?? member.units ?? 0);
-                if (!Number.isFinite(depositCount) || depositCount <= 0) return;
-                const memberProfit = perDeposit * depositCount;
-                const localMember = db.members.find(item => String(item.code || '') === String(member.code || ''));
-                if (localMember) {
-                    localMember.totalProfitReceived = Number(localMember.totalProfitReceived || 0) + memberProfit;
-                }
-            });
-        }
-    }
-
-    const selectedCode = String(document.getElementById('profileSelect')?.value || '');
-    const selectedMemberEntry = activeMembers.find(([, member]) => String(member.code || '') === selectedCode);
-    let selectedMemberProfit = null;
-    if (selectedMemberEntry) {
-        const selectedMember = selectedMemberEntry[1];
-        const selectedDepositCount = Number(selectedMember.depositCount ?? selectedMember.units ?? 0);
-        const existingProfit = Number(selectedMember.totalProfitReceived || 0) || 0;
-        selectedMemberProfit = existingProfit + (Number.isFinite(selectedDepositCount) && selectedDepositCount > 0 ? perDeposit * selectedDepositCount : 0);
-    }
-
-    return { totalProfit, totalDeposits, perDeposit, updatedMembers: Object.keys(updates).length, selectedMemberProfit, memberShares };
-};
-
-// ==========================================================
-// PROFIT HISTORY BOOK — Firestore additive module
-// Existing ERP/member/project storage remains on Realtime Database.
-// This module adds only the separate Firestore history collection.
-// ==========================================================
-let dbgProfitHistoryUnsubscribe = null;
-
-function dbgProfitHistoryMonth(dateValue) {
-    if (!dateValue) return '';
-    try { return new Date(`${dateValue}T00:00:00`).toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' }); }
-    catch (_) { return String(dateValue); }
-}
-function dbgProfitHistoryDate(dateValue) {
-    if (!dateValue) return '';
-    try { return new Date(`${dateValue}T00:00:00`).toLocaleDateString('bn-BD', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
-    catch (_) { return String(dateValue); }
-}
-function dbgRenderProfitHistory(rows = []) {
-    const tbody = document.getElementById('dbgProfitHistoryTableBody');
-    if (!tbody) return;
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-sm text-gray-400">এখনো কোনো লভ্যাংশ বিতরণের ইতিহাস নেই।</td></tr>';
-        return;
-    }
-    tbody.innerHTML = rows.map(item => `
-        <tr>
-            <td class="p-2.5 font-bold text-gray-800">${escapeHtml(item.projectName || 'প্রজেক্ট')}</td>
-            <td class="p-2.5 text-right font-bold text-purple-700">৳${Number(item.totalDistributedAmount || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="p-2.5 text-xs text-gray-500 font-mono">${escapeHtml(dbgProfitHistoryDate(item.date))}</td>
-            <td class="p-2.5 text-xs text-gray-600">${escapeHtml(item.month || dbgProfitHistoryMonth(item.date) || '')}</td>
-            <td class="p-2.5 text-center no-print">
-                <button type="button" onclick="dbgDeleteProfitDistribution('${escapeHtml(item.id)}')" class="inline-flex items-center gap-1 bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-bold" title="লভ্যাংশ বণ্টন ডিলিট">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> মুছে ফেলুন
-                </button>
-            </td>
-        </tr>`).join('');
-    try { lucide.createIcons(); } catch (_) {}
-}
-function dbgStartProfitHistoryListener() {
-    if (!firebaseFirestore || dbgProfitHistoryUnsubscribe) return;
-    const statusEl = document.getElementById('dbgProfitHistoryStatus');
-    try {
-        dbgProfitHistoryUnsubscribe = onSnapshot(collection(firebaseFirestore, 'profit_distributions'), snap => {
-            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                .sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')) || Number(b.createdAt || 0) - Number(a.createdAt || 0));
-            dbgRenderProfitHistory(rows);
-            if (statusEl) statusEl.textContent = 'রিয়েল-টাইম ✓';
-        }, err => {
-            console.error('DBG Profit History listener failed:', err);
-            if (statusEl) statusEl.textContent = 'সংযোগ পাওয়া যায়নি';
-        });
-    } catch (e) {
-        console.error('DBG Profit History listener init failed:', e);
-        if (statusEl) statusEl.textContent = 'সংযোগ পাওয়া যায়নি';
-    }
-}
-window.dbgSaveProfitDistributionHistory = async function ({ projectId, projectName, totalDistributedAmount, date, month, memberShares, profitEntryId }) {
-    const safeShares = {};
-    Object.entries(memberShares || {}).forEach(([memberId, amount]) => {
-        const value = Number(amount || 0);
-        if (Number.isFinite(value) && value !== 0) safeShares[String(memberId)] = value;
-    });
-    const result = await addDoc(collection(firebaseFirestore, 'profit_distributions'), {
-        projectId: String(projectId),
-        projectName: String(projectName || ''),
-        totalDistributedAmount: Number(totalDistributedAmount || 0),
-        date: String(date || ''),
-        month: String(month || dbgProfitHistoryMonth(date) || ''),
-        memberShares: safeShares,
-        profitEntryId: String(profitEntryId || ''),
-        createdAt: Date.now()
-    });
-    return result.id;
-};
-window.dbgRollbackProfitDistributionHistory = async function (history) {
-    if (!history || !history.id) return false;
-    const historyId = String(history.id);
-    const memberShares = history.memberShares || {};
-    const projectId = String(history.projectId || '');
-    const profitEntryId = String(history.profitEntryId || '');
-    const totalAmount = Number(history.totalDistributedAmount || 0);
-
-    const ledgerRef = ref(firebaseDB, `dbg_erp/profitReversalLedger/${historyId}`);
-    const ledgerSnap = await get(ledgerRef);
-    const ledger = ledgerSnap.exists() && ledgerSnap.val() && typeof ledgerSnap.val() === 'object' ? ledgerSnap.val() : {};
-    const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
-    const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
-    const entries = Array.isArray(rawMembers)
-        ? rawMembers.map((member, index) => [String(index), member])
-        : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
-    const byMemberId = new Map();
-    entries.forEach(([key, member]) => {
-        if (member && typeof member === 'object') byMemberId.set(String(member.code || member.id || key), key);
-    });
-
-    const updates = {};
-    const missing = [];
-    Object.entries(memberShares).forEach(([memberId, share]) => {
-        const amount = Number(share || 0);
-        if (!Number.isFinite(amount) || amount === 0 || ledger[String(memberId)] === true) return;
-        const key = byMemberId.get(String(memberId));
-        if (!key) { missing.push(String(memberId)); return; }
-        updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(-amount);
-        updates[`dbg_erp/profitReversalLedger/${historyId}/${String(memberId)}`] = true;
-    });
-    if (missing.length) throw new Error('রিভার্স করার জন্য কিছু সদস্য পাওয়া যায়নি: ' + missing.join(', '));
-    if (Object.keys(updates).length) await update(ref(firebaseDB), updates);
-
-    if (projectId) {
-        const investmentRef = doc(firebaseFirestore, 'investments', projectId);
-        await runTransaction(firebaseFirestore, async transaction => {
-            const snap = await transaction.get(investmentRef);
-            if (!snap.exists()) return;
-            const investment = snap.data() || {};
-            const reversalMap = investment.profitHistoryReversals && typeof investment.profitHistoryReversals === 'object' ? investment.profitHistoryReversals : {};
-            if (reversalMap[historyId] === true) return;
-            let monthlyProfits = Array.isArray(investment.monthlyProfits) ? investment.monthlyProfits.map(x => ({...x})) : [];
-            if (profitEntryId) {
-                monthlyProfits = monthlyProfits.filter(entry => String(entry?.id || '') !== profitEntryId);
-            } else {
-                let removed = false;
-                monthlyProfits = monthlyProfits.filter(entry => {
-                    if (removed) return true;
-                    const sameAmount = Math.abs(Number(entry?.amount || 0) - totalAmount) < 0.000001;
-                    const sameDate = !history.date || String(entry?.date || '') === String(history.date);
-                    if (sameAmount && sameDate) { removed = true; return false; }
-                    return true;
-                });
-            }
-            transaction.update(investmentRef, {
-                profit: Math.max(0, Number(investment.profit || 0) - totalAmount),
-                monthlyProfits,
-                profitHistoryReversals: {...reversalMap, [historyId]: true},
-                updatedAt: Date.now()
-            });
-        });
-    }
-
-    if (Array.isArray(db?.members)) {
-        Object.entries(memberShares).forEach(([memberId, amount]) => {
-            const member = db.members.find(m => String(m.code || m.id || '') === String(memberId));
-            if (member) member.totalProfitReceived = Math.max(0, Number(member.totalProfitReceived || 0) - Number(amount || 0));
-        });
-    }
-    await deleteDoc(doc(firebaseFirestore, 'profit_distributions', historyId));
-    return true;
-};
-
-window.dbgDeleteProfitDistributionHistoryDocument = async function (historyId) {
-    if (!historyId) return false;
-    const historyRef = doc(firebaseFirestore, 'profit_distributions', String(historyId));
-    const historySnap = await getDoc(historyRef);
-    if (!historySnap.exists()) return false;
-    await window.dbgRollbackProfitDistributionHistory({ id: String(historyId), ...historySnap.data() });
-    return true;
-};
-window.dbgReverseProfitDistributionMembers = async function (memberShares) {
-    const shares = memberShares || {};
-    const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
-    const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
-    const entries = Array.isArray(rawMembers)
-        ? rawMembers.map((member, index) => [String(index), member])
-        : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
-    const byMemberId = new Map();
-    entries.forEach(([key, member]) => {
-        if (!member || typeof member !== 'object') return;
-        byMemberId.set(String(member.code || member.id || key), key);
-    });
-    const updates = {};
-    Object.entries(shares).forEach(([memberId, amount]) => {
-        const key = byMemberId.get(String(memberId));
-        const value = Number(amount || 0);
-        if (!key || !Number.isFinite(value) || value === 0) return;
-        updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(-value);
-    });
-    if (Object.keys(updates).length) await update(ref(firebaseDB), updates);
-    if (Array.isArray(db?.members)) {
-        Object.entries(shares).forEach(([memberId, amount]) => {
-            const localMember = db.members.find(member => String(member.code || member.id || '') === String(memberId));
-            if (localMember) localMember.totalProfitReceived = Number(localMember.totalProfitReceived || 0) - Number(amount || 0);
-        });
-    }
-    return true;
-};
-window.dbgDeleteProfitDistribution = async function (historyId) {
-    if (!historyId) return;
-    if (!confirm('আপনি কি নিশ্চিতভাবে এই লভ্যাংশ বণ্টনটি ডিলিট করতে চান? এর ফলে সদস্যদের প্রোফাইল থেকে টাকা স্বয়ংক্রিয়ভাবে মাইনাস হয়ে যাবে!')) return;
-    try {
-        const historyRef = doc(firebaseFirestore, 'profit_distributions', String(historyId));
-        const historySnap = await getDoc(historyRef);
-        if (!historySnap.exists()) throw new Error('লভ্যাংশের ইতিহাস রেকর্ডটি পাওয়া যায়নি।');
-        await window.dbgRollbackProfitDistributionHistory({ id: String(historyId), ...historySnap.data() });
-        try { localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments || [])); } catch (_) {}
-        renderAll();
-        alert('লভ্যাংশের ইতিহাস ডিলিট হয়েছে এবং সদস্যদের প্রোফাইলে সংশ্লিষ্ট লাভ সম্পূর্ণ রোলব্যাক হয়েছে।');
-    } catch (error) {
-        console.error('DBG profit distribution delete failed:', error);
-        alert('লভ্যাংশের ইতিহাস ডিলিট করা যায়নি.\n\n' + (error?.message || error));
-    }
-};
-
-window.dbgPrintProfitHistory = function () {
-    const card = document.getElementById('dbgProfitHistoryCard');
-    if (!card) return;
-
-    const printRoot = document.createElement('div');
-    printRoot.id = 'dbg-profit-history-print-root';
-    printRoot.innerHTML = `
-        <div class="dbg-profit-history-print-header">
-            <h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1>
-            <p>লভ্যাংশ বিতরণের সম্পূর্ণ ইতিহাস রিপোর্ট</p>
-        </div>`;
-
-    const table = card.querySelector('table');
-    if (!table) return;
-    const tableClone = table.cloneNode(true);
-    tableClone.querySelectorAll('.no-print').forEach(el => el.remove());
-    printRoot.appendChild(tableClone);
-
-    document.body.appendChild(printRoot);
-    document.body.classList.add('dbg-profit-history-printing');
-    try { lucide.createIcons(); } catch (_) {}
-
-    const cleanup = () => {
-        document.body.classList.remove('dbg-profit-history-printing');
-        printRoot.remove();
-        window.removeEventListener('afterprint', cleanup);
-    };
-    window.addEventListener('afterprint', cleanup, { once: true });
-    window.print();
-    setTimeout(cleanup, 2500);
-};
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dbgStartProfitHistoryListener, { once: true });
-else dbgStartProfitHistoryListener();
-
 const firebaseFunctions = getFunctions(firebaseApp);
 const memberResetPasswordFunction = httpsCallable(firebaseFunctions, 'memberResetPassword');
 let dbgMemberRecoveryConfirmation = null;
@@ -6227,9 +5325,6 @@ function isAdminRole(role) {
 }
 
 function clearRealtimeListeners() {
-    if (typeof window.dbgStopInvestmentFirestoreListener === 'function') {
-        try { window.dbgStopInvestmentFirestoreListener(); } catch (_) {}
-    }
     if (dbgFirebaseAdminDepositUnsub) { try { dbgFirebaseAdminDepositUnsub(); } catch (_) {} dbgFirebaseAdminDepositUnsub = null; }
     if (dbgFirebaseUnsubscribe) {
         try { dbgFirebaseUnsubscribe(); } catch (_) {}
@@ -6745,16 +5840,6 @@ async function initializeFirebaseERPData(role) {
             await applyFirebasePayload(latestSnap.val(), { accountantOnly: false });
         }
 
-        // Investment portfolio is maintained separately in Firestore.
-        // A failure here must not block the rest of the ERP.
-        try {
-            if (typeof window.dbgInitializeInvestmentFirestore === 'function') {
-                await window.dbgInitializeInvestmentFirestore();
-            }
-        } catch (investmentError) {
-            console.error('DBG Investment Firestore initialization failed:', investmentError);
-        }
-
         dbgFirebaseSyncReady = true;
         window.dbgFirebaseSyncReady = true;
         setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Cloud data loaded');
@@ -7222,7 +6307,7 @@ function installMemberPortalStylesAndRoot() {
         .dbg-member-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
         .dbg-member-stat-card{min-width:0;display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:15px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 7px 20px rgba(15,23,42,.05)}
         .dbg-member-stat-icon{width:36px;height:36px;flex:0 0 36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px}.dbg-member-stat-card span{display:block;font-size:10px;color:#64748b;font-weight:700}.dbg-member-stat-card strong{display:block;font-size:16px;line-height:1.2;margin-top:3px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .stat-green .dbg-member-stat-icon{background:#dcfce7;color:#047857}.stat-indigo .dbg-member-stat-icon{background:#e0e7ff;color:#4338ca}.stat-amber .dbg-member-stat-icon{background:#fef3c7;color:#b45309}.stat-red .dbg-member-stat-icon{background:#fee2e2;color:#dc2626}.stat-teal .dbg-member-stat-icon{background:#ccfbf1;color:#0f766e}.stat-purple .dbg-member-stat-icon{background:#f3e8ff;color:#7e22ce}
+        .stat-green .dbg-member-stat-icon{background:#dcfce7;color:#047857}.stat-indigo .dbg-member-stat-icon{background:#e0e7ff;color:#4338ca}.stat-amber .dbg-member-stat-icon{background:#fef3c7;color:#b45309}.stat-red .dbg-member-stat-icon{background:#fee2e2;color:#dc2626}.stat-teal .dbg-member-stat-icon{background:#ccfbf1;color:#0f766e}
         .dbg-member-progress-card{padding:13px 15px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.dbg-member-progress-head{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#334155}.dbg-member-progress-head strong{color:#047857}.dbg-member-progress-track{height:9px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}.dbg-member-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#059669,#14b8a6,#f59e0b);transition:width .5s ease}.dbg-member-progress-foot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:9px;color:#94a3b8}
         @media(max-width:900px){.dbg-member-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:520px){.dbg-member-hero-strip{padding:12px;gap:10px}.dbg-member-hero-avatar{width:50px;height:50px;flex-basis:50px;border-radius:14px}.dbg-member-hero-name{font-size:17px}.dbg-member-hero-badge{padding:7px 8px;font-size:9px}.dbg-member-hero-badge small{font-size:8px}.dbg-member-stat-card{padding:11px 9px;gap:8px}.dbg-member-stat-icon{width:32px;height:32px;flex-basis:32px;font-size:15px}.dbg-member-stat-card span{font-size:9px}.dbg-member-stat-card strong{font-size:14px}.dbg-member-progress-card{padding:11px 12px}}
@@ -8176,7 +7261,6 @@ if (outstanding > 0) {
                 <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
                 <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
                 <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'মোট বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
-                <div class="dbg-member-stat-card stat-purple"><div class="dbg-member-stat-icon">৳</div><div><span>মোট লভ্যাংশ</span><strong id="dbgMemberPortalTotalProfitDashboard">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div></div>
             </div>
 
             <div class="dbg-member-progress-card">
@@ -8221,10 +7305,6 @@ if (outstanding > 0) {
                     <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                         <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                         <span class="text-xl font-bold text-rose-700">৳${outstanding.toLocaleString()}</span>
-                    </div>
-                    <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
-                        <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
-                        <span id="dbgMemberPortalTotalProfitProfile" class="text-xl font-bold text-purple-700">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
             </div>
@@ -8400,25 +7480,6 @@ async function loadMemberPortalData(user) {
         }
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
-
-        // Realtime dividend update: only the two dividend cards are refreshed,
-        // so the existing member dashboard/profile UI and data-processing logic stay unchanged.
-        try {
-            const profitLiveRef = query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(memberId));
-            onValue(profitLiveRef, snap => {
-                const liveMember = snap.exists() ? Object.values(snap.val())[0] : null;
-                if (!liveMember) return;
-                const liveProfit = Number(liveMember.totalProfitReceived || 0);
-                const liveText = `৳${liveProfit.toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                const dashboardProfit = document.getElementById('dbgMemberPortalTotalProfitDashboard');
-                const profileProfit = document.getElementById('dbgMemberPortalTotalProfitProfile');
-                if (dashboardProfit) dashboardProfit.textContent = liveText;
-                if (profileProfit) profileProfit.textContent = liveText;
-            });
-        } catch (profitLiveError) {
-            console.warn('DBG member dividend realtime listener unavailable:', profitLiveError);
-        }
-
         startMemberPortalClock();
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
