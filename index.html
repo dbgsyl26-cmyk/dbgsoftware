@@ -2277,7 +2277,7 @@
                                         <th class="p-2.5 text-right">মূলধন (৳)</th>
                                         <th class="p-2.5 text-right">লভ্যাংশ (৳)</th>
                                         <th class="p-2.5">স্ট্যাটাস</th>
-                                        <th class="p-2.5 text-center no-print">ডিলিট</th>
+                                        <th class="p-2.5 text-center no-print">অ্যাকশন</th>
                                     </tr>
                                 </thead>
                                 <tbody id="investmentsTableBody" class="divide-y divide-gray-100"></tbody>
@@ -3391,7 +3391,7 @@ function changeMemPage(direction) {
                             </div>
                             <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
                                 <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
-                                <span id="memberTotalProfit" class="text-xl font-bold text-purple-700">৳${parseFloat(member.totalProfitReceived || 0).toLocaleString('bn-BD')}</span>
+                                <span id="memberTotalProfit" class="text-xl font-bold text-purple-700">৳${parseFloat(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
@@ -4335,36 +4335,89 @@ function changeDepPage(direction) {
         }
 
         // INVESTMENTS LOGIC
+        // Additive state: null = new project, otherwise an existing project
+        // is being given a monthly dividend entry.
+        let dbgInvestmentProfitMode = null;
+
+        window.dbgAddProfitToInvestment = function (investmentId) {
+            const inv = db.investments.find(item => String(item.id) === String(investmentId));
+            if (!inv) return;
+
+            dbgInvestmentProfitMode = { id: inv.id };
+            document.getElementById('invTitle').value = inv.title || '';
+            document.getElementById('invCategory').value = inv.category || '';
+            document.getElementById('invAmount').value = Number(inv.amount || 0);
+            document.getElementById('invProfit').value = '';
+            document.getElementById('invDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('invStatus').value = inv.status || 'চলমান';
+
+            const profitInput = document.getElementById('invProfit');
+            profitInput?.focus();
+            profitInput?.select();
+        };
+
         async function saveInvestment(e) {
             e.preventDefault();
             const earnedProfit = parseFloat(document.getElementById('invProfit').value || 0);
-            db.investments.push({
-                id: Date.now(),
-                title: document.getElementById('invTitle').value,
-                category: document.getElementById('invCategory').value,
-                amount: parseFloat(document.getElementById('invAmount').value),
-                profit: earnedProfit,
-                date: document.getElementById('invDate').value,
-                status: document.getElementById('invStatus').value
-            });
+            const investmentDate = document.getElementById('invDate').value;
+            const isDividendEntry = !!dbgInvestmentProfitMode;
+            let targetInvestment = null;
 
-            // নতুন অর্জিত লভ্যাংশটি সক্রিয় সদস্যদের depositCount/units অনুযায়ী
-            // Firebase Realtime Database-এ totalProfitReceived-এ যোগ হবে।
+            if (isDividendEntry) {
+                targetInvestment = db.investments.find(item => String(item.id) === String(dbgInvestmentProfitMode.id));
+                if (!targetInvestment) {
+                    alert('নির্বাচিত ইনভেস্টমেন্ট প্রজেক্টটি পাওয়া যায়নি।');
+                    dbgInvestmentProfitMode = null;
+                    return;
+                }
+                if (targetInvestment.status !== 'চলমান') {
+                    alert('শুধুমাত্র চলমান (Active) প্রজেক্টে লভ্যাংশ যোগ করা যাবে।');
+                    dbgInvestmentProfitMode = null;
+                    return;
+                }
+                if (!(earnedProfit > 0)) {
+                    alert('লভ্যাংশের পরিমাণ ০-এর বেশি হতে হবে।');
+                    document.getElementById('invProfit')?.focus();
+                    return;
+                }
+
+                if (!Array.isArray(targetInvestment.monthlyProfits)) targetInvestment.monthlyProfits = [];
+                targetInvestment.monthlyProfits.push({
+                    id: Date.now(),
+                    amount: earnedProfit,
+                    date: investmentDate,
+                    createdAt: Date.now()
+                });
+                targetInvestment.profit = Number(targetInvestment.profit || 0) + earnedProfit;
+            } else {
+                // Creating a project does NOT distribute profit. Profit is
+                // recorded only through the "লভ্যাংশ যোগ করুন" action above.
+                db.investments.push({
+                    id: Date.now(),
+                    title: document.getElementById('invTitle').value,
+                    category: document.getElementById('invCategory').value,
+                    amount: parseFloat(document.getElementById('invAmount').value),
+                    profit: 0,
+                    date: investmentDate,
+                    status: document.getElementById('invStatus').value,
+                    monthlyProfits: []
+                });
+            }
+
+            // Save the project/monthly dividend history first. The actual member
+            // distribution is performed only for an explicit dividend entry.
+            saveData();
+
             let profitDistributionResult = null;
-            if (earnedProfit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
+            if (isDividendEntry && earnedProfit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
                 try {
                     profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
                 } catch (error) {
                     console.error('DBG profit distribution failed:', error);
-                    alert('ইনভেস্টমেন্ট সেভ হয়েছে, কিন্তু লভ্যাংশ বণ্টন করা যায়নি।\n\n' + (error?.message || error));
+                    alert('লভ্যাংশের হিস্ট্রি সেভ হয়েছে, কিন্তু সদস্যদের মধ্যে লভ্যাংশ বণ্টন করা যায়নি।\n\n' + (error?.message || error));
                 }
             }
 
-            saveData();
-
-            // renderAll() above refreshes the existing calculator from its old
-            // cumulative-project logic. Re-apply only this newly distributed
-            // project's share to the existing Profit Share cards.
             if (profitDistributionResult) {
                 const r = profitDistributionResult;
                 const fmt = value => Number(value || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -4373,12 +4426,9 @@ function changeDepPage(direction) {
                 document.getElementById('calc2UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 2)));
                 document.getElementById('calc3UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 3)));
                 document.getElementById('calc4UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 4)));
-                if (r.selectedMemberProfit != null) {
-                    const memberProfitCard = document.getElementById('memberTotalProfit');
-                    if (memberProfitCard) memberProfitCard.innerText = `৳${Number(r.selectedMemberProfit).toLocaleString('bn-BD')}`;
-                }
             }
 
+            dbgInvestmentProfitMode = null;
             document.getElementById('investForm').reset();
         }
 
@@ -4397,9 +4447,20 @@ function changeDepPage(direction) {
                         <td class="p-2.5 text-right font-bold text-emerald-600">৳${inv.profit || 0}</td>
                         <td class="p-2.5"><span class="text-xs px-2 py-0.5 rounded font-bold ${inv.status === 'চলমান' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'}">${inv.status}</span></td>
                         <td class="p-2.5 text-center no-print">
-                            <button onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            ${inv.status === 'চলমান' ? `
+                                <div class="flex items-center justify-center gap-2">
+                                    <button type="button" onclick="dbgAddProfitToInvestment(${inv.id})" class="text-purple-700 hover:text-purple-900 font-semibold text-xs whitespace-nowrap" title="লভ্যাংশ যোগ করুন">
+                                        + লভ্যাংশ যোগ করুন
+                                    </button>
+                                    <button type="button" onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            ` : `
+                                <button type="button" onclick="deleteInvestment(${inv.id})" class="text-rose-600 hover:text-rose-800" title="ডিলিট">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            `}
                         </td>
                     </tr>
                 `;
@@ -5209,6 +5270,20 @@ window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
 
     if (Object.keys(updates).length) {
         await update(ref(firebaseDB), updates);
+
+        // Keep the existing local member model aligned with the Firebase
+        // increment so the next normal save cannot overwrite the new profit.
+        if (Array.isArray(db?.members)) {
+            activeMembers.forEach(([key, member]) => {
+                const depositCount = Number(member.depositCount ?? member.units ?? 0);
+                if (!Number.isFinite(depositCount) || depositCount <= 0) return;
+                const memberProfit = perDeposit * depositCount;
+                const localMember = db.members.find(item => String(item.code || '') === String(member.code || ''));
+                if (localMember) {
+                    localMember.totalProfitReceived = Number(localMember.totalProfitReceived || 0) + memberProfit;
+                }
+            });
+        }
     }
 
     const selectedCode = String(document.getElementById('profileSelect')?.value || '');
@@ -6424,7 +6499,7 @@ function installMemberPortalStylesAndRoot() {
         .dbg-member-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
         .dbg-member-stat-card{min-width:0;display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:15px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 7px 20px rgba(15,23,42,.05)}
         .dbg-member-stat-icon{width:36px;height:36px;flex:0 0 36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px}.dbg-member-stat-card span{display:block;font-size:10px;color:#64748b;font-weight:700}.dbg-member-stat-card strong{display:block;font-size:16px;line-height:1.2;margin-top:3px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .stat-green .dbg-member-stat-icon{background:#dcfce7;color:#047857}.stat-indigo .dbg-member-stat-icon{background:#e0e7ff;color:#4338ca}.stat-amber .dbg-member-stat-icon{background:#fef3c7;color:#b45309}.stat-red .dbg-member-stat-icon{background:#fee2e2;color:#dc2626}.stat-teal .dbg-member-stat-icon{background:#ccfbf1;color:#0f766e}
+        .stat-green .dbg-member-stat-icon{background:#dcfce7;color:#047857}.stat-indigo .dbg-member-stat-icon{background:#e0e7ff;color:#4338ca}.stat-amber .dbg-member-stat-icon{background:#fef3c7;color:#b45309}.stat-red .dbg-member-stat-icon{background:#fee2e2;color:#dc2626}.stat-teal .dbg-member-stat-icon{background:#ccfbf1;color:#0f766e}.stat-purple .dbg-member-stat-icon{background:#f3e8ff;color:#7e22ce}
         .dbg-member-progress-card{padding:13px 15px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.dbg-member-progress-head{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:800;color:#334155}.dbg-member-progress-head strong{color:#047857}.dbg-member-progress-track{height:9px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:8px}.dbg-member-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#059669,#14b8a6,#f59e0b);transition:width .5s ease}.dbg-member-progress-foot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:9px;color:#94a3b8}
         @media(max-width:900px){.dbg-member-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:520px){.dbg-member-hero-strip{padding:12px;gap:10px}.dbg-member-hero-avatar{width:50px;height:50px;flex-basis:50px;border-radius:14px}.dbg-member-hero-name{font-size:17px}.dbg-member-hero-badge{padding:7px 8px;font-size:9px}.dbg-member-hero-badge small{font-size:8px}.dbg-member-stat-card{padding:11px 9px;gap:8px}.dbg-member-stat-icon{width:32px;height:32px;flex-basis:32px;font-size:15px}.dbg-member-stat-card span{font-size:9px}.dbg-member-stat-card strong{font-size:14px}.dbg-member-progress-card{padding:11px 12px}}
@@ -7378,6 +7453,7 @@ if (outstanding > 0) {
                 <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
                 <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
                 <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'মোট বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
+                <div class="dbg-member-stat-card stat-purple"><div class="dbg-member-stat-icon">৳</div><div><span>মোট লভ্যাংশ</span><strong id="dbgMemberPortalTotalProfitDashboard">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></div></div>
             </div>
 
             <div class="dbg-member-progress-card">
@@ -7422,6 +7498,10 @@ if (outstanding > 0) {
                     <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                         <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                         <span class="text-xl font-bold text-rose-700">৳${outstanding.toLocaleString()}</span>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                        <span id="dbgMemberPortalTotalProfitProfile" class="text-xl font-bold text-purple-700">৳${Number(member.totalProfitReceived || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                 </div>
             </div>
@@ -7597,6 +7677,25 @@ async function loadMemberPortalData(user) {
         }
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
+
+        // Realtime dividend update: only the two dividend cards are refreshed,
+        // so the existing member dashboard/profile UI and data-processing logic stay unchanged.
+        try {
+            const profitLiveRef = query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(memberId));
+            onValue(profitLiveRef, snap => {
+                const liveMember = snap.exists() ? Object.values(snap.val())[0] : null;
+                if (!liveMember) return;
+                const liveProfit = Number(liveMember.totalProfitReceived || 0);
+                const liveText = `৳${liveProfit.toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const dashboardProfit = document.getElementById('dbgMemberPortalTotalProfitDashboard');
+                const profileProfit = document.getElementById('dbgMemberPortalTotalProfitProfile');
+                if (dashboardProfit) dashboardProfit.textContent = liveText;
+                if (profileProfit) profileProfit.textContent = liveText;
+            });
+        } catch (profitLiveError) {
+            console.warn('DBG member dividend realtime listener unavailable:', profitLiveError);
+        }
+
         startMemberPortalClock();
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
