@@ -2312,6 +2312,32 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ================= PROFIT DISTRIBUTION HISTORY ================= -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100" id="dbgProfitHistoryCard">
+                        <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-4 gap-2">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <span class="text-lg">📊</span> লভ্যাংশ বিতরণের ইতিহাস (Profit History Book)
+                            </h3>
+                            <span id="dbgProfitHistoryStatus" class="text-[11px] text-gray-400">রিয়েল-টাইম</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                                    <tr>
+                                        <th class="p-2.5">প্রজেক্টের নাম</th>
+                                        <th class="p-2.5 text-right">লভ্যাংশের পরিমাণ (৳)</th>
+                                        <th class="p-2.5">বণ্টনের তারিখ</th>
+                                        <th class="p-2.5">বিবরণ/মাস</th>
+                                        <th class="p-2.5 text-center no-print">অ্যাকশন</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dbgProfitHistoryTableBody" class="divide-y divide-gray-100">
+                                    <tr><td colspan="5" class="p-6 text-center text-sm text-gray-400">হিস্ট্রি লোড হচ্ছে...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -4412,6 +4438,16 @@ function changeDepPage(direction) {
             if (isDividendEntry && earnedProfit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
                 try {
                     profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
+                    if (profitDistributionResult?.memberShares && typeof window.dbgSaveProfitDistributionHistory === 'function') {
+                        await window.dbgSaveProfitDistributionHistory({
+                            projectId: targetInvestment.id,
+                            projectName: targetInvestment.title,
+                            totalDistributedAmount: earnedProfit,
+                            date: investmentDate,
+                            month: dbgProfitHistoryMonth(investmentDate),
+                            memberShares: profitDistributionResult.memberShares
+                        });
+                    }
                 } catch (error) {
                     console.error('DBG profit distribution failed:', error);
                     alert('লভ্যাংশের হিস্ট্রি সেভ হয়েছে, কিন্তু সদস্যদের মধ্যে লভ্যাংশ বণ্টন করা যায়নি।\n\n' + (error?.message || error));
@@ -5179,6 +5215,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 import {
+    getFirestore,
+    collection,
+    addDoc,
+    onSnapshot,
+    doc,
+    getDoc,
+    deleteDoc,
+    runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
     getDatabase,
     ref,
     get,
@@ -5205,6 +5251,7 @@ const firebaseConfig = {
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
+const firebaseFirestore = getFirestore(firebaseApp);
 
 // ==========================================================
 // DBG PROFIT DISTRIBUTION — additive feature only
@@ -5246,6 +5293,7 @@ window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
     }
 
     const perDeposit = totalProfit / totalDeposits;
+    const memberShares = {};
 
     // Existing Profit Share cards — no existing UI/style is replaced.
     const totalEl = document.getElementById('calcTotalProfit');
@@ -5265,6 +5313,8 @@ window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
         const depositCount = Number(member.depositCount ?? member.units ?? 0);
         if (!Number.isFinite(depositCount) || depositCount <= 0) return;
         const memberProfit = perDeposit * depositCount;
+        const memberId = String(member.code || member.id || key);
+        memberShares[memberId] = Number(memberShares[memberId] || 0) + memberProfit;
         updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(memberProfit);
     });
 
@@ -5296,8 +5346,174 @@ window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
         selectedMemberProfit = existingProfit + (Number.isFinite(selectedDepositCount) && selectedDepositCount > 0 ? perDeposit * selectedDepositCount : 0);
     }
 
-    return { totalProfit, totalDeposits, perDeposit, updatedMembers: Object.keys(updates).length, selectedMemberProfit };
+    return { totalProfit, totalDeposits, perDeposit, updatedMembers: Object.keys(updates).length, selectedMemberProfit, memberShares };
 };
+
+// ==========================================================
+// PROFIT HISTORY BOOK — Firestore additive module
+// Existing ERP/member/project storage remains on Realtime Database.
+// This module adds only the separate Firestore history collection.
+// ==========================================================
+let dbgProfitHistoryUnsubscribe = null;
+
+function dbgProfitHistoryMonth(dateValue) {
+    if (!dateValue) return '';
+    try { return new Date(`${dateValue}T00:00:00`).toLocaleDateString('bn-BD', { month: 'long', year: 'numeric' }); }
+    catch (_) { return String(dateValue); }
+}
+function dbgProfitHistoryDate(dateValue) {
+    if (!dateValue) return '';
+    try { return new Date(`${dateValue}T00:00:00`).toLocaleDateString('bn-BD', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+    catch (_) { return String(dateValue); }
+}
+function dbgRenderProfitHistory(rows = []) {
+    const tbody = document.getElementById('dbgProfitHistoryTableBody');
+    if (!tbody) return;
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-sm text-gray-400">এখনো কোনো লভ্যাংশ বিতরণের ইতিহাস নেই।</td></tr>';
+        return;
+    }
+    tbody.innerHTML = rows.map(item => `
+        <tr>
+            <td class="p-2.5 font-bold text-gray-800">${escapeHtml(item.projectName || 'প্রজেক্ট')}</td>
+            <td class="p-2.5 text-right font-bold text-purple-700">৳${Number(item.totalDistributedAmount || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="p-2.5 text-xs text-gray-500 font-mono">${escapeHtml(dbgProfitHistoryDate(item.date))}</td>
+            <td class="p-2.5 text-xs text-gray-600">${escapeHtml(item.month || dbgProfitHistoryMonth(item.date) || '')}</td>
+            <td class="p-2.5 text-center no-print">
+                <button type="button" onclick="dbgDeleteProfitDistribution('${escapeHtml(item.id)}')" class="inline-flex items-center gap-1 bg-rose-100 hover:bg-rose-200 text-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-bold" title="লভ্যাংশ বণ্টন ডিলিট">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> মুছে ফেলুন
+                </button>
+            </td>
+        </tr>`).join('');
+    try { lucide.createIcons(); } catch (_) {}
+}
+function dbgStartProfitHistoryListener() {
+    if (!firebaseFirestore || dbgProfitHistoryUnsubscribe) return;
+    const statusEl = document.getElementById('dbgProfitHistoryStatus');
+    try {
+        dbgProfitHistoryUnsubscribe = onSnapshot(collection(firebaseFirestore, 'profit_distributions'), snap => {
+            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')) || Number(b.createdAt || 0) - Number(a.createdAt || 0));
+            dbgRenderProfitHistory(rows);
+            if (statusEl) statusEl.textContent = 'রিয়েল-টাইম ✓';
+        }, err => {
+            console.error('DBG Profit History listener failed:', err);
+            if (statusEl) statusEl.textContent = 'সংযোগ পাওয়া যায়নি';
+        });
+    } catch (e) {
+        console.error('DBG Profit History listener init failed:', e);
+        if (statusEl) statusEl.textContent = 'সংযোগ পাওয়া যায়নি';
+    }
+}
+window.dbgSaveProfitDistributionHistory = async function ({ projectId, projectName, totalDistributedAmount, date, month, memberShares }) {
+    const safeShares = {};
+    Object.entries(memberShares || {}).forEach(([memberId, amount]) => {
+        const value = Number(amount || 0);
+        if (Number.isFinite(value) && value !== 0) safeShares[String(memberId)] = value;
+    });
+    const result = await addDoc(collection(firebaseFirestore, 'profit_distributions'), {
+        projectId: String(projectId),
+        projectName: String(projectName || ''),
+        totalDistributedAmount: Number(totalDistributedAmount || 0),
+        date: String(date || ''),
+        month: String(month || dbgProfitHistoryMonth(date) || ''),
+        memberShares: safeShares,
+        createdAt: Date.now()
+    });
+    return result.id;
+};
+window.dbgDeleteProfitDistribution = async function (historyId) {
+    if (!historyId) return;
+    if (!confirm('আপনি কি নিশ্চিতভাবে এই লভ্যাংশ বণ্টনটি ডিলিট করতে চান? এর ফলে সদস্যদের প্রোফাইল থেকে টাকা স্বয়ংক্রিয়ভাবে মাইনাস হয়ে যাবে!')) return;
+    try {
+        const historyRef = doc(firebaseFirestore, 'profit_distributions', String(historyId));
+        const historySnap = await getDoc(historyRef);
+        if (!historySnap.exists()) throw new Error('লভ্যাংশের ইতিহাস রেকর্ডটি পাওয়া যায়নি।');
+        const history = historySnap.data() || {};
+        const memberShares = history.memberShares || {};
+        const totalAmount = Number(history.totalDistributedAmount || 0);
+        const projectId = String(history.projectId || '');
+
+        // A Firestore transaction marks the reversal state first, so a retry
+        // cannot accidentally subtract the same dividend twice if the final
+        // Firestore delete is interrupted.
+        let reversalState = String(history.reversalState || 'pending');
+        if (reversalState !== 'completed') {
+            await runTransaction(firebaseFirestore, async transaction => {
+                const snap = await transaction.get(historyRef);
+                if (!snap.exists()) throw new Error('লভ্যাংশের ইতিহাস রেকর্ডটি পাওয়া যায়নি।');
+                const current = snap.data() || {};
+                if (String(current.reversalState || 'pending') === 'completed') return;
+                transaction.update(historyRef, { reversalState: 'processing', reversalStartedAt: Date.now() });
+            });
+            reversalState = 'processing';
+        }
+
+        const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
+        const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
+        const memberEntries = Array.isArray(rawMembers)
+            ? rawMembers.map((member,index) => [String(index), member])
+            : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
+        const byMemberId = new Map();
+        memberEntries.forEach(([key, member]) => {
+            if (!member || typeof member !== 'object') return;
+            byMemberId.set(String(member.code || member.id || key), key);
+        });
+
+        const investmentIndex = Array.isArray(db.investments) ? db.investments.findIndex(inv => String(inv.id) === projectId) : -1;
+        if (investmentIndex < 0) throw new Error('মূল ইনভেস্টমেন্ট প্রজেক্টটি পাওয়া যায়নি। রিভার্স করা বন্ধ রাখা হয়েছে।');
+
+        const updates = {};
+        const missingMembers = [];
+        Object.entries(memberShares).forEach(([memberId, shareAmount]) => {
+            const key = byMemberId.get(String(memberId));
+            const amount = Number(shareAmount || 0);
+            if (!Number.isFinite(amount) || amount === 0) return;
+            if (!key) { missingMembers.push(String(memberId)); return; }
+            updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(-amount);
+        });
+        if (missingMembers.length) {
+            throw new Error('রিভার্স করার জন্য কিছু সদস্য পাওয়া যায়নি: ' + missingMembers.join(', '));
+        }
+        {
+            const investment = db.investments[investmentIndex];
+            investment.profit = Math.max(0, Number(investment.profit || 0) - totalAmount);
+            if (Array.isArray(investment.monthlyProfits)) {
+                let removed = false;
+                investment.monthlyProfits = investment.monthlyProfits.filter(entry => {
+                    if (removed) return true;
+                    const sameAmount = Math.abs(Number(entry.amount || 0) - totalAmount) < 0.000001;
+                    const sameDate = !history.date || String(entry.date || '') === String(history.date);
+                    if (sameAmount && sameDate) { removed = true; return false; }
+                    return true;
+                });
+            }
+            updates['dbg_erp/investments'] = db.investments;
+        }
+
+        // Realtime Database is the existing source of truth for members/projects.
+        // A single multi-location update keeps those reversals together.
+        // Existing members/projects live in Realtime Database, so one RTDB
+        // multi-location update applies the member reversals and project reversal together.
+        if (Object.keys(updates).length) await update(ref(firebaseDB), updates);
+
+        // Mark the Firestore record complete before deleting it. If deleteDoc
+        // itself is interrupted, a retry sees "completed" and will not subtract twice.
+        await runTransaction(firebaseFirestore, async transaction => {
+            const snap = await transaction.get(historyRef);
+            if (snap.exists()) transaction.update(historyRef, { reversalState: 'completed', reversedAt: Date.now() });
+        });
+        await deleteDoc(historyRef);
+        saveLocalData();
+        renderAll();
+        alert('লভ্যাংশ বণ্টনটি ডিলিট এবং সদস্যদের লভ্যাংশ রিভার্স করা হয়েছে।');
+    } catch (error) {
+        console.error('DBG Profit History delete/reverse failed:', error);
+        alert('লভ্যাংশ বণ্টন ডিলিট করা যায়নি।\n\n' + (error?.message || error));
+    }
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dbgStartProfitHistoryListener, { once: true });
+else dbgStartProfitHistoryListener();
 
 const firebaseFunctions = getFunctions(firebaseApp);
 const memberResetPasswordFunction = httpsCallable(firebaseFunctions, 'memberResetPassword');
