@@ -43,6 +43,67 @@
     
         .dbg-print-company-header { display: none; }
 
+        /* ================= PROFIT HISTORY A4 PRINT ================= */
+        @media print {
+            body.dbg-profit-history-printing {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                color: #111827 !important;
+            }
+            body.dbg-profit-history-printing > * { display: none !important; }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header {
+                display: block !important;
+                text-align: center !important;
+                margin: 0 0 16px 0 !important;
+                padding: 0 0 10px 0 !important;
+                border-bottom: 2px solid #111827 !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header h1 {
+                margin: 0 !important;
+                font-size: 23px !important;
+                line-height: 1.25 !important;
+                font-weight: 800 !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root .dbg-profit-history-print-header p {
+                margin: 4px 0 0 !important;
+                font-size: 15px !important;
+                font-weight: 600 !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root table {
+                width: 100% !important;
+                max-width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+                margin: 0 !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root th,
+            body.dbg-profit-history-printing #dbg-profit-history-print-root td {
+                border: 1px solid #9ca3af !important;
+                padding: 8px 9px !important;
+                font-size: 12px !important;
+                vertical-align: middle !important;
+                word-break: break-word !important;
+                overflow-wrap: anywhere !important;
+            }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(1),
+            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(1) { width: 34% !important; }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(2),
+            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(2) { width: 22% !important; }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(3),
+            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(3) { width: 20% !important; }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root th:nth-child(4),
+            body.dbg-profit-history-printing #dbg-profit-history-print-root td:nth-child(4) { width: 24% !important; }
+            body.dbg-profit-history-printing #dbg-profit-history-print-root .no-print { display: none !important; }
+            @page { size: A4 portrait; margin: 12mm; }
+        }
+
         /* ================= FIREBASE AUTHENTICATION GATE ================= */
         body.dbg-logged-out > *:not(#dbg-auth-overlay) {
             visibility: hidden !important;
@@ -2319,7 +2380,12 @@
                             <h3 class="font-bold text-gray-800 flex items-center gap-2">
                                 <span class="text-lg">📊</span> লভ্যাংশ বিতরণের ইতিহাস (Profit History Book)
                             </h3>
-                            <span id="dbgProfitHistoryStatus" class="text-[11px] text-gray-400">রিয়েল-টাইম</span>
+                            <div class="flex items-center gap-2 no-print">
+                                <button type="button" onclick="dbgPrintProfitHistory()" class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" title="ইতিহাস প্রিন্ট করুন">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i> ইতিহাস প্রিন্ট করুন
+                                </button>
+                                <span id="dbgProfitHistoryStatus" class="text-[11px] text-gray-400">রিয়েল-টাইম</span>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left">
@@ -4383,11 +4449,14 @@ function changeDepPage(direction) {
         };
 
         async function saveInvestment(e) {
+            const dbgProfitHistoryMonth = new Date().toLocaleString('bn-BD', { month: 'long', year: 'numeric' });
             e.preventDefault();
             const earnedProfit = parseFloat(document.getElementById('invProfit').value || 0);
             const investmentDate = document.getElementById('invDate').value;
             const isDividendEntry = !!dbgInvestmentProfitMode;
             let targetInvestment = null;
+            let previousInvestmentProfit = 0;
+            let previousMonthlyProfits = null;
 
             if (isDividendEntry) {
                 targetInvestment = db.investments.find(item => String(item.id) === String(dbgInvestmentProfitMode.id));
@@ -4407,6 +4476,11 @@ function changeDepPage(direction) {
                     return;
                 }
 
+                previousInvestmentProfit = Number(targetInvestment.profit || 0);
+                previousMonthlyProfits = Array.isArray(targetInvestment.monthlyProfits)
+                    ? targetInvestment.monthlyProfits.map(item => ({ ...item }))
+                    : [];
+
                 if (!Array.isArray(targetInvestment.monthlyProfits)) targetInvestment.monthlyProfits = [];
                 targetInvestment.monthlyProfits.push({
                     id: Date.now(),
@@ -4414,7 +4488,7 @@ function changeDepPage(direction) {
                     date: investmentDate,
                     createdAt: Date.now()
                 });
-                targetInvestment.profit = Number(targetInvestment.profit || 0) + earnedProfit;
+                targetInvestment.profit = previousInvestmentProfit + earnedProfit;
             } else {
                 // Creating a project does NOT distribute profit. Profit is
                 // recorded only through the "লভ্যাংশ যোগ করুন" action above.
@@ -4428,33 +4502,41 @@ function changeDepPage(direction) {
                     status: document.getElementById('invStatus').value,
                     monthlyProfits: []
                 });
+                saveData();
+                dbgInvestmentProfitMode = null;
+                document.getElementById('investForm').reset();
+                return;
             }
 
-            // Save the project/monthly dividend history first. The actual member
-            // distribution is performed only for an explicit dividend entry.
-            saveData();
-
+            // For a dividend entry, do not report success until BOTH the member
+            // distribution and the Firestore history document have succeeded.
+            // If history save fails after member distribution, immediately
+            // reverse the member increments and restore the project locally.
             let profitDistributionResult = null;
-            if (isDividendEntry && earnedProfit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
-                try {
-                    profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
-                    if (profitDistributionResult?.memberShares && typeof window.dbgSaveProfitDistributionHistory === 'function') {
-                        await window.dbgSaveProfitDistributionHistory({
-                            projectId: targetInvestment.id,
-                            projectName: targetInvestment.title,
-                            totalDistributedAmount: earnedProfit,
-                            date: investmentDate,
-                            month: dbgProfitHistoryMonth(investmentDate),
-                            memberShares: profitDistributionResult.memberShares
-                        });
-                    }
-                } catch (error) {
-                    console.error('DBG profit distribution failed:', error);
-                    alert('লভ্যাংশের হিস্ট্রি সেভ হয়েছে, কিন্তু সদস্যদের মধ্যে লভ্যাংশ বণ্টন করা যায়নি।\n\n' + (error?.message || error));
+            let historyId = null;
+            try {
+                if (typeof window.dbgDistributeInvestmentProfit !== 'function') {
+                    throw new Error('লভ্যাংশ বণ্টন ফাংশন পাওয়া যায়নি।');
                 }
-            }
 
-            if (profitDistributionResult) {
+                profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
+                if (!profitDistributionResult?.memberShares || typeof window.dbgSaveProfitDistributionHistory !== 'function') {
+                    throw new Error('লভ্যাংশের ইতিহাস সংরক্ষণ ফাংশন পাওয়া যায়নি।');
+                }
+
+                historyId = await window.dbgSaveProfitDistributionHistory({
+                    projectId: targetInvestment.id,
+                    projectName: targetInvestment.title,
+                    totalDistributedAmount: earnedProfit,
+                    date: investmentDate,
+                    month: dbgProfitHistoryMonth,
+                    memberShares: profitDistributionResult.memberShares
+                });
+
+                // Both cloud operations succeeded. Now persist the existing
+                // project data locally and trigger the normal ERP sync.
+                saveData();
+
                 const r = profitDistributionResult;
                 const fmt = value => Number(value || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 document.getElementById('calcTotalProfit')?.replaceChildren(document.createTextNode(Number(r.totalProfit || 0).toLocaleString('bn-BD')));
@@ -4462,10 +4544,40 @@ function changeDepPage(direction) {
                 document.getElementById('calc2UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 2)));
                 document.getElementById('calc3UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 3)));
                 document.getElementById('calc4UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 4)));
-            }
 
-            dbgInvestmentProfitMode = null;
-            document.getElementById('investForm').reset();
+                dbgInvestmentProfitMode = null;
+                document.getElementById('investForm').reset();
+                alert('লভ্যাংশ সফলভাবে সদস্যদের মধ্যে বণ্টন এবং Profit History Book-এ সংরক্ষণ হয়েছে।');
+            } catch (error) {
+                console.error('DBG profit distribution/history failed:', error);
+
+                // If the history was created but a later operation failed, remove
+                // that history document. If members were already credited, reverse
+                // those exact shares before restoring the investment state.
+                try {
+                    if (historyId && typeof window.dbgDeleteProfitDistributionHistoryDocument === 'function') {
+                        await window.dbgDeleteProfitDistributionHistoryDocument(historyId);
+                    }
+                } catch (cleanupHistoryError) {
+                    console.error('DBG profit history cleanup failed:', cleanupHistoryError);
+                }
+
+                try {
+                    if (profitDistributionResult?.memberShares && typeof window.dbgReverseProfitDistributionMembers === 'function') {
+                        await window.dbgReverseProfitDistributionMembers(profitDistributionResult.memberShares);
+                    }
+                } catch (rollbackError) {
+                    console.error('DBG member profit rollback failed:', rollbackError);
+                }
+
+                if (targetInvestment) {
+                    targetInvestment.profit = previousInvestmentProfit;
+                    targetInvestment.monthlyProfits = previousMonthlyProfits || [];
+                }
+                saveData();
+                alert('লভ্যাংশ সেভ করা যায়নি। সদস্যদের টাকা ও ইনভেস্টমেন্ট ডাটা আগের অবস্থায় ফিরিয়ে আনার চেষ্টা করা হয়েছে।\n\n' + (error?.message || error));
+                return;
+            }
         }
 
         function renderInvestments() {
@@ -5422,6 +5534,39 @@ window.dbgSaveProfitDistributionHistory = async function ({ projectId, projectNa
     });
     return result.id;
 };
+window.dbgDeleteProfitDistributionHistoryDocument = async function (historyId) {
+    if (!historyId) return false;
+    await deleteDoc(doc(firebaseFirestore, 'profit_distributions', String(historyId)));
+    return true;
+};
+window.dbgReverseProfitDistributionMembers = async function (memberShares) {
+    const shares = memberShares || {};
+    const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
+    const rawMembers = membersSnap.exists() ? membersSnap.val() : {};
+    const entries = Array.isArray(rawMembers)
+        ? rawMembers.map((member, index) => [String(index), member])
+        : (rawMembers && typeof rawMembers === 'object' ? Object.entries(rawMembers) : []);
+    const byMemberId = new Map();
+    entries.forEach(([key, member]) => {
+        if (!member || typeof member !== 'object') return;
+        byMemberId.set(String(member.code || member.id || key), key);
+    });
+    const updates = {};
+    Object.entries(shares).forEach(([memberId, amount]) => {
+        const key = byMemberId.get(String(memberId));
+        const value = Number(amount || 0);
+        if (!key || !Number.isFinite(value) || value === 0) return;
+        updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(-value);
+    });
+    if (Object.keys(updates).length) await update(ref(firebaseDB), updates);
+    if (Array.isArray(db?.members)) {
+        Object.entries(shares).forEach(([memberId, amount]) => {
+            const localMember = db.members.find(member => String(member.code || member.id || '') === String(memberId));
+            if (localMember) localMember.totalProfitReceived = Number(localMember.totalProfitReceived || 0) - Number(amount || 0);
+        });
+    }
+    return true;
+};
 window.dbgDeleteProfitDistribution = async function (historyId) {
     if (!historyId) return;
     if (!confirm('আপনি কি নিশ্চিতভাবে এই লভ্যাংশ বণ্টনটি ডিলিট করতে চান? এর ফলে সদস্যদের প্রোফাইল থেকে টাকা স্বয়ংক্রিয়ভাবে মাইনাস হয়ে যাবে!')) return;
@@ -5511,6 +5656,37 @@ window.dbgDeleteProfitDistribution = async function (historyId) {
         console.error('DBG Profit History delete/reverse failed:', error);
         alert('লভ্যাংশ বণ্টন ডিলিট করা যায়নি।\n\n' + (error?.message || error));
     }
+};
+window.dbgPrintProfitHistory = function () {
+    const card = document.getElementById('dbgProfitHistoryCard');
+    if (!card) return;
+
+    const printRoot = document.createElement('div');
+    printRoot.id = 'dbg-profit-history-print-root';
+    printRoot.innerHTML = `
+        <div class="dbg-profit-history-print-header">
+            <h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1>
+            <p>লভ্যাংশ বিতরণের সম্পূর্ণ ইতিহাস রিপোর্ট</p>
+        </div>`;
+
+    const table = card.querySelector('table');
+    if (!table) return;
+    const tableClone = table.cloneNode(true);
+    tableClone.querySelectorAll('.no-print').forEach(el => el.remove());
+    printRoot.appendChild(tableClone);
+
+    document.body.appendChild(printRoot);
+    document.body.classList.add('dbg-profit-history-printing');
+    try { lucide.createIcons(); } catch (_) {}
+
+    const cleanup = () => {
+        document.body.classList.remove('dbg-profit-history-printing');
+        printRoot.remove();
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup, { once: true });
+    window.print();
+    setTimeout(cleanup, 2500);
 };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dbgStartProfitHistoryListener, { once: true });
 else dbgStartProfitHistoryListener();
