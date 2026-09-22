@@ -4395,23 +4395,48 @@ function changeDepPage(direction) {
             return m ? `${names[Number(m[2]) - 1] || m[2]} ${m[1]}` : String(month || '-');
         }
 
-        function saveInvestment(e) {
+        async function saveInvestment(e) {
             e.preventDefault();
+            const title = document.getElementById('invTitle').value.trim();
+            const category = document.getElementById('invCategory').value.trim();
             const amount = parseFloat(document.getElementById('invAmount').value || 0);
             const legacyProfit = parseFloat(document.getElementById('invProfit').value || 0);
-            db.investments.push({
-                id: Date.now(),
-                title: document.getElementById('invTitle').value.trim(),
-                category: document.getElementById('invCategory').value.trim(),
-                amount,
-                profit: legacyProfit,
-                dividendHistory: [],
-                date: document.getElementById('invDate').value,
-                status: document.getElementById('invStatus').value
-            });
+            const date = document.getElementById('invDate').value;
+            const status = document.getElementById('invStatus').value;
+
+            if (!title || !Number.isFinite(amount) || amount <= 0 || !date) {
+                alert('প্রজেক্টের নাম, মূলধন এবং তারিখ সঠিকভাবে দিন।');
+                return;
+            }
+
+            // Use a collision-resistant application ID so multiple Projects are always
+            // stored as separate records.
+            const id = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+            const record = {
+                id, title, category, amount, profit: Number.isFinite(legacyProfit) ? legacyProfit : 0,
+                dividendHistory: [], date, status
+            };
+
+            db.investments.push(record);
             saveData();
+
+            // Commit immediately instead of waiting for the 250ms debounce. This avoids
+            // the realtime listener restoring an older Investment list before the new
+            // Project reaches Firebase.
+            try {
+                if (typeof window.dbgFirebaseSyncToFirebaseNow === 'function' && dbgFirebaseSyncReady) {
+                    await window.dbgFirebaseSyncToFirebaseNow();
+                }
+            } catch (err) {
+                console.error('DBG Investment Firebase sync failed:', err);
+                alert(`ইনভেস্টমেন্ট লোকালি সেভ হয়েছে, কিন্তু Firebase-এ সেভ হয়নি।\nকারণ: ${err?.code || err?.message || err}`);
+            }
+
             document.getElementById('investForm').reset();
             document.getElementById('invProfit').value = 0;
+            const invDate = document.getElementById('invDate');
+            if (invDate) invDate.value = new Date().toISOString().slice(0,10);
+            renderInvestments();
         }
 
         function addInvestmentDividend(id) {
@@ -4442,6 +4467,9 @@ function changeDepPage(direction) {
             // profit is kept as a compatibility/summary field for the existing dashboard.
             inv.profit = inv.dividendHistory.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
             saveData();
+            if (typeof window.dbgFirebaseSyncToFirebaseNow === 'function' && dbgFirebaseSyncReady) {
+                window.dbgFirebaseSyncToFirebaseNow().catch(err => console.error('DBG Dividend Firebase sync failed:', err));
+            }
         }
 
         function deleteInvestmentDividend(investmentId, dividendId) {
@@ -4451,6 +4479,9 @@ function changeDepPage(direction) {
             inv.dividendHistory = dbgInvestmentDividendHistory(inv).filter(d => String(d.id) !== String(dividendId));
             inv.profit = inv.dividendHistory.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
             saveData();
+            if (typeof window.dbgFirebaseSyncToFirebaseNow === 'function' && dbgFirebaseSyncReady) {
+                window.dbgFirebaseSyncToFirebaseNow().catch(err => console.error('DBG Dividend delete Firebase sync failed:', err));
+            }
         }
 
         function printInvestmentDividendHistory(id) {
@@ -4515,6 +4546,9 @@ function changeDepPage(direction) {
             if (confirm("ইনভেস্টমেন্ট প্রজেক্টটি স্থায়ীভাবে মুছে ফেলতে চান?")) {
                 db.investments = db.investments.filter(i => String(i.id) !== String(id));
                 saveData();
+                if (typeof window.dbgFirebaseSyncToFirebaseNow === 'function' && dbgFirebaseSyncReady) {
+                    window.dbgFirebaseSyncToFirebaseNow().catch(err => console.error('DBG Investment delete Firebase sync failed:', err));
+                }
             }
         }
 
@@ -5742,14 +5776,26 @@ async function applyFirebasePayload(payload) {
     try {
         if (typeof payload.logo === 'string') db.logo = payload.logo;
         if (Array.isArray(payload.members)) {
-            db.members = payload.members;
-            if (memberStorageReady) await replaceAllMembersInIDB(db.members);
+            // Do not replace an already-populated local Member list with an empty
+            // Firebase array. This prevents the Member Profile dropdown from going blank
+            // during a Firebase refresh/migration race.
+            if (payload.members.length > 0 || db.members.length === 0) {
+                db.members = payload.members.filter(Boolean);
+                if (memberStorageReady) await replaceAllMembersInIDB(db.members);
+            }
         }
         // Firebase deposits may be stored as an Array (legacy data) or as an
         // object keyed by push IDs (new transaction-safe writes). Normalize both.
         if (Array.isArray(payload.deposits)) db.deposits = payload.deposits.filter(Boolean);
         else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
-        if (Array.isArray(payload.investments)) db.investments = payload.investments;
+        // Never let an empty/stale Firebase branch erase valid local records.
+        // This is especially important immediately after replacing/updating the HTML,
+        // when the browser may still have valid Member/Investment data in its cache.
+        if (Array.isArray(payload.investments)) {
+            if (payload.investments.length > 0 || db.investments.length === 0) {
+                db.investments = payload.investments.filter(Boolean);
+            }
+        }
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
         // Firebase push() stores accounts as an object keyed by push IDs.
         // Normalize both legacy arrays and push-keyed objects so Admin Dashboard
