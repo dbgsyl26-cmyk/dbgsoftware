@@ -3389,6 +3389,10 @@ function changeMemPage(direction) {
                                 <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                                 <span class="text-xl font-bold text-rose-700">৳${dbgGetMemberCumulativeArrears(member, new Date().toISOString().slice(0, 7)).toLocaleString()}</span>
                             </div>
+                            <div class="bg-purple-50 p-3 rounded-lg text-center border border-purple-100 min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                                <span id="memberTotalProfit" class="text-xl font-bold text-purple-700">৳${parseFloat(member.totalProfitReceived || 0).toLocaleString('bn-BD')}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -4331,18 +4335,50 @@ function changeDepPage(direction) {
         }
 
         // INVESTMENTS LOGIC
-        function saveInvestment(e) {
+        async function saveInvestment(e) {
             e.preventDefault();
+            const earnedProfit = parseFloat(document.getElementById('invProfit').value || 0);
             db.investments.push({
                 id: Date.now(),
                 title: document.getElementById('invTitle').value,
                 category: document.getElementById('invCategory').value,
                 amount: parseFloat(document.getElementById('invAmount').value),
-                profit: parseFloat(document.getElementById('invProfit').value || 0),
+                profit: earnedProfit,
                 date: document.getElementById('invDate').value,
                 status: document.getElementById('invStatus').value
             });
+
+            // নতুন অর্জিত লভ্যাংশটি সক্রিয় সদস্যদের depositCount/units অনুযায়ী
+            // Firebase Realtime Database-এ totalProfitReceived-এ যোগ হবে।
+            let profitDistributionResult = null;
+            if (earnedProfit > 0 && typeof window.dbgDistributeInvestmentProfit === 'function') {
+                try {
+                    profitDistributionResult = await window.dbgDistributeInvestmentProfit(earnedProfit);
+                } catch (error) {
+                    console.error('DBG profit distribution failed:', error);
+                    alert('ইনভেস্টমেন্ট সেভ হয়েছে, কিন্তু লভ্যাংশ বণ্টন করা যায়নি।\n\n' + (error?.message || error));
+                }
+            }
+
             saveData();
+
+            // renderAll() above refreshes the existing calculator from its old
+            // cumulative-project logic. Re-apply only this newly distributed
+            // project's share to the existing Profit Share cards.
+            if (profitDistributionResult) {
+                const r = profitDistributionResult;
+                const fmt = value => Number(value || 0).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById('calcTotalProfit')?.replaceChildren(document.createTextNode(Number(r.totalProfit || 0).toLocaleString('bn-BD')));
+                document.getElementById('calcProfitPerUnit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit)));
+                document.getElementById('calc2UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 2)));
+                document.getElementById('calc3UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 3)));
+                document.getElementById('calc4UnitProfit')?.replaceChildren(document.createTextNode(fmt(r.perDeposit * 4)));
+                if (r.selectedMemberProfit != null) {
+                    const memberProfitCard = document.getElementById('memberTotalProfit');
+                    if (memberProfitCard) memberProfitCard.innerText = `৳${Number(r.selectedMemberProfit).toLocaleString('bn-BD')}`;
+                }
+            }
+
             document.getElementById('investForm').reset();
         }
 
@@ -5091,6 +5127,7 @@ import {
     set,
     update,
     push,
+    increment,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -5107,6 +5144,86 @@ const firebaseConfig = {
 const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
+
+// ==========================================================
+// DBG PROFIT DISTRIBUTION — additive feature only
+// Reads the current member collection from Firebase Realtime Database,
+// calculates the per-deposit share, updates the Profit Share UI, and
+// increments each active member's totalProfitReceived field.
+// ==========================================================
+window.dbgDistributeInvestmentProfit = async function (earnedProfit) {
+    const totalProfit = Number(earnedProfit) || 0;
+    if (totalProfit <= 0) return { totalProfit: 0, totalDeposits: 0, perDeposit: 0 };
+
+    if (!firebaseDB) throw new Error('Firebase Realtime Database সংযোগ পাওয়া যায়নি।');
+
+    const membersSnap = await get(ref(firebaseDB, 'dbg_erp/members'));
+    if (!membersSnap.exists()) {
+        throw new Error('Firebase members collection-এ কোনো সদস্য পাওয়া যায়নি।');
+    }
+
+    const rawMembers = membersSnap.val();
+    const isActiveMember = member => {
+        const status = String(member?.status ?? member?.memberStatus ?? 'active').trim().toLowerCase();
+        return !['inactive', 'disabled', 'deactivated', 'বন্ধ', 'নিষ্ক্রিয়', 'নিষ্ক্রিয়'].includes(status);
+    };
+
+    const memberEntries = Array.isArray(rawMembers)
+        ? rawMembers.map((member, index) => [String(index), member]).filter(([, member]) => member && typeof member === 'object')
+        : (rawMembers && typeof rawMembers === 'object'
+            ? Object.entries(rawMembers).filter(([, member]) => member && typeof member === 'object')
+            : []);
+
+    const activeMembers = memberEntries.filter(([, member]) => isActiveMember(member));
+    const totalDeposits = activeMembers.reduce((sum, [, member]) => {
+        const depositCount = Number(member.depositCount ?? member.units ?? 0);
+        return sum + (Number.isFinite(depositCount) && depositCount > 0 ? depositCount : 0);
+    }, 0);
+
+    if (totalDeposits <= 0) {
+        throw new Error('সক্রিয় সদস্যদের মোট ডিপোজিট সংখ্যা ০।');
+    }
+
+    const perDeposit = totalProfit / totalDeposits;
+
+    // Existing Profit Share cards — no existing UI/style is replaced.
+    const totalEl = document.getElementById('calcTotalProfit');
+    const perEl = document.getElementById('calcProfitPerUnit');
+    const twoEl = document.getElementById('calc2UnitProfit');
+    const threeEl = document.getElementById('calc3UnitProfit');
+    const fourEl = document.getElementById('calc4UnitProfit');
+    if (totalEl) totalEl.innerText = totalProfit.toLocaleString('bn-BD');
+    if (perEl) perEl.innerText = perDeposit.toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (twoEl) twoEl.innerText = (perDeposit * 2).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (threeEl) threeEl.innerText = (perDeposit * 3).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (fourEl) fourEl.innerText = (perDeposit * 4).toLocaleString('bn-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Increment, rather than overwrite, each member's accumulated profit.
+    const updates = {};
+    activeMembers.forEach(([key, member]) => {
+        const depositCount = Number(member.depositCount ?? member.units ?? 0);
+        if (!Number.isFinite(depositCount) || depositCount <= 0) return;
+        const memberProfit = perDeposit * depositCount;
+        updates[`dbg_erp/members/${key}/totalProfitReceived`] = increment(memberProfit);
+    });
+
+    if (Object.keys(updates).length) {
+        await update(ref(firebaseDB), updates);
+    }
+
+    const selectedCode = String(document.getElementById('profileSelect')?.value || '');
+    const selectedMemberEntry = activeMembers.find(([, member]) => String(member.code || '') === selectedCode);
+    let selectedMemberProfit = null;
+    if (selectedMemberEntry) {
+        const selectedMember = selectedMemberEntry[1];
+        const selectedDepositCount = Number(selectedMember.depositCount ?? selectedMember.units ?? 0);
+        const existingProfit = Number(selectedMember.totalProfitReceived || 0) || 0;
+        selectedMemberProfit = existingProfit + (Number.isFinite(selectedDepositCount) && selectedDepositCount > 0 ? perDeposit * selectedDepositCount : 0);
+    }
+
+    return { totalProfit, totalDeposits, perDeposit, updatedMembers: Object.keys(updates).length, selectedMemberProfit };
+};
+
 const firebaseFunctions = getFunctions(firebaseApp);
 const memberResetPasswordFunction = httpsCallable(firebaseFunctions, 'memberResetPassword');
 let dbgMemberRecoveryConfirmation = null;
