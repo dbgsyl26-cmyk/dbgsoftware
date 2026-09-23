@@ -2312,6 +2312,68 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ================= DBG PROJECT DIVIDEND MODULE ================= -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 no-print">
+                        <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-emerald-600"></i> প্রজেক্ট ও মাসিক লভ্যাংশ ব্যবস্থাপনা
+                            </h3>
+                            <span class="text-xs text-slate-500">প্রতিটি প্রজেক্ট ও মাসের হিসাব আলাদাভাবে সংরক্ষিত থাকবে</span>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            <div class="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
+                                <h4 class="font-bold text-emerald-900 mb-3">নতুন বিনিয়োগ প্রজেক্ট</h4>
+                                <form id="dbgProjectForm" class="space-y-3">
+                                    <input type="hidden" id="dbgProjectEditId">
+                                    <input id="dbgProjectName" required placeholder="প্রজেক্টের নাম *" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="dbgProjectCategory" placeholder="ক্যাটাগরি" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                        <input id="dbgProjectCapital" type="number" min="0" step="0.01" placeholder="মূলধন (৳)" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="dbgProjectStartDate" type="date" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                        <select id="dbgProjectStatus" class="w-full border rounded-lg p-2.5 text-sm bg-white"><option value="চলমান">চলমান</option><option value="সম্পন্ন">সম্পন্ন</option><option value="স্থগিত">স্থগিত</option></select>
+                                    </div>
+                                    <textarea id="dbgProjectNotes" rows="2" placeholder="নোট / বিবরণ" class="w-full border rounded-lg p-2.5 text-sm bg-white"></textarea>
+                                    <div class="flex gap-2"><button class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg" type="submit">প্রজেক্ট সেভ করুন</button><button type="button" id="dbgProjectCancelEdit" class="hidden px-4 bg-slate-200 rounded-lg">বাতিল</button></div>
+                                    <div id="dbgProjectStatusMsg" class="text-xs min-h-[18px]"></div>
+                                </form>
+                            </div>
+                            <div class="rounded-xl border border-amber-100 bg-amber-50/40 p-4">
+                                <h4 class="font-bold text-amber-900 mb-3">মাসিক লভ্যাংশ এন্ট্রি</h4>
+                                <form id="dbgDividendForm" class="space-y-3">
+                                    <select id="dbgDividendProject" required class="w-full border rounded-lg p-2.5 text-sm bg-white"><option value="">প্রজেক্ট নির্বাচন করুন</option></select>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input id="dbgDividendMonth" type="month" required class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                        <input id="dbgDividendProfit" type="number" min="0" step="0.01" required placeholder="মোট লভ্যাংশ (৳)" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    </div>
+                                    <div class="rounded-lg bg-white border p-3 text-xs text-slate-600">
+                                        <div>মোট শেয়ার: <strong id="dbgDividendTotalShares">0</strong></div>
+                                        <div>প্রতি শেয়ারে: <strong id="dbgDividendPerShare">৳0.00</strong></div>
+                                    </div>
+                                    <button class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg" type="submit">মাসিক লভ্যাংশ সেভ ও বণ্টন করুন</button>
+                                    <div id="dbgDividendStatusMsg" class="text-xs min-h-[18px]"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-800">প্রজেক্ট ইতিহাস</h3>
+                            <button type="button" onclick="printDBGProjectHistory()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs no-print">প্রিন্ট</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2 text-left">প্রজেক্ট</th><th class="p-2">ক্যাটাগরি</th><th class="p-2 text-right">মূলধন</th><th class="p-2">শুরু</th><th class="p-2">স্ট্যাটাস</th><th class="p-2 no-print">অ্যাকশন</th></tr></thead><tbody id="dbgProjectHistoryBody"></tbody></table></div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-800">মাসিক লভ্যাংশ বণ্টন ইতিহাস</h3>
+                            <button type="button" onclick="printDBGDividendHistory()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs no-print">ইতিহাস প্রিন্ট</button>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2 text-left">প্রজেক্ট</th><th class="p-2">মাস</th><th class="p-2 text-right">মোট লভ্যাংশ</th><th class="p-2 text-right">শেয়ার</th><th class="p-2 text-right">প্রতি শেয়ার</th><th class="p-2 text-center">সদস্য</th><th class="p-2 no-print">ডিলিট</th></tr></thead><tbody id="dbgDividendHistoryBody"></tbody></table></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -2790,6 +2852,8 @@
             deposits: 'dbg_deposits',
             investments: 'dbg_investments',
             investorProfiles: 'dbg_investor_profiles',
+            investmentProjects: 'dbg_investment_projects',
+            projectDividends: 'dbg_project_dividends',
             accounts: 'dbg_accounts'
         ,
             notices: 'dbg_notices'};
@@ -2815,6 +2879,8 @@
             deposits: readJSON(LOCAL_KEYS.deposits, []),
             investments: readJSON(LOCAL_KEYS.investments, []),
             investorProfiles: readJSON(LOCAL_KEYS.investorProfiles, []),
+            investmentProjects: readJSON(LOCAL_KEYS.investmentProjects, []),
+            projectDividends: readJSON(LOCAL_KEYS.projectDividends, []),
             accounts: readJSON(LOCAL_KEYS.accounts, []),
             notices: readJSON(LOCAL_KEYS.notices, [])
         };
@@ -2904,6 +2970,8 @@
             localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
             localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
             localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
+            localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects || []));
+            localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends || []));
             localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
         }
 
@@ -2971,6 +3039,7 @@
             document.getElementById('printDate').innerText = formatDateDDMMYY(todayStr);
 
             renderAll();
+            initDBGPortfolioModule();
             resetInvestorForm();
             lucide.createIcons();
             // Firebase/Local storage status is handled by the authentication sync module.
@@ -3006,6 +3075,7 @@
             renderInvestments();
             renderInvestorProfiles();
             renderSelectedInvestorProfile();
+            renderDBGPortfolio();
             renderAccounts();
             populateMemberDropdowns();
             renderIndividualProfile();
@@ -3388,6 +3458,10 @@ function changeMemPage(direction) {
                             <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                                 <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                                 <span class="text-xl font-bold text-rose-700">৳${dbgGetMemberCumulativeArrears(member, new Date().toISOString().slice(0, 7)).toLocaleString()}</span>
+                            </div>
+                            <div class="bg-emerald-50 p-3 rounded-lg text-center border border-emerald-100 min-w-[120px]">
+                                <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                                <span class="text-xl font-bold text-emerald-700">৳${dbgGetMemberTotalDividend(member.code).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -4572,6 +4646,61 @@ function changeDepPage(direction) {
             lucide.createIcons();
         }
 
+        // ================= DBG PROJECT + DIVIDEND PORTFOLIO =================
+        function dbgMoney(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+        function dbgProjectList(){ return Array.isArray(db.investmentProjects) ? db.investmentProjects : []; }
+        function dbgDividendList(){ return Array.isArray(db.projectDividends) ? db.projectDividends : []; }
+        function dbgGetMemberTotalDividend(memberCode){
+            const code=String(memberCode||'').trim().toUpperCase(); let total=0;
+            dbgDividendList().forEach(entry=>{
+                const d=(entry.distributions||[]).find(x=>String(x.memberCode||'').toUpperCase()===code);
+                if(d) total += Number(d.amount||0);
+            });
+            return Math.round((total+Number.EPSILON)*100)/100;
+        }
+        function dbgTotalShares(){ return db.members.reduce((sum,m)=>sum+Math.max(0,parseInt(m.units,10)||0),0); }
+        function dbgProjectName(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); return p?.name||'—'; }
+        function dbgSetMsg(id,msg,error=false){ const el=document.getElementById(id); if(el){el.textContent=msg||'';el.className=`text-xs min-h-[18px] ${error?'text-rose-600':'text-slate-500'}`;} }
+        function dbgRenderDividendProjectSelect(){
+            const sel=document.getElementById('dbgDividendProject'); if(!sel)return; const current=sel.value;
+            sel.innerHTML='<option value="">প্রজেক্ট নির্বাচন করুন</option>'+dbgProjectList().map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}${p.status==='সম্পন্ন'?' (সম্পন্ন)':''}</option>`).join('');
+            if(current && dbgProjectList().some(p=>String(p.id)===current))sel.value=current;
+        }
+        function dbgRenderProjectHistory(){
+            const body=document.getElementById('dbgProjectHistoryBody'); if(!body)return;
+            const list=dbgProjectList().slice().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+            body.innerHTML=list.length?list.map(p=>`<tr class="border-b"><td class="p-2 font-bold text-indigo-800">${escapeHtml(p.name||'')}</td><td class="p-2">${escapeHtml(p.category||'—')}</td><td class="p-2 text-right font-bold">৳${dbgMoney(p.capital)}</td><td class="p-2 text-center">${escapeHtml(p.startDate?formatDateDDMMYY(p.startDate):'—')}</td><td class="p-2 text-center">${escapeHtml(p.status||'চলমান')}</td><td class="p-2 text-center no-print"><button onclick="dbgEditProject('${escapeHtml(p.id)}')" class="text-indigo-600 mr-2">এডিট</button><button onclick="dbgDeleteProject('${escapeHtml(p.id)}')" class="text-rose-600">ডিলিট</button></td></tr>`).join(''):'<tr><td colspan="6" class="p-6 text-center text-slate-400">কোনো প্রজেক্ট নেই।</td></tr>';
+        }
+        function dbgRenderDividendHistory(){
+            const body=document.getElementById('dbgDividendHistoryBody'); if(!body)return;
+            const list=dbgDividendList().slice().sort((a,b)=>String(b.month||'').localeCompare(String(a.month||''))||Number(b.createdAt||0)-Number(a.createdAt||0));
+            body.innerHTML=list.length?list.map(e=>`<tr class="border-b"><td class="p-2 font-bold">${escapeHtml(dbgProjectName(e.projectId))}</td><td class="p-2 text-center">${escapeHtml(e.month||'')}</td><td class="p-2 text-right font-bold text-emerald-700">৳${dbgMoney(e.totalProfit)}</td><td class="p-2 text-right">${dbgMoney(e.totalShares)}</td><td class="p-2 text-right">৳${dbgMoney(e.perShare)}</td><td class="p-2 text-center">${(e.distributions||[]).length}</td><td class="p-2 text-center no-print"><button onclick="dbgDeleteDividend('${escapeHtml(e.id)}')" class="text-rose-600 font-bold">ডিলিট</button></td></tr>`).join(''):'<tr><td colspan="7" class="p-6 text-center text-slate-400">কোনো মাসিক লভ্যাংশ এন্ট্রি নেই।</td></tr>';
+        }
+        function dbgUpdateDividendPreview(){
+            const total=dbgTotalShares(), profit=Number(document.getElementById('dbgDividendProfit')?.value||0); const per=total>0?profit/total:0;
+            const a=document.getElementById('dbgDividendTotalShares'),b=document.getElementById('dbgDividendPerShare'); if(a)a.textContent=dbgMoney(total);if(b)b.textContent='৳'+dbgMoney(per);
+        }
+        async function dbgPersistPortfolio(){
+            localStorage.setItem(LOCAL_KEYS.investmentProjects,JSON.stringify(dbgProjectList())); localStorage.setItem(LOCAL_KEYS.projectDividends,JSON.stringify(dbgDividendList()));
+            if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
+            await set(ref(firebaseDB,'dbg_erp/investmentProjects'),dbgProjectList());
+            await set(ref(firebaseDB,'dbg_erp/projectDividends'),dbgDividendList());
+        }
+        window.dbgEditProject=function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; document.getElementById('dbgProjectEditId').value=p.id;document.getElementById('dbgProjectName').value=p.name||'';document.getElementById('dbgProjectCategory').value=p.category||'';document.getElementById('dbgProjectCapital').value=p.capital||0;document.getElementById('dbgProjectStartDate').value=p.startDate||'';document.getElementById('dbgProjectStatus').value=p.status||'চলমান';document.getElementById('dbgProjectNotes').value=p.notes||'';document.getElementById('dbgProjectCancelEdit').classList.remove('hidden');document.getElementById('dbgProjectName').focus(); };
+        window.dbgDeleteProject=async function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; if(dbgDividendList().some(x=>String(x.projectId)===String(id))){alert('এই প্রজেক্টের মাসিক লভ্যাংশ ইতিহাস আছে। আগে সেই ইতিহাস ডিলিট করুন।');return;} if(!confirm(`“${p.name}” প্রজেক্টটি ডিলিট করতে চান?`))return; const old=db.investmentProjects; db.investmentProjects=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio();renderAll();dbgSetMsg('dbgProjectStatusMsg','প্রজেক্ট ডিলিট হয়েছে।');}catch(e){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',e.message||'ডিলিট ব্যর্থ',true);} };
+        window.dbgDeleteDividend=async function(id){ const old=db.projectDividends; const item=old.find(x=>String(x.id)===String(id)); if(!item)return; if(!confirm(`“${dbgProjectName(item.projectId)} / ${item.month}” লভ্যাংশ এন্ট্রি ডিলিট করতে চান?\nডিলিট করলে সদস্যদের মোট লভ্যাংশ স্বয়ংক্রিয়ভাবে কমে যাবে।`))return; db.projectDividends=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio();renderAll();}catch(e){db.projectDividends=old;renderAll();alert(e.message||'লভ্যাংশ ডিলিট ব্যর্থ হয়েছে।');} };
+        function dbgResetProjectForm(){document.getElementById('dbgProjectForm')?.reset();document.getElementById('dbgProjectEditId').value='';document.getElementById('dbgProjectCancelEdit')?.classList.add('hidden');document.getElementById('dbgProjectStatus').value='চলমান';}
+        function initDBGPortfolioModule(){
+            if(window.dbgPortfolioInitialized)return;window.dbgPortfolioInitialized=true;
+            const pf=document.getElementById('dbgProjectForm');pf?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgProjectStatusMsg','শুধুমাত্র Admin প্রজেক্ট পরিবর্তন করতে পারবেন।',true);return;}const id=document.getElementById('dbgProjectEditId').value.trim(),now=Date.now();const old=dbgProjectList();const rec={id:id||`PRJ-${now}-${Math.random().toString(36).slice(2,7)}`,name:document.getElementById('dbgProjectName').value.trim(),category:document.getElementById('dbgProjectCategory').value.trim(),capital:Number(document.getElementById('dbgProjectCapital').value||0),startDate:document.getElementById('dbgProjectStartDate').value||'',status:document.getElementById('dbgProjectStatus').value,notes:document.getElementById('dbgProjectNotes').value.trim(),createdAt:id?(old.find(x=>String(x.id)===id)?.createdAt||now):now,updatedAt:now};if(!rec.name){dbgSetMsg('dbgProjectStatusMsg','প্রজেক্টের নাম দিন।',true);return;}db.investmentProjects=id?old.map(x=>String(x.id)===id?rec:x):[...old,rec];try{await dbgPersistPortfolio();dbgResetProjectForm();renderAll();dbgSetMsg('dbgProjectStatusMsg',id?'প্রজেক্ট আপডেট হয়েছে।':'নতুন প্রজেক্ট যোগ হয়েছে।');}catch(err){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',err.message||'সেভ ব্যর্থ হয়েছে।',true);}});
+            document.getElementById('dbgProjectCancelEdit')?.addEventListener('click',dbgResetProjectForm);
+            document.getElementById('dbgDividendProfit')?.addEventListener('input',dbgUpdateDividendPreview);
+            document.getElementById('dbgDividendForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgDividendStatusMsg','শুধুমাত্র Admin লভ্যাংশ পরিবর্তন করতে পারবেন।',true);return;}const projectId=document.getElementById('dbgDividendProject').value,month=document.getElementById('dbgDividendMonth').value,profit=Number(document.getElementById('dbgDividendProfit').value||0);if(!projectId||!month||profit<0){dbgSetMsg('dbgDividendStatusMsg','প্রজেক্ট, মাস ও মোট লভ্যাংশ সঠিকভাবে দিন।',true);return;}const shares=dbgTotalShares();if(shares<=0){dbgSetMsg('dbgDividendStatusMsg','কোনো বৈধ ডিপোজিট শেয়ার পাওয়া যায়নি।',true);return;}const old=db.projectDividends;const id=`${projectId}__${month}`;const prev=old.find(x=>String(x.id)===id);const distributions=db.members.map(m=>{const units=Math.max(0,parseInt(m.units,10)||0);return {memberCode:m.code,memberName:m.name||'',units,amount:Math.round((profit*units/shares+Number.EPSILON)*100)/100};}).filter(x=>x.units>0);const rec={id,projectId,month,totalProfit:profit,totalShares:shares,perShare:profit/shares,distributions,createdAt:prev?.createdAt||Date.now(),updatedAt:Date.now()};db.projectDividends=prev?old.map(x=>String(x.id)===id?rec:x):[...old,rec];try{await dbgPersistPortfolio();renderAll();document.getElementById('dbgDividendForm').reset();dbgUpdateDividendPreview();dbgSetMsg('dbgDividendStatusMsg',prev?'মাসিক লভ্যাংশ আপডেট হয়েছে।':'মাসিক লভ্যাংশ সফলভাবে বণ্টন হয়েছে।');}catch(err){db.projectDividends=old;renderAll();dbgSetMsg('dbgDividendStatusMsg',err.message||'লভ্যাংশ সেভ ব্যর্থ হয়েছে।',true);}});
+        }
+        function printDBGProjectHistory(){const list=dbgProjectList();const root=document.createElement('div');root.id='dbg-print-root';root.setAttribute('data-print-title','DBG Project History');root.innerHTML=`<div class="dbg-print-company-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>প্রজেক্ট ইতিহাস</p></div><table style="width:100%;border-collapse:collapse"><thead><tr><th>প্রজেক্ট</th><th>ক্যাটাগরি</th><th>মূলধন</th><th>শুরু</th><th>স্ট্যাটাস</th></tr></thead><tbody>${list.map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category||'—')}</td><td>৳${dbgMoney(p.capital)}</td><td>${escapeHtml(p.startDate||'—')}</td><td>${escapeHtml(p.status||'')}</td></tr>`).join('')}</tbody></table>`;document.body.appendChild(root);document.body.classList.add('dbg-printing');setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('dbg-printing');root.remove();},300);},50);}
+        function printDBGDividendHistory(){const list=dbgDividendList();const root=document.createElement('div');root.id='dbg-print-root';root.setAttribute('data-print-title','DBG Dividend History');root.innerHTML=`<div class="dbg-print-company-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>মাসিক লভ্যাংশ বণ্টন ইতিহাস</p></div>${list.map(e=>`<div style="margin-bottom:18px"><h3>${escapeHtml(dbgProjectName(e.projectId))} — ${escapeHtml(e.month)} | মোট ৳${dbgMoney(e.totalProfit)} | প্রতি শেয়ার ৳${dbgMoney(e.perShare)}</h3><table style="width:100%;border-collapse:collapse"><thead><tr><th>Member ID</th><th>সদস্যের নাম</th><th>ডিপোজিট শেয়ার</th><th>প্রাপ্য লভ্যাংশ</th></tr></thead><tbody>${(e.distributions||[]).map(d=>`<tr><td>${escapeHtml(d.memberCode)}</td><td>${escapeHtml(d.memberName)}</td><td>${dbgMoney(d.units)}</td><td>৳${dbgMoney(d.amount)}</td></tr>`).join('')}</tbody></table></div>`).join('')}`;document.body.appendChild(root);document.body.classList.add('dbg-printing');setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('dbg-printing');root.remove();},300);},50);}
+        function renderDBGPortfolio(){dbgRenderDividendProjectSelect();dbgRenderProjectHistory();dbgRenderDividendHistory();dbgUpdateDividendPreview();}
+
         // ACCOUNTS LOGIC
         document.addEventListener('DOMContentLoaded', () => { if (!document.querySelector('#accItems .account-item-row')) resetAccountItems(); });
         function escapeVoucherHtml(value) {
@@ -4995,7 +5124,10 @@ async function restoreFromDriveBackup() {
             deposits: payload.db.deposits || [],
             investments: payload.db.investments || [],
             investorProfiles: payload.db.investorProfiles || [],
-            accounts: payload.db.accounts || []
+            investmentProjects: payload.db.investmentProjects || [],
+            projectDividends: payload.db.projectDividends || [],
+            accounts: payload.db.accounts || [],
+            notices: payload.db.notices || []
         };
         saveLocalData();
         if(db.logo && document.getElementById('groupLogoImg')) document.getElementById('groupLogoImg').src=db.logo;
@@ -5407,6 +5539,8 @@ function buildFirebasePayload() {
         deposits: Array.isArray(db.deposits) ? db.deposits : [],
         investments: Array.isArray(db.investments) ? db.investments : [],
         investorProfiles: Array.isArray(db.investorProfiles) ? db.investorProfiles : [],
+        investmentProjects: Array.isArray(db.investmentProjects) ? db.investmentProjects : [],
+        projectDividends: Array.isArray(db.projectDividends) ? db.projectDividends : [],
         accounts: Array.isArray(db.accounts) ? db.accounts : [],
         notices: Array.isArray(db.notices) ? db.notices : [],
         updatedAt: Date.now()
@@ -5620,6 +5754,8 @@ async function applyFirebasePayload(payload) {
         else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
+        if (Array.isArray(payload.investmentProjects)) db.investmentProjects = payload.investmentProjects;
+        if (Array.isArray(payload.projectDividends)) db.projectDividends = payload.projectDividends;
         // Firebase push() stores accounts as an object keyed by push IDs.
         // Normalize both legacy arrays and push-keyed objects so Admin Dashboard
         // receives Accountant income/expense entries without changing any data.
@@ -5634,6 +5770,8 @@ async function applyFirebasePayload(payload) {
         localStorage.setItem(LOCAL_KEYS.deposits, JSON.stringify(db.deposits));
         localStorage.setItem(LOCAL_KEYS.investments, JSON.stringify(db.investments));
         localStorage.setItem(LOCAL_KEYS.investorProfiles, JSON.stringify(db.investorProfiles));
+        localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects || []));
+        localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends || []));
         localStorage.setItem(LOCAL_KEYS.accounts, JSON.stringify(db.accounts));
         if (db.logo) {
             const logoEl = document.getElementById('groupLogoImg');
@@ -5796,6 +5934,14 @@ async function initializeFirebaseERPData(role) {
         });
         dbgFirebaseAdminDepositUnsub = adminDepositUnsub;
 
+        const portfolioProjectUnsub = onValue(ref(firebaseDB,'dbg_erp/investmentProjects'), snapshot => {
+            if(dbgFirebaseWriteInProgress) return; const v=snapshot.exists()?snapshot.val():[]; db.investmentProjects=Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); localStorage.setItem(LOCAL_KEYS.investmentProjects,JSON.stringify(db.investmentProjects)); renderAll();
+        });
+        const portfolioDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), snapshot => {
+            if(dbgFirebaseWriteInProgress) return; const v=snapshot.exists()?snapshot.val():[]; db.projectDividends=Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); localStorage.setItem(LOCAL_KEYS.projectDividends,JSON.stringify(db.projectDividends)); renderAll();
+        });
+        dbgFirebaseAccountantUnsubs.push(portfolioProjectUnsub, portfolioDividendUnsub);
+
         const snap = await get(dataRef);
         const remote = snap.exists() ? (snap.val() || {}) : {};
 
@@ -5839,6 +5985,20 @@ async function initializeFirebaseERPData(role) {
         if (latestSnap.exists()) {
             await applyFirebasePayload(latestSnap.val(), { accountantOnly: false });
         }
+        // Separate project/dividend branches are loaded independently so they never
+        // participate in the legacy whole-tree member/deposit sync.
+        try {
+            const [ps, ds2] = await Promise.all([
+                get(ref(firebaseDB,'dbg_erp/investmentProjects')),
+                get(ref(firebaseDB,'dbg_erp/projectDividends'))
+            ]);
+            const asList2 = v => Array.isArray(v) ? v.filter(Boolean) : (v && typeof v==='object' ? Object.values(v).filter(Boolean) : []);
+            db.investmentProjects = ps.exists() ? asList2(ps.val()) : (db.investmentProjects || []);
+            db.projectDividends = ds2.exists() ? asList2(ds2.val()) : (db.projectDividends || []);
+            localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
+            localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
+            renderAll();
+        } catch(e) { console.warn('DBG project/dividend branch load failed:',e); }
 
         dbgFirebaseSyncReady = true;
         window.dbgFirebaseSyncReady = true;
@@ -7114,7 +7274,7 @@ function startMemberPortalClock() {
     dbgMemberPortalClockTimer = setInterval(updateMemberPortalDateTime, 1000);
 }
 
-function buildMemberPortalProfileHtml(member, memberDeposits) {
+function buildMemberPortalProfileHtml(member, memberDeposits, memberTotalDividend = 0) {
     const totalDepPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
     const totalDreamProsperityPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
     const totalDreamDevelopmentPaid = memberDeposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
@@ -7261,6 +7421,7 @@ if (outstanding > 0) {
                 <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
                 <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
                 <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'মোট বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
+                <div class="dbg-member-stat-card stat-green"><div class="dbg-member-stat-icon">৳</div><div><span>মোট লভ্যাংশ</span><strong>৳${Number(memberTotalDividend||0).toLocaleString()}</strong></div></div>
             </div>
 
             <div class="dbg-member-progress-card">
@@ -7305,6 +7466,10 @@ if (outstanding > 0) {
                     <div class="bg-rose-50 p-3 rounded-lg text-center border border-rose-100 min-w-[120px]">
                         <span class="text-xs text-gray-500 block">মোট বকেয়া</span>
                         <span class="text-xl font-bold text-rose-700">৳${outstanding.toLocaleString()}</span>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-lg text-center border border-emerald-100 min-w-[120px]">
+                        <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
+                        <span class="text-xl font-bold text-emerald-700">৳${Number(memberTotalDividend||0).toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -7446,11 +7611,17 @@ async function loadMemberPortalData(user) {
 
         // IMPORTANT: Member Profile/Deposit must not fail just because the optional
         // Notice Board read is unavailable. Load the original profile data first.
-        const [ms,ds]=await Promise.all([get(memberQ),get(depQ)]);
+        const [ms,ds,divSnap]=await Promise.all([
+            get(memberQ),
+            get(depQ),
+            get(ref(firebaseDB,'dbg_erp/projectDividends')).catch(()=>null)
+        ]);
         const membersObj=ms.exists()?ms.val():{};
         const depositsObj=ds.exists()?ds.val():{};
         const member=Object.values(membersObj)[0];
         const deposits=Object.values(depositsObj);
+        const dividendEntries=divSnap?.exists()?Object.values(divSnap.val()||{}):[];
+        const memberTotalDividend=Math.round((dividendEntries.reduce((sum,e)=>{ const d=(e.distributions||[]).find(x=>String(x.memberCode||'').toUpperCase()===memberId); return sum+Number(d?.amount||0); },0)+Number.EPSILON)*100)/100;
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
 
         const welcomeBox=document.getElementById('dbgMemberWelcome');
@@ -7479,7 +7650,7 @@ async function loadMemberPortalData(user) {
             console.warn('DBG Notice Board read unavailable for Member:', noticeError?.code || noticeError?.message || noticeError);
         }
 
-        content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits);
+        content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits,memberTotalDividend);
         startMemberPortalClock();
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
