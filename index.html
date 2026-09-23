@@ -8335,8 +8335,7 @@ async function dbgAddQardRepayment(id){
   await dbgLoadQardAdmin(true);
   alert(`৳${dbgQardMoney(amount)} সফলভাবে রিসিভ এন্ট্রি হয়েছে।
 মাস: ${month}`);
- }catch(e){ console.error('DBG Qard repayment save error:',e); alert('টাকা রিসিভ এন্ট্রি করা যায়নি।
-কারণ: '+(e?.message||e)); }
+ }catch(e){ console.error('DBG Qard repayment save error:',e); alert('টাকা রিসিভ এন্ট্রি করা যায়নি।\nকারণ: '+(e?.message||e)); }
 }
 function dbgRenderQardAdminApplications(apps){
  const listEl=document.getElementById('dbgQardAdminList'); if(!listEl) return;
