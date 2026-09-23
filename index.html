@@ -4699,31 +4699,31 @@ function changeDepPage(direction) {
             const total=dbgTotalShares(), profit=Number(document.getElementById('dbgDividendProfit')?.value||0); const per=total>0?profit/total:0;
             const a=document.getElementById('dbgDividendTotalShares'),b=document.getElementById('dbgDividendPerShare'); if(a)a.textContent=dbgMoney(total);if(b)b.textContent='৳'+dbgMoney(per);
         }
-        async function dbgPersistPortfolio(syncMemberDividends=false, changedBranch='both'){
+        async function dbgPersistPortfolio(syncMemberDividends=false, changedBranch='both', changedIndex=null, changedItem=null){
             if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
             if(typeof window.dbgSavePortfolioToFirebase !== 'function') throw new Error('Firebase Portfolio Sync এখনো প্রস্তুত হয়নি। কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
 
             // Member totals only change when the dividend list changes.
-            // Project create/edit/delete therefore avoids rebuilding and writing
-            // the full members array, making those actions much faster.
+            // Keep the in-memory member data synchronized, but the Firebase bridge
+            // writes only the small totalDividend fields instead of full member records.
             const memberPayload = syncMemberDividends
                 ? (db.members = dbgBuildMemberDividendSyncedList(db.members, dbgDividendList()))
                 : undefined;
 
             // Cloud-first: localStorage is updated ONLY after Firebase confirms
             // the portfolio write.
-            await window.dbgSavePortfolioToFirebase(dbgProjectList(),dbgDividendList(),memberPayload,changedBranch);
+            await window.dbgSavePortfolioToFirebase(dbgProjectList(),dbgDividendList(),memberPayload,changedBranch,changedIndex,changedItem);
         }
         window.dbgEditProject=function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; document.getElementById('dbgProjectEditId').value=p.id;document.getElementById('dbgProjectName').value=p.name||'';document.getElementById('dbgProjectCategory').value=p.category||'';document.getElementById('dbgProjectCapital').value=p.capital||0;document.getElementById('dbgProjectStartDate').value=p.startDate||'';document.getElementById('dbgProjectStatus').value=p.status||'চলমান';document.getElementById('dbgProjectNotes').value=p.notes||'';document.getElementById('dbgProjectCancelEdit').classList.remove('hidden');document.getElementById('dbgProjectName').focus(); };
         window.dbgDeleteProject=async function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; if(dbgDividendList().some(x=>String(x.projectId)===String(id))){alert('এই প্রজেক্টের মাসিক লভ্যাংশ ইতিহাস আছে। আগে সেই ইতিহাস ডিলিট করুন।');return;} if(!confirm(`“${p.name}” প্রজেক্টটি ডিলিট করতে চান?`))return; const old=db.investmentProjects; db.investmentProjects=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio(false,'projects');renderAll();dbgSetMsg('dbgProjectStatusMsg','প্রজেক্ট ডিলিট হয়েছে।');}catch(e){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',e.message||'ডিলিট ব্যর্থ',true);} };
-        window.dbgDeleteDividend=async function(id){ const old=db.projectDividends; const oldMembers=db.members.map(m=>({...m})); const item=old.find(x=>String(x.id)===String(id)); if(!item)return; if(!confirm(`“${dbgProjectName(item.projectId)} / ${item.month}” লভ্যাংশ এন্ট্রি ডিলিট করতে চান?\nডিলিট করলে সদস্যদের মোট লভ্যাংশ স্বয়ংক্রিয়ভাবে কমে যাবে।`))return; db.projectDividends=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio(true,'dividends');renderAll();}catch(e){db.projectDividends=old;db.members=oldMembers;renderAll();alert(e.message||'লভ্যাংশ ডিলিট ব্যর্থ হয়েছে।');} };
+        window.dbgDeleteDividend=async function(id){ const old=db.projectDividends; const oldMembers=db.members.map(m=>({...m})); const item=old.find(x=>String(x.id)===String(id)); const changedIndex=old.findIndex(x=>String(x.id)===String(id)); if(!item)return; if(!confirm(`“${dbgProjectName(item.projectId)} / ${item.month}” লভ্যাংশ এন্ট্রি ডিলিট করতে চান?\nডিলিট করলে সদস্যদের মোট লভ্যাংশ স্বয়ংক্রিয়ভাবে কমে যাবে।`))return; db.projectDividends=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio(true,'dividends',changedIndex,null);renderAll();}catch(e){db.projectDividends=old;db.members=oldMembers;renderAll();alert(e.message||'লভ্যাংশ ডিলিট ব্যর্থ হয়েছে।');} };
         function dbgResetProjectForm(){document.getElementById('dbgProjectForm')?.reset();document.getElementById('dbgProjectEditId').value='';document.getElementById('dbgProjectCancelEdit')?.classList.add('hidden');document.getElementById('dbgProjectStatus').value='চলমান';}
         function initDBGPortfolioModule(){
             if(window.dbgPortfolioInitialized)return;window.dbgPortfolioInitialized=true;
             const pf=document.getElementById('dbgProjectForm');pf?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgProjectStatusMsg','শুধুমাত্র Admin প্রজেক্ট পরিবর্তন করতে পারবেন।',true);return;}const id=document.getElementById('dbgProjectEditId').value.trim(),now=Date.now();const old=dbgProjectList();const rec={id:id||`PRJ-${now}-${Math.random().toString(36).slice(2,7)}`,name:document.getElementById('dbgProjectName').value.trim(),category:document.getElementById('dbgProjectCategory').value.trim(),capital:Number(document.getElementById('dbgProjectCapital').value||0),startDate:document.getElementById('dbgProjectStartDate').value||'',status:document.getElementById('dbgProjectStatus').value,notes:document.getElementById('dbgProjectNotes').value.trim(),createdAt:id?(old.find(x=>String(x.id)===id)?.createdAt||now):now,updatedAt:now};if(!rec.name){dbgSetMsg('dbgProjectStatusMsg','প্রজেক্টের নাম দিন।',true);return;}db.investmentProjects=id?old.map(x=>String(x.id)===id?rec:x):[...old,rec];try{await dbgPersistPortfolio(false,'projects');dbgResetProjectForm();renderAll();dbgSetMsg('dbgProjectStatusMsg',id?'প্রজেক্ট আপডেট হয়েছে।':'নতুন প্রজেক্ট যোগ হয়েছে।');}catch(err){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',err.message||'সেভ ব্যর্থ হয়েছে।',true);}});
             document.getElementById('dbgProjectCancelEdit')?.addEventListener('click',dbgResetProjectForm);
             document.getElementById('dbgDividendProfit')?.addEventListener('input',dbgUpdateDividendPreview);
-            document.getElementById('dbgDividendForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgDividendStatusMsg','শুধুমাত্র Admin লভ্যাংশ পরিবর্তন করতে পারবেন।',true);return;}const projectId=document.getElementById('dbgDividendProject').value,month=document.getElementById('dbgDividendMonth').value,profit=Number(document.getElementById('dbgDividendProfit').value||0);if(!projectId||!month||profit<0){dbgSetMsg('dbgDividendStatusMsg','প্রজেক্ট, মাস ও মোট লভ্যাংশ সঠিকভাবে দিন।',true);return;}const shares=dbgTotalShares();if(shares<=0){dbgSetMsg('dbgDividendStatusMsg','কোনো বৈধ ডিপোজিট শেয়ার পাওয়া যায়নি।',true);return;}const old=db.projectDividends;const oldMembers=db.members.map(m=>({...m}));const id=`${projectId}__${month}`;const prev=old.find(x=>String(x.id)===id);const distributions=db.members.map(m=>{const units=Math.max(0,parseInt(m.units,10)||0);return {memberCode:m.code,memberName:m.name||'',units,amount:Math.round((profit*units/shares+Number.EPSILON)*100)/100};}).filter(x=>x.units>0);const rec={id,projectId,month,totalProfit:profit,totalShares:shares,perShare:profit/shares,distributions,createdAt:prev?.createdAt||Date.now(),updatedAt:Date.now()};db.projectDividends=prev?old.map(x=>String(x.id)===id?rec:x):[...old,rec];try{await dbgPersistPortfolio(true,'dividends');renderAll();document.getElementById('dbgDividendForm').reset();dbgUpdateDividendPreview();dbgSetMsg('dbgDividendStatusMsg',prev?'মাসিক লভ্যাংশ আপডেট হয়েছে।':'মাসিক লভ্যাংশ সফলভাবে বণ্টন হয়েছে।');}catch(err){db.projectDividends=old;db.members=oldMembers;renderAll();dbgSetMsg('dbgDividendStatusMsg',err.message||'লভ্যাংশ সেভ ব্যর্থ হয়েছে।',true);}});
+            document.getElementById('dbgDividendForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgDividendStatusMsg','শুধুমাত্র Admin লভ্যাংশ পরিবর্তন করতে পারবেন।',true);return;}const projectId=document.getElementById('dbgDividendProject').value,month=document.getElementById('dbgDividendMonth').value,profit=Number(document.getElementById('dbgDividendProfit').value||0);if(!projectId||!month||profit<0){dbgSetMsg('dbgDividendStatusMsg','প্রজেক্ট, মাস ও মোট লভ্যাংশ সঠিকভাবে দিন।',true);return;}const shares=dbgTotalShares();if(shares<=0){dbgSetMsg('dbgDividendStatusMsg','কোনো বৈধ ডিপোজিট শেয়ার পাওয়া যায়নি।',true);return;}const old=db.projectDividends;const oldMembers=db.members.map(m=>({...m}));const id=`${projectId}__${month}`;const prev=old.find(x=>String(x.id)===id);const distributions=db.members.map(m=>{const units=Math.max(0,parseInt(m.units,10)||0);return {memberCode:m.code,memberName:m.name||'',units,amount:Math.round((profit*units/shares+Number.EPSILON)*100)/100};}).filter(x=>x.units>0);const rec={id,projectId,month,totalProfit:profit,totalShares:shares,perShare:profit/shares,distributions,createdAt:prev?.createdAt||Date.now(),updatedAt:Date.now()};db.projectDividends=prev?old.map(x=>String(x.id)===id?rec:x):[...old,rec];const changedIndex=prev?old.findIndex(x=>String(x.id)===id):old.length;try{await dbgPersistPortfolio(true,'dividends',changedIndex,rec);renderAll();document.getElementById('dbgDividendForm').reset();dbgUpdateDividendPreview();dbgSetMsg('dbgDividendStatusMsg',prev?'মাসিক লভ্যাংশ আপডেট হয়েছে।':'মাসিক লভ্যাংশ সফলভাবে বণ্টন হয়েছে।');}catch(err){db.projectDividends=old;db.members=oldMembers;renderAll();dbgSetMsg('dbgDividendStatusMsg',err.message||'লভ্যাংশ সেভ ব্যর্থ হয়েছে।',true);}});
         }
         function printDBGProjectHistory(){const list=dbgProjectList();const root=document.createElement('div');root.id='dbg-print-root';root.setAttribute('data-print-title','DBG Project History');root.innerHTML=`<div class="dbg-print-company-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>প্রজেক্ট ইতিহাস</p></div><table style="width:100%;border-collapse:collapse"><thead><tr><th>প্রজেক্ট</th><th>ক্যাটাগরি</th><th>মূলধন</th><th>শুরু</th><th>স্ট্যাটাস</th></tr></thead><tbody>${list.map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category||'—')}</td><td>৳${dbgMoney(p.capital)}</td><td>${escapeHtml(p.startDate||'—')}</td><td>${escapeHtml(p.status||'')}</td></tr>`).join('')}</tbody></table>`;document.body.appendChild(root);document.body.classList.add('dbg-printing');setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('dbg-printing');root.remove();},300);},50);}
         function printDBGDividendHistory(){const list=dbgDividendList();const root=document.createElement('div');root.id='dbg-print-root';root.setAttribute('data-print-title','DBG Dividend History');root.innerHTML=`<div class="dbg-print-company-header"><h1>ড্রিমস বিজনেস গ্রুপ (DBG)</h1><p>মাসিক লভ্যাংশ বণ্টন ইতিহাস</p></div>${list.map(e=>`<div style="margin-bottom:18px"><h3>${escapeHtml(dbgProjectName(e.projectId))} — ${escapeHtml(e.month)} | মোট ৳${dbgMoney(e.totalProfit)} | প্রতি শেয়ার ৳${dbgMoney(e.perShare)}</h3><table style="width:100%;border-collapse:collapse"><thead><tr><th>Member ID</th><th>সদস্যের নাম</th><th>ডিপোজিট শেয়ার</th><th>প্রাপ্য লভ্যাংশ</th></tr></thead><tbody>${(e.distributions||[]).map(d=>`<tr><td>${escapeHtml(d.memberCode)}</td><td>${escapeHtml(d.memberName)}</td><td>${dbgMoney(d.units)}</td><td>৳${dbgMoney(d.amount)}</td></tr>`).join('')}</tbody></table></div>`).join('')}`;document.body.appendChild(root);document.body.classList.add('dbg-printing');setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('dbg-printing');root.remove();},300);},50);}
@@ -5272,10 +5272,8 @@ window.dbgFirebaseDB = firebaseDB;
 // Isolated Portfolio save bridge: waits for Firebase ERP initialization and
 // temporarily blocks the portfolio realtime listeners from overwriting the
 // just-saved project/dividend data while the write is in progress.
-window.dbgSavePortfolioToFirebase = async function(projects, dividends, members, changedBranch='both'){
+window.dbgSavePortfolioToFirebase = async function(projects, dividends, members, changedBranch='both', changedIndex=null, changedItem=null){
     // Portfolio save is isolated from the large ERP initialization process.
-    // Firebase Database is already initialized above; an authenticated Admin
-    // can therefore save this module even if another sync task is still loading.
     const currentUser = firebaseAuth.currentUser || window.dbgFirebaseUser;
     if (!currentUser) throw new Error('Firebase লগইন পাওয়া যায়নি। Admin হিসেবে আবার লগইন করুন।');
     if (!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
@@ -5283,19 +5281,30 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends, members,
     const projectList = Array.isArray(projects) ? projects : [];
     const dividendList = Array.isArray(dividends) ? dividends : [];
     const updates = {};
-    // Write only the branch that actually changed. This avoids sending the
-    // entire portfolio history for a small project/dividend edit or delete.
+
     if (changedBranch === 'projects' || changedBranch === 'both') {
         updates['dbg_erp/investmentProjects'] = projectList.length ? projectList : null;
     }
+
+    // For dividend changes, update only the changed history item instead of
+    // rewriting the complete (potentially large) dividend history array.
     if (changedBranch === 'dividends' || changedBranch === 'both') {
-        updates['dbg_erp/projectDividends'] = dividendList.length ? dividendList : null;
+        if (Number.isInteger(changedIndex) && changedIndex >= 0) {
+            updates[`dbg_erp/projectDividends/${changedIndex}`] = changedItem || null;
+        } else {
+            updates['dbg_erp/projectDividends'] = dividendList.length ? dividendList : null;
+        }
     }
-    // Only dividend changes need the synchronized member totals. Project-only
-    // operations must not rewrite the potentially large members array.
+
+    // Dividend changes synchronize only each member's totalDividend field.
+    // The full member records are never rewritten here.
     const hasMemberSync = Array.isArray(members);
     if (hasMemberSync) {
-        updates['dbg_erp/members'] = members.length ? members : null;
+        members.forEach((member, index) => {
+            if (member && typeof member === 'object') {
+                updates[`dbg_erp/members/${index}/totalDividend`] = Number(member.totalDividend || 0);
+            }
+        });
     }
 
     dbgFirebaseWriteInProgress = true;
@@ -5303,9 +5312,7 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends, members,
         await update(ref(firebaseDB), updates);
         db.investmentProjects = projectList.slice();
         db.projectDividends = dividendList.slice();
-        if (hasMemberSync) {
-            db.members = members.slice();
-        }
+        if (hasMemberSync) db.members = members.slice();
         localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
         localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
     } catch (err) {
