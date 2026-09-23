@@ -5266,41 +5266,10 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends){
 
     const projectList = Array.isArray(projects) ? projects : [];
     const dividendList = Array.isArray(dividends) ? dividends : [];
-
-    // Permission-safe Member Panel dividend sync:
-    // Members already have read access to /dbg_erp/members, while they may not
-    // have read access to the private /dbg_erp/projectDividends collection.
-    // Therefore Admin persists only each member's derived totalDividend on the
-    // member record. No dividend history is exposed to Member accounts.
-    const memberSnap = await get(ref(firebaseDB,'dbg_erp/members'));
-    const memberRaw = memberSnap.exists() ? memberSnap.val() : {};
-    const memberEntries = Array.isArray(memberRaw)
-        ? memberRaw.map((member, index) => ({ key: String(index), member: member || {} }))
-        : (memberRaw && typeof memberRaw === 'object'
-            ? Object.entries(memberRaw).map(([key, member]) => ({ key, member: member || {} }))
-            : []);
-    const dividendTotals = {};
-    dividendList.forEach(entry => {
-        (entry?.distributions || []).forEach(d => {
-            const code = String(d?.memberCode || '').trim().toUpperCase();
-            if (!code) return;
-            dividendTotals[code] = (dividendTotals[code] || 0) + Number(d?.amount || 0);
-        });
-    });
-    Object.keys(dividendTotals).forEach(code => {
-        dividendTotals[code] = Math.round((dividendTotals[code] + Number.EPSILON) * 100) / 100;
-    });
-
     const updates = {
         'dbg_erp/investmentProjects': projectList.length ? projectList : null,
         'dbg_erp/projectDividends': dividendList.length ? dividendList : null
     };
-    memberEntries.forEach(({key, member}) => {
-        const code = String(member?.code || '').trim().toUpperCase();
-        if (!code || !key) return;
-        // Write only the derived field; all existing member fields remain intact.
-        updates[`dbg_erp/members/${key}/totalDividend`] = dividendTotals[code] || 0;
-    });
 
     dbgFirebaseWriteInProgress = true;
     try {
@@ -6040,15 +6009,6 @@ async function initializeFirebaseERPData(role) {
                 : (v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
             localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
             renderAll();
-            // Backfill the derived member totals once so existing dividend history
-            // becomes available to Member Panel accounts without exposing history.
-            try {
-                if (isAdminRole(window.dbgFirebaseRole) && typeof window.dbgSavePortfolioToFirebase === 'function') {
-                    await window.dbgSavePortfolioToFirebase(db.investmentProjects, db.projectDividends);
-                }
-            } catch (syncErr) {
-                console.warn('DBG member dividend total backfill skipped:', syncErr?.code || syncErr?.message || syncErr);
-            }
         });
         dbgFirebaseAccountantUnsubs.push(portfolioProjectUnsub, portfolioDividendUnsub);
 
@@ -7357,7 +7317,6 @@ async function downloadMemberIdCardJPEG(member){
 
 let dbgMemberPortalClockTimer = null;
 let dbgMemberPortalDividendUnsub = null;
-let dbgMemberPortalMemberUnsub = null;
 let dbgMemberPortalDividendPollTimer = null;
 /* dbgIndividualProfileClockTimer is declared in the main classic script. */
 
@@ -7729,17 +7688,19 @@ async function loadMemberPortalData(user) {
 
         // IMPORTANT: Member Profile/Deposit must not fail just because the optional
         // Notice Board read is unavailable. Load the original profile data first.
-        const [ms,ds]=await Promise.all([
+        const [ms,ds,divSnap]=await Promise.all([
             get(memberQ),
-            get(depQ)
+            get(depQ),
+            get(ref(firebaseDB,'dbg_erp/projectDividends')).catch(()=>null)
         ]);
         const membersObj=ms.exists()?ms.val():{};
         const depositsObj=ds.exists()?ds.val():{};
         const member=Object.values(membersObj)[0];
         const deposits=Object.values(depositsObj);
-        // Permission-safe source: Member Panel reads only its own member record,
-        // never the private projectDividends history.
-        const memberTotalDividend=Math.round((Number(member?.totalDividend || 0)+Number.EPSILON)*100)/100;
+        const dividendEntries=divSnap?.exists()
+            ? (Array.isArray(divSnap.val()) ? divSnap.val().filter(Boolean) : Object.values(divSnap.val()||{}).filter(Boolean))
+            : [];
+        const memberTotalDividend=dbgCalculateMemberTotalDividendFromEntries(dividendEntries, memberId);
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
 
         const welcomeBox=document.getElementById('dbgMemberWelcome');
@@ -7772,15 +7733,21 @@ async function loadMemberPortalData(user) {
         startMemberPortalClock();
 
         // Keep both Member Portal "মোট লভ্যাংশ" cards synchronized in real time
-        // from the member record, which is already readable by the logged-in member.
-        if (typeof dbgMemberPortalMemberUnsub === 'function') {
-            try { dbgMemberPortalMemberUnsub(); } catch (_) {}
+        // with the same projectDividends source used by the Admin member profile.
+        if (typeof dbgMemberPortalDividendUnsub === 'function') {
+            try { dbgMemberPortalDividendUnsub(); } catch (_) {}
+        }
+        if (dbgMemberPortalDividendPollTimer) {
+            clearInterval(dbgMemberPortalDividendPollTimer);
+            dbgMemberPortalDividendPollTimer = null;
         }
         const refreshMemberPortalDividend = snapshot => {
             try {
-                const raw = snapshot?.exists() ? snapshot.val() : {};
-                const liveMember = Array.isArray(raw) ? raw.find(Boolean) : Object.values(raw || {})[0];
-                const liveTotal = Math.round((Number(liveMember?.totalDividend || 0)+Number.EPSILON)*100)/100;
+                const raw = snapshot?.exists() ? snapshot.val() : [];
+                const entries = Array.isArray(raw)
+                    ? raw.filter(Boolean)
+                    : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
+                const liveTotal = dbgCalculateMemberTotalDividendFromEntries(entries, memberId);
                 const dashboardEl = document.getElementById('dbgMemberPortalTotalDividendDashboard');
                 const profileEl = document.getElementById('dbgMemberPortalTotalDividendProfile');
                 if (dashboardEl) dashboardEl.textContent = '৳' + liveTotal.toLocaleString();
@@ -7789,7 +7756,17 @@ async function loadMemberPortalData(user) {
                 console.warn('DBG Member Portal dividend refresh failed:', liveErr);
             }
         };
-        dbgMemberPortalMemberUnsub = onValue(memberQ, refreshMemberPortalDividend);
+        dbgMemberPortalDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), refreshMemberPortalDividend);
+        // Fallback refresh for an already-open Member Portal, so its two cards
+        // always catch the same Firebase value shown by the Admin profile.
+        dbgMemberPortalDividendPollTimer = setInterval(async () => {
+            try {
+                const snap = await get(ref(firebaseDB,'dbg_erp/projectDividends'));
+                refreshMemberPortalDividend(snap);
+            } catch (pollErr) {
+                console.warn('DBG Member Portal dividend polling failed:', pollErr);
+            }
+        }, 5000);
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
