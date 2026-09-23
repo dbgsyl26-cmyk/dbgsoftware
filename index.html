@@ -4681,9 +4681,12 @@ function changeDepPage(direction) {
             const a=document.getElementById('dbgDividendTotalShares'),b=document.getElementById('dbgDividendPerShare'); if(a)a.textContent=dbgMoney(total);if(b)b.textContent='৳'+dbgMoney(per);
         }
         async function dbgPersistPortfolio(){
-            localStorage.setItem(LOCAL_KEYS.investmentProjects,JSON.stringify(dbgProjectList())); localStorage.setItem(LOCAL_KEYS.projectDividends,JSON.stringify(dbgDividendList()));
             if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
             if(typeof window.dbgSavePortfolioToFirebase !== 'function') throw new Error('Firebase Portfolio Sync এখনো প্রস্তুত হয়নি। কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
+
+            // Cloud-first: localStorage is updated ONLY after Firebase confirms
+            // the complete portfolio write. This prevents a failed save/delete
+            // from leaving stale local data that can return after refresh.
             await window.dbgSavePortfolioToFirebase(dbgProjectList(),dbgDividendList());
         }
         window.dbgEditProject=function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; document.getElementById('dbgProjectEditId').value=p.id;document.getElementById('dbgProjectName').value=p.name||'';document.getElementById('dbgProjectCategory').value=p.category||'';document.getElementById('dbgProjectCapital').value=p.capital||0;document.getElementById('dbgProjectStartDate').value=p.startDate||'';document.getElementById('dbgProjectStatus').value=p.status||'চলমান';document.getElementById('dbgProjectNotes').value=p.notes||'';document.getElementById('dbgProjectCancelEdit').classList.remove('hidden');document.getElementById('dbgProjectName').focus(); };
@@ -5252,10 +5255,28 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends){
         const detail = dbgFirebaseInitError?.code || dbgFirebaseInitError?.message || '';
         throw new Error(detail ? `Firebase Realtime সংযোগ প্রস্তুত হয়নি: ${detail}` : 'Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি। লগইন করার পর কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
     }
+
+    // Portfolio is stored in its own RTDB branches.  Use ONE atomic update so
+    // Save/Delete can never leave the two branches in a half-written state.
+    // Empty arrays are written as null so Firebase really removes the branch.
+    const projectList = Array.isArray(projects) ? projects : [];
+    const dividendList = Array.isArray(dividends) ? dividends : [];
+    const updates = {
+        'dbg_erp/investmentProjects': projectList.length ? projectList : null,
+        'dbg_erp/projectDividends': dividendList.length ? dividendList : null
+    };
+
     dbgFirebaseWriteInProgress = true;
     try {
-        await set(ref(firebaseDB,'dbg_erp/investmentProjects'), Array.isArray(projects) ? projects : []);
-        await set(ref(firebaseDB,'dbg_erp/projectDividends'), Array.isArray(dividends) ? dividends : []);
+        await update(ref(firebaseDB), updates);
+
+        // Keep this browser immediately consistent after a successful cloud
+        // commit.  The realtime listeners may have ignored their in-flight
+        // callback while dbgFirebaseWriteInProgress was true.
+        db.investmentProjects = projectList.slice();
+        db.projectDividends = dividendList.slice();
+        localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
+        localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
     } finally {
         dbgFirebaseWriteInProgress = false;
     }
@@ -5775,8 +5796,13 @@ async function applyFirebasePayload(payload) {
         else if (payload.deposits && typeof payload.deposits === 'object') db.deposits = Object.values(payload.deposits).filter(Boolean);
         if (Array.isArray(payload.investments)) db.investments = payload.investments;
         if (Array.isArray(payload.investorProfiles)) db.investorProfiles = payload.investorProfiles;
-        if (Array.isArray(payload.investmentProjects)) db.investmentProjects = payload.investmentProjects;
-        if (Array.isArray(payload.projectDividends)) db.projectDividends = payload.projectDividends;
+        if (Array.isArray(payload.investmentProjects)) db.investmentProjects = payload.investmentProjects.filter(Boolean);
+        else if (payload.investmentProjects && typeof payload.investmentProjects === 'object') db.investmentProjects = Object.values(payload.investmentProjects).filter(Boolean);
+        else if (payload.investmentProjects === null) db.investmentProjects = [];
+
+        if (Array.isArray(payload.projectDividends)) db.projectDividends = payload.projectDividends.filter(Boolean);
+        else if (payload.projectDividends && typeof payload.projectDividends === 'object') db.projectDividends = Object.values(payload.projectDividends).filter(Boolean);
+        else if (payload.projectDividends === null) db.projectDividends = [];
         // Firebase push() stores accounts as an object keyed by push IDs.
         // Normalize both legacy arrays and push-keyed objects so Admin Dashboard
         // receives Accountant income/expense entries without changing any data.
@@ -5956,10 +5982,22 @@ async function initializeFirebaseERPData(role) {
         dbgFirebaseAdminDepositUnsub = adminDepositUnsub;
 
         const portfolioProjectUnsub = onValue(ref(firebaseDB,'dbg_erp/investmentProjects'), snapshot => {
-            if(dbgFirebaseWriteInProgress) return; const v=snapshot.exists()?snapshot.val():[]; db.investmentProjects=Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); localStorage.setItem(LOCAL_KEYS.investmentProjects,JSON.stringify(db.investmentProjects)); renderAll();
+            if(dbgFirebaseWriteInProgress) return;
+            const v = snapshot.exists() ? snapshot.val() : [];
+            db.investmentProjects = Array.isArray(v)
+                ? v.filter(Boolean)
+                : (v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
+            localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
+            renderAll();
         });
         const portfolioDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), snapshot => {
-            if(dbgFirebaseWriteInProgress) return; const v=snapshot.exists()?snapshot.val():[]; db.projectDividends=Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); localStorage.setItem(LOCAL_KEYS.projectDividends,JSON.stringify(db.projectDividends)); renderAll();
+            if(dbgFirebaseWriteInProgress) return;
+            const v = snapshot.exists() ? snapshot.val() : [];
+            db.projectDividends = Array.isArray(v)
+                ? v.filter(Boolean)
+                : (v && typeof v === 'object' ? Object.values(v).filter(Boolean) : []);
+            localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
+            renderAll();
         });
         dbgFirebaseAccountantUnsubs.push(portfolioProjectUnsub, portfolioDividendUnsub);
 
@@ -6014,8 +6052,12 @@ async function initializeFirebaseERPData(role) {
                 get(ref(firebaseDB,'dbg_erp/projectDividends'))
             ]);
             const asList2 = v => Array.isArray(v) ? v.filter(Boolean) : (v && typeof v==='object' ? Object.values(v).filter(Boolean) : []);
-            db.investmentProjects = ps.exists() ? asList2(ps.val()) : (db.investmentProjects || []);
-            db.projectDividends = ds2.exists() ? asList2(ds2.val()) : (db.projectDividends || []);
+            // For the dedicated portfolio branches, a missing Firebase node
+            // means the cloud collection is empty. Do NOT fall back to stale
+            // localStorage here, otherwise a deliberately deleted project can
+            // return after a refresh.
+            db.investmentProjects = ps.exists() ? asList2(ps.val()) : [];
+            db.projectDividends = ds2.exists() ? asList2(ds2.val()) : [];
             localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
             localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
             renderAll();
