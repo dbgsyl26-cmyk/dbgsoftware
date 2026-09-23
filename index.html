@@ -4655,13 +4655,17 @@ function changeDepPage(direction) {
         function dbgMoney(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2}); }
         function dbgProjectList(){ return Array.isArray(db.investmentProjects) ? db.investmentProjects : []; }
         function dbgDividendList(){ return Array.isArray(db.projectDividends) ? db.projectDividends : []; }
-        function dbgGetMemberTotalDividend(memberCode){
+        // Single source-of-truth calculation used by both Admin and Member panels.
+        function dbgCalculateMemberTotalDividendFromEntries(entries, memberCode){
             const code=String(memberCode||'').trim().toUpperCase(); let total=0;
-            dbgDividendList().forEach(entry=>{
-                const d=(entry.distributions||[]).find(x=>String(x.memberCode||'').toUpperCase()===code);
-                if(d) total += Number(d.amount||0);
+            (Array.isArray(entries) ? entries : []).forEach(entry=>{
+                const d=(entry?.distributions||[]).find(x=>String(x?.memberCode||'').trim().toUpperCase()===code);
+                if(d) total += Number(d?.amount||0);
             });
             return Math.round((total+Number.EPSILON)*100)/100;
+        }
+        function dbgGetMemberTotalDividend(memberCode){
+            return dbgCalculateMemberTotalDividendFromEntries(dbgDividendList(), memberCode);
         }
         function dbgTotalShares(){ return db.members.reduce((sum,m)=>sum+Math.max(0,parseInt(m.units,10)||0),0); }
         function dbgProjectName(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); return p?.name||'—'; }
@@ -7313,6 +7317,7 @@ async function downloadMemberIdCardJPEG(member){
 
 let dbgMemberPortalClockTimer = null;
 let dbgMemberPortalDividendUnsub = null;
+let dbgMemberPortalDividendPollTimer = null;
 /* dbgIndividualProfileClockTimer is declared in the main classic script. */
 
 function updateMemberPortalDateTime() {
@@ -7692,8 +7697,10 @@ async function loadMemberPortalData(user) {
         const depositsObj=ds.exists()?ds.val():{};
         const member=Object.values(membersObj)[0];
         const deposits=Object.values(depositsObj);
-        const dividendEntries=divSnap?.exists()?Object.values(divSnap.val()||{}):[];
-        const memberTotalDividend=Math.round((dividendEntries.reduce((sum,e)=>{ const d=(e.distributions||[]).find(x=>String(x.memberCode||'').toUpperCase()===memberId); return sum+Number(d?.amount||0); },0)+Number.EPSILON)*100)/100;
+        const dividendEntries=divSnap?.exists()
+            ? (Array.isArray(divSnap.val()) ? divSnap.val().filter(Boolean) : Object.values(divSnap.val()||{}).filter(Boolean))
+            : [];
+        const memberTotalDividend=dbgCalculateMemberTotalDividendFromEntries(dividendEntries, memberId);
         if(!member) throw new Error(`Member ID ${memberId} অনুযায়ী Profile পাওয়া যায়নি।`);
 
         const welcomeBox=document.getElementById('dbgMemberWelcome');
@@ -7730,17 +7737,17 @@ async function loadMemberPortalData(user) {
         if (typeof dbgMemberPortalDividendUnsub === 'function') {
             try { dbgMemberPortalDividendUnsub(); } catch (_) {}
         }
-        dbgMemberPortalDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), snapshot => {
+        if (dbgMemberPortalDividendPollTimer) {
+            clearInterval(dbgMemberPortalDividendPollTimer);
+            dbgMemberPortalDividendPollTimer = null;
+        }
+        const refreshMemberPortalDividend = snapshot => {
             try {
-                const raw = snapshot.exists() ? snapshot.val() : [];
+                const raw = snapshot?.exists() ? snapshot.val() : [];
                 const entries = Array.isArray(raw)
                     ? raw.filter(Boolean)
                     : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
-                const code = String(memberId || '').trim().toUpperCase();
-                const liveTotal = Math.round((entries.reduce((sum,e) => {
-                    const d = (e.distributions || []).find(x => String(x.memberCode || '').trim().toUpperCase() === code);
-                    return sum + Number(d?.amount || 0);
-                },0) + Number.EPSILON) * 100) / 100;
+                const liveTotal = dbgCalculateMemberTotalDividendFromEntries(entries, memberId);
                 const dashboardEl = document.getElementById('dbgMemberPortalTotalDividendDashboard');
                 const profileEl = document.getElementById('dbgMemberPortalTotalDividendProfile');
                 if (dashboardEl) dashboardEl.textContent = '৳' + liveTotal.toLocaleString();
@@ -7748,7 +7755,18 @@ async function loadMemberPortalData(user) {
             } catch (liveErr) {
                 console.warn('DBG Member Portal dividend refresh failed:', liveErr);
             }
-        });
+        };
+        dbgMemberPortalDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), refreshMemberPortalDividend);
+        // Fallback refresh for an already-open Member Portal, so its two cards
+        // always catch the same Firebase value shown by the Admin profile.
+        dbgMemberPortalDividendPollTimer = setInterval(async () => {
+            try {
+                const snap = await get(ref(firebaseDB,'dbg_erp/projectDividends'));
+                refreshMemberPortalDividend(snap);
+            } catch (pollErr) {
+                console.warn('DBG Member Portal dividend polling failed:', pollErr);
+            }
+        }, 5000);
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
