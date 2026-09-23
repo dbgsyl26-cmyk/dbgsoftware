@@ -1310,6 +1310,10 @@
 }
 </style>
 
+<style id="dbg-qard-addon-style">
+#dbgMemberPortalRoot .dbg-member-portal-menu{grid-template-columns:repeat(5,minmax(0,1fr));}
+@media(max-width:700px){#dbgMemberPortalRoot .dbg-member-portal-menu{grid-template-columns:repeat(3,minmax(0,1fr));}}
+</style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
 
@@ -1523,6 +1527,9 @@
                 </button>
                 <button onclick="switchTab('investments')" id="tab-investments" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
                     <i data-lucide="trending-up" class="w-5 h-5"></i> ইনভেস্টমেন্ট ও লভ্যাংশ
+                </button>
+                <button onclick="switchTab('qard-hasan')" id="tab-qard-hasan" class="nav-tab dbg-admin-only w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="hand-coins" class="w-5 h-5"></i> কর্জে হাসানা
                 </button>
                 <button onclick="switchTab('accounts')" id="tab-accounts" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
                     <i data-lucide="receipt-text" class="w-5 h-5"></i> আয়-ব্যয় হিসাব
@@ -2379,6 +2386,30 @@
         </section>
 
         <!-- ================= 7. ACCOUNTS VIEW ================= -->
+        <section id="view-qard-hasan" class="tab-content hidden space-y-6">
+            <div class="rounded-3xl p-6 text-white shadow-xl bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-800">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs uppercase tracking-[.22em] text-emerald-200 font-black">DBG Islamic Finance</div>
+                        <h2 class="text-3xl font-black mt-1">☪️ কর্জে হাসানা</h2>
+                        <p class="text-sm text-emerald-100 mt-2">সুদমুক্ত সদস্য সহায়তা • আবেদন • যাচাই • অনুমোদন • বিতরণ</p>
+                    </div>
+                    <div class="rounded-2xl bg-white/10 border border-white/15 px-5 py-3 text-center">
+                        <div class="text-[11px] text-emerald-100">যোগ্যতার ন্যূনতম সঞ্চয়</div>
+                        <div class="text-2xl font-black">৳30,000</div>
+                    </div>
+                </div>
+            </div>
+            <div id="dbgQardAdminStats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-5 border-b flex flex-wrap justify-between items-center gap-3">
+                    <div><h3 class="font-black text-slate-800">কর্জে হাসানা আবেদনসমূহ</h3><p class="text-xs text-slate-500 mt-1">প্রতিটি আবেদন যাচাই করে সিদ্ধান্ত ও বিতরণ তথ্য সংরক্ষণ করুন।</p></div>
+                    <button type="button" onclick="dbgLoadQardAdmin(true)" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold flex items-center gap-2"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh</button>
+                </div>
+                <div id="dbgQardAdminList" class="divide-y divide-slate-100"></div>
+            </div>
+        </section>
+        
         <section id="view-accounts" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
@@ -3076,6 +3107,7 @@
             renderInvestorProfiles();
             renderSelectedInvestorProfile();
             renderDBGPortfolio();
+            if (document.getElementById('view-qard-hasan') && !document.getElementById('view-qard-hasan').classList.contains('hidden')) { try { dbgLoadQardAdmin(false); } catch (_) {} }
             renderAccounts();
             populateMemberDropdowns();
             renderIndividualProfile();
@@ -3979,7 +4011,7 @@ closeMemberModal();
         async function sendDepositSMS(deposit) {
             const member = db.members.find(m => m.code === deposit.memberCode);
             if (!member || !member.phone) {
-                alert('সদস্যের মোবাইল নম্বর পাওয়া যায়নি।');
+                if (!deposit.__silent) alert('সদস্যের মোবাইল নম্বর পাওয়া যায়নি।');
                 return false;
             }
 
@@ -4011,7 +4043,7 @@ closeMemberModal();
             };
 
             const monthName = monthNames[String(deposit.month).split('-')[1]] || deposit.month;
-            const smsText = `Dear ${member.nameEn || member.name || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
+            const smsText = deposit.__smsMessage || `Dear ${member.nameEn || member.name || 'Member'}, your ${monthName} deposit has been received successfully. Your current balance is Tk. ${totalDepositBalance.toLocaleString('en-US')} BDT. Thank you for choosing Dreams Business Group.`;
 
             // SMS gateway-তে নম্বরটি 8801XXXXXXXXX ফরম্যাটে পাঠাতে হবে।
             let cleanPhone = String(member.phone).replace(/\D/g, '');
@@ -4020,7 +4052,7 @@ closeMemberModal();
             else if (!cleanPhone.startsWith('880')) cleanPhone = '880' + cleanPhone;
 
             if (!/^8801[3-9]\d{8}$/.test(cleanPhone)) {
-                alert(`মোবাইল নম্বরটি সঠিক নয়: ${member.phone}\nসঠিক ফরম্যাট: 01XXXXXXXXX`);
+                if (!deposit.__silent) alert(`মোবাইল নম্বরটি সঠিক নয়: ${member.phone}\nসঠিক ফরম্যাট: 01XXXXXXXXX`);
                 return false;
             }
 
@@ -4059,19 +4091,19 @@ closeMemberModal();
                             localStorage.setItem('DBG_BULKSMS_API_KEY', newKey.trim());
                             alert('নতুন API Key সংরক্ষণ করা হয়েছে। একই SMS আবার পাঠাতে SMS বাটনে চাপুন।');
                         } else {
-                            alert(`SMS পাঠানো যায়নি।\nGateway response: ${result}`);
+                            if (!deposit.__silent) alert(`SMS পাঠানো যায়নি।\nGateway response: ${result}`);
                         }
                     } else {
-                        alert(`SMS পাঠানো যায়নি।\nGateway response: ${result}`);
+                        if (!deposit.__silent) alert(`SMS পাঠানো যায়নি।\nGateway response: ${result}`);
                     }
                     return false;
                 }
 
-                alert(`SMS gateway-তে পাঠানো হয়েছে।\nমোবাইল: 0${cleanPhone.slice(3)}\nGateway response: ${result}`);
+                if (!deposit.__silent) alert(`SMS gateway-তে পাঠানো হয়েছে।\nমোবাইল: 0${cleanPhone.slice(3)}\nGateway response: ${result}`);
                 return true;
             } catch (error) {
                 console.error('SMS API error:', error);
-                alert(`SMS পাঠানো যায়নি।\nকারণ: ${error.message || error}`);
+                if (!deposit.__silent) alert(`SMS পাঠানো যায়নি।\nকারণ: ${error.message || error}`);
                 return false;
             }
         }
@@ -7054,6 +7086,7 @@ function installMemberPortalStylesAndRoot() {
       <button type="button" data-member-menu="profile" role="tab" aria-selected="false"><i data-lucide="user-round"></i><span>প্রোফাইল</span></button>
       <button type="button" data-member-menu="summary" role="tab" aria-selected="false"><i data-lucide="wallet-cards"></i><span>ডিপোজিট</span></button>
       <button type="button" data-member-menu="idcard" role="tab" aria-selected="false"><i data-lucide="badge-check"></i><span>ID কার্ড</span></button>
+      <button type="button" data-member-menu="qard" role="tab" aria-selected="false"><i data-lucide="hand-coins"></i><span>কর্জে হাসানা</span></button>
     </nav>`;
     document.body.appendChild(root); try{lucide.createIcons();}catch(_){ }
     document.getElementById('dbgMemberLogout')?.addEventListener('click',()=>signOut(firebaseAuth));
@@ -7673,6 +7706,11 @@ if (outstanding > 0) {
                 </div>
             </div>
             </div>
+
+            <div id="dbgMemberPortalQardPanel" class="dbg-member-portal-panel" data-member-panel="qard">
+                <div class="dbg-profile-section-title"><span class="dbg-profile-section-icon"><i data-lucide="hand-coins" class="w-4 h-4"></i></span><span>☪️ কর্জে হাসানা</span></div>
+                <div id="dbgMemberQardContent"><div class="p-6 text-center text-slate-500">কর্জে হাসানা তথ্য প্রস্তুত হচ্ছে...</div></div>
+            </div>
             </div>
         </div>`;
 }
@@ -7785,6 +7823,7 @@ async function loadMemberPortalData(user) {
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits,memberTotalDividend);
         startMemberPortalClock();
+        try { await dbgInitQardMemberPanel(member, deposits); } catch (qardInitErr) { console.warn('DBG Qard Member Panel init failed:', qardInitErr); }
 
         // Keep both Member Portal "মোট লভ্যাংশ" cards synchronized in real time
         // from the member's own /dbg_erp/members record. This is Firebase
@@ -8166,6 +8205,46 @@ onAuthStateChanged(firebaseAuth, async (user) => {
         setLoggedOutUI();
     }
 });
+
+/* ================= QARD HASAN MODULE — ISOLATED ADD-ON ================= */
+const DBG_QARD_MIN_DEPOSIT = 30000;
+const DBG_QARD_MAX_RATIO = 0.70;
+const DBG_QARD_NODE = 'dbg_erp/qardApplications';
+function dbgQardMoney(v){ return Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2}); }
+function dbgQardDepositTotal(deposits){ return (Array.isArray(deposits)?deposits:[]).reduce((s,d)=>s+Number(d?.amount||0)+Number(d?.dreamProsperityAmount||0)+Number(d?.dreamDevelopmentAmount||0),0); }
+function dbgQardMaxAmount(total){ return Math.floor((Number(total||0)*DBG_QARD_MAX_RATIO)*100)/100; }
+function dbgQardStatusBadge(status){ const map={Pending:['bg-amber-100','text-amber-800'],['Under Review']:['bg-blue-100','text-blue-800'],Approved:['bg-emerald-100','text-emerald-800'],Rejected:['bg-rose-100','text-rose-800'],Disbursed:['bg-indigo-100','text-indigo-800'],Completed:['bg-slate-100','text-slate-700']}; const c=map[status]||map.Pending; return `<span class="px-2.5 py-1 rounded-full text-[11px] font-black ${c[0]} ${c[1]}">${escapeHtml(status||'Pending')}</span>`; }
+function dbgQardReadList(v){ return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); }
+async function dbgQardGetMemberApplications(memberCode){ const q=query(ref(firebaseDB,DBG_QARD_NODE),orderByChild('memberCode'),equalTo(String(memberCode||'').toUpperCase())); const s=await get(q); return dbgQardReadList(s.exists()?s.val():{}); }
+function dbgQardCompressImage(file,maxW=1200,quality=.72){ return new Promise((resolve,reject)=>{ if(!file){resolve('');return;} if(file.size>6*1024*1024){reject(new Error('ফাইল ৬MB-এর বেশি হতে পারবে না।'));return;} const r=new FileReader(); r.onload=e=>{ const img=new Image(); img.onload=()=>{ const scale=Math.min(1,maxW/img.width); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); resolve(c.toDataURL('image/jpeg',quality)); }; img.onerror=()=>reject(new Error('ছবিটি পড়া যায়নি।')); img.src=e.target.result; }; r.onerror=()=>reject(new Error('ফাইল পড়া যায়নি।')); r.readAsDataURL(file); }); }
+async function dbgQardSendSMS(member,message){ try { if(!member?.phone) return false; return await sendDepositSMS({memberCode:member.code,__smsMessage:message,__silent:true,month:''}); } catch(e){ console.warn('DBG Qard SMS failed:',e); return false; } }
+function dbgQardApplicationBase(member,deposits){ const total=dbgQardDepositTotal(deposits), max=dbgQardMaxAmount(total); return {memberCode:String(member.code||'').toUpperCase(),memberName:member.name||member.nameEn||'',fatherName:member.fatherName||'',dob:member.dob||'',permanentAddress:member.permanentAddress||'',presentAddress:member.presentAddress||'',phone:member.phone||'',memberNid:member.nid||'',memberPhoto:member.photo||'',accumulatedDeposit:Math.round(total*100)/100,maxEligibleAmount:max}; }
+async function dbgInitQardMemberPanel(member,deposits){
+ const box=document.getElementById('dbgMemberQardContent'); if(!box) return;
+ const base=dbgQardApplicationBase(member,deposits); const apps=await dbgQardGetMemberApplications(member.code); const active=apps.filter(a=>!['Rejected','Completed'].includes(a.status)).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0))[0];
+ const eligible=base.accumulatedDeposit>=DBG_QARD_MIN_DEPOSIT;
+ box.innerHTML=`<div class="rounded-3xl overflow-hidden border border-emerald-100 shadow-sm bg-white"><div class="p-5 bg-gradient-to-br from-emerald-950 via-emerald-800 to-teal-700 text-white"><div class="flex flex-wrap justify-between gap-4"><div><div class="text-[11px] tracking-[.2em] font-black text-emerald-200">QARD HASAN • DBG</div><h3 class="text-2xl font-black mt-1">সুদমুক্ত আর্থিক সহায়তা</h3><p class="text-sm text-emerald-50 mt-1">আবেদন যাচাই ও সিদ্ধান্ত সাধারণত ৩–৫ কার্যদিবসের মধ্যে</p></div><div class="text-right"><div class="text-[11px] text-emerald-200">আপনার মোট জমাকৃত ডিপোজিট</div><div class="text-2xl font-black">৳${dbgQardMoney(base.accumulatedDeposit)}</div><div class="text-xs text-emerald-100 mt-1">সর্বোচ্চ আবেদনযোগ্য: ৳${dbgQardMoney(base.maxEligibleAmount)}</div></div></div></div>
+ <div class="p-5 space-y-5">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div class="rounded-2xl bg-slate-50 p-4 border"><div class="text-[11px] text-slate-500">যোগ্যতার সীমা</div><div class="font-black ${eligible?'text-emerald-700':'text-rose-700'}">${eligible?'যোগ্য':'এখনো যোগ্য নন'}</div></div><div class="rounded-2xl bg-emerald-50 p-4 border border-emerald-100"><div class="text-[11px] text-slate-500">সর্বোচ্চ ৭০%</div><div class="font-black text-emerald-800">৳${dbgQardMoney(base.maxEligibleAmount)}</div></div><div class="rounded-2xl bg-blue-50 p-4 border border-blue-100"><div class="text-[11px] text-slate-500">বর্তমান আবেদন</div><div class="font-black text-blue-800">${active?dbgQardStatusBadge(active.status):'নেই'}</div></div><div class="rounded-2xl bg-amber-50 p-4 border border-amber-100"><div class="text-[11px] text-slate-500">নীতি</div><div class="font-black text-amber-800">Principal Only</div></div></div>
+  ${active?`<div class="rounded-2xl border border-blue-200 bg-blue-50 p-4"><div class="flex flex-wrap justify-between gap-3"><div><div class="font-black text-blue-900">আপনার সর্বশেষ সক্রিয় আবেদন</div><div class="text-xs text-blue-700 mt-1">আবেদন: ${escapeHtml(active.applicationNo||active.id||'-')} • ${escapeHtml(active.createdAt?new Date(active.createdAt).toLocaleDateString('en-GB'):'-')}</div></div><div class="text-right"><div class="text-xs text-blue-600">আবেদনের পরিমাণ</div><div class="text-xl font-black text-blue-900">৳${dbgQardMoney(active.requestedAmount)}</div></div></div><div class="mt-3 text-xs text-blue-800">${escapeHtml(active.adminRemark||'আবেদনটি যাচাই প্রক্রিয়ায় আছে।')}</div></div>`:''}
+  ${eligible&&!active?`<form id="dbgQardMemberForm" class="space-y-5"><div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4"><div class="font-black text-emerald-900">আপনার আবেদনযোগ্য সীমা: ৳${dbgQardMoney(base.maxEligibleAmount)}</div><div class="text-xs text-emerald-700 mt-1">আপনি সর্বোচ্চ আপনার মোট জমাকৃত ডিপোজিটের ৭০% পর্যন্ত আবেদন করতে পারবেন।</div></div>
+   <div class="grid md:grid-cols-2 gap-4">${[['সদস্যের নাম','qName',base.memberName],['পিতার নাম','qFather',base.fatherName],['জন্ম তারিখ','qDob',base.dob],['স্থায়ী ঠিকানা','qPermanent',base.permanentAddress],['বর্তমান ঠিকানা','qPresent',base.presentAddress],['মোবাইল','qPhone',base.phone]].map(([l,id,v])=>`<div><label class="block text-xs font-bold text-slate-600 mb-1">${l}</label><input id="${id}" value="${escapeHtml(v)}" readonly class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></div>`).join('')}</div>
+   <div class="grid md:grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-slate-600 mb-1">আবেদনের পরিমাণ *</label><input id="qAmount" type="number" min="1" max="${base.maxEligibleAmount}" step="1" required class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 font-bold" placeholder="সর্বোচ্চ ৳${dbgQardMoney(base.maxEligibleAmount)}"></div><div><label class="block text-xs font-bold text-slate-600 mb-1">অর্থের প্রয়োজন / উদ্দেশ্য *</label><textarea id="qPurpose" rows="2" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="কী উদ্দেশ্যে কর্জে হাসানা প্রয়োজন তা লিখুন"></textarea></div></div>
+   <div class="rounded-2xl border border-slate-200 p-4"><h4 class="font-black text-slate-800 mb-3">নমিনী তথ্য</h4><div class="grid md:grid-cols-3 gap-3"><input id="qNominee" required placeholder="নমিনীর নাম" class="border rounded-xl px-3 py-2.5"><input id="qRelation" required placeholder="সম্পর্ক" class="border rounded-xl px-3 py-2.5"><input id="qNomineePhone" required placeholder="নমিনীর মোবাইল" class="border rounded-xl px-3 py-2.5"></div></div>
+   <div class="rounded-2xl border border-slate-200 p-4"><h4 class="font-black text-slate-800 mb-3">২ জন সাংগঠনিক জামিনদার</h4><div class="grid md:grid-cols-2 gap-4"><div class="space-y-2"><input id="qG1Name" required placeholder="জামিনদার–১ নাম" class="w-full border rounded-xl px-3 py-2.5"><input id="qG1Id" required placeholder="জামিনদার–১ Member ID" class="w-full border rounded-xl px-3 py-2.5"><input id="qG1Phone" required placeholder="জামিনদার–১ মোবাইল" class="w-full border rounded-xl px-3 py-2.5"></div><div class="space-y-2"><input id="qG2Name" required placeholder="জামিনদার–২ নাম" class="w-full border rounded-xl px-3 py-2.5"><input id="qG2Id" required placeholder="জামিনদার–২ Member ID" class="w-full border rounded-xl px-3 py-2.5"><input id="qG2Phone" required placeholder="জামিনদার–২ মোবাইল" class="w-full border rounded-xl px-3 py-2.5"></div></div></div>
+   <div class="rounded-2xl border border-slate-200 p-4"><h4 class="font-black text-slate-800 mb-3">ব্যাংক অ্যাকাউন্ট — অনুমোদিত অর্থ এই অ্যাকাউন্টে পাঠানো হবে</h4><div class="grid md:grid-cols-2 gap-3"><input id="qBankName" required placeholder="ব্যাংকের নাম" class="border rounded-xl px-3 py-2.5"><input id="qBranch" required placeholder="শাখার নাম" class="border rounded-xl px-3 py-2.5"><input id="qAccountName" required placeholder="অ্যাকাউন্টের নাম" class="border rounded-xl px-3 py-2.5"><input id="qAccountNo" required placeholder="অ্যাকাউন্ট নম্বর" class="border rounded-xl px-3 py-2.5"></div></div>
+   <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><h4 class="font-black text-amber-900 mb-2">ডকুমেন্ট আপলোড</h4><div class="grid md:grid-cols-4 gap-3"><label class="text-xs font-bold text-slate-700">নিজের NID *<input id="qMemberNidFile" type="file" accept="image/*,.pdf" required class="block w-full mt-1 text-xs"></label><label class="text-xs font-bold text-slate-700">নমিনীর NID *<input id="qNomineeNidFile" type="file" accept="image/*,.pdf" required class="block w-full mt-1 text-xs"></label><label class="text-xs font-bold text-slate-700">জামিনদার–১ NID *<input id="qG1NidFile" type="file" accept="image/*,.pdf" required class="block w-full mt-1 text-xs"></label><label class="text-xs font-bold text-slate-700">জামিনদার–২ NID *<input id="qG2NidFile" type="file" accept="image/*,.pdf" required class="block w-full mt-1 text-xs"></label></div><div class="text-[11px] text-amber-800 mt-2">সদস্যের প্রোফাইলের ছবি স্বয়ংক্রিয়ভাবে আবেদনের সঙ্গে সংযুক্ত হবে।</div></div>
+   <label class="flex items-start gap-2 text-xs text-slate-600"><input id="qConsent" type="checkbox" required class="mt-1"><span>আমি নিশ্চিত করছি যে আবেদনপত্রের তথ্য সঠিক এবং কর্জে হাসানা প্রতিষ্ঠানের নির্ধারিত শর্ত অনুযায়ী ফেরত দেওয়ার অঙ্গীকার করছি। কর্জে হাসানায় সুদ/লাভ দাবি করা হবে না।</span></label>
+   <button type="submit" class="w-full md:w-auto px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> কর্জে হাসানার আবেদন জমা দিন</button><div id="dbgQardMemberStatus" class="text-sm font-bold"></div>
+  </form>`:`${!eligible?`<div class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-center"><div class="font-black text-rose-900">আপনি এখনো কর্জে হাসানার জন্য যোগ্য নন</div><div class="text-sm text-rose-700 mt-1">যোগ্য হতে মোট জমাকৃত ডিপোজিট কমপক্ষে ৳30,000 হতে হবে। আরও ৳${dbgQardMoney(Math.max(0,DBG_QARD_MIN_DEPOSIT-base.accumulatedDeposit))} জমা হলে আপনি যোগ্য হবেন।</div></div>`:''}`}</div></div>`;
+ try{lucide.createIcons();}catch(_){ }
+ const form=document.getElementById('dbgQardMemberForm'); if(form) form.addEventListener('submit',e=>dbgSubmitQardApplication(e,member,deposits));
+}
+async function dbgSubmitQardApplication(e,member,deposits){ e.preventDefault(); const status=document.getElementById('dbgQardMemberStatus'); const amount=Number(document.getElementById('qAmount')?.value||0); const total=dbgQardDepositTotal(deposits), max=dbgQardMaxAmount(total); try{ if(total<DBG_QARD_MIN_DEPOSIT) throw new Error('আপনার মোট ডিপোজিট এখনো ৳30,000 হয়নি।'); if(amount<=0||amount>max) throw new Error(`আবেদনের পরিমাণ সর্বোচ্চ ৳${dbgQardMoney(max)} হতে পারবে।`); const files=[document.getElementById('qMemberNidFile')?.files[0],document.getElementById('qNomineeNidFile')?.files[0],document.getElementById('qG1NidFile')?.files[0],document.getElementById('qG2NidFile')?.files[0]]; const docs=await Promise.all(files.map(f=>f?.type==='application/pdf'?new Promise((res,rej)=>{const r=new FileReader();r.onload=x=>res(x.target.result);r.onerror=rej;r.readAsDataURL(f)}):dbgQardCompressImage(f))); const id='QH-'+Date.now().toString(36).toUpperCase(); const app={...dbgQardApplicationBase(member,deposits),id,applicationNo:id,status:'Pending',requestedAmount:amount,purpose:document.getElementById('qPurpose').value.trim(),nominee:{name:document.getElementById('qNominee').value.trim(),relation:document.getElementById('qRelation').value.trim(),phone:document.getElementById('qNomineePhone').value.trim(),nidDoc:docs[1]},guarantors:[{name:document.getElementById('qG1Name').value.trim(),memberId:document.getElementById('qG1Id').value.trim().toUpperCase(),phone:document.getElementById('qG1Phone').value.trim(),nidDoc:docs[2]},{name:document.getElementById('qG2Name').value.trim(),memberId:document.getElementById('qG2Id').value.trim().toUpperCase(),phone:document.getElementById('qG2Phone').value.trim(),nidDoc:docs[3]}],bank:{name:qBankName.value.trim(),branch:qBranch.value.trim(),accountName:qAccountName.value.trim(),accountNo:qAccountNo.value.trim()},memberNidDoc:docs[0],createdAt:Date.now(),updatedAt:Date.now(),adminRemark:''}; const apps=await dbgQardGetMemberApplications(member.code); if(apps.some(a=>!['Rejected','Completed'].includes(a.status))) throw new Error('আপনার একটি সক্রিয় কর্জে হাসানা আবেদন ইতোমধ্যে রয়েছে।'); await set(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`),app); status.textContent='আবেদন সফলভাবে জমা হয়েছে।'; status.className='text-sm font-bold text-emerald-700'; await dbgQardSendSMS(member,`Dear ${member.nameEn||member.name||'Member'}, your Qard Hasan application ${id} has been received successfully. Requested amount Tk. ${amount.toLocaleString('en-US')}. It will be reviewed within 3-5 working days. Dreams Business Group.`); await dbgInitQardMemberPanel(member,deposits); }catch(err){ console.error('DBG Qard submit error:',err); status.textContent=err?.message||'আবেদন জমা দেওয়া যায়নি।'; status.className='text-sm font-bold text-rose-700'; } }
+async function dbgLoadQardAdmin(force=true){ const listEl=document.getElementById('dbgQardAdminList'); if(!listEl) return; try{ const s=await get(ref(firebaseDB,DBG_QARD_NODE)); const apps=dbgQardReadList(s.exists()?s.val():{}).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)); const stats={Pending:0,['Under Review']:0,Approved:0,Rejected:0,Disbursed:0}; apps.forEach(a=>{if(stats[a.status]!==undefined)stats[a.status]++}); const totalApproved=apps.filter(a=>['Approved','Disbursed','Completed'].includes(a.status)).reduce((x,a)=>x+Number(a.approvedAmount||a.requestedAmount||0),0); document.getElementById('dbgQardAdminStats').innerHTML=[['মোট আবেদন',apps.length,'text-slate-800'],['Pending',stats.Pending,'text-amber-700'],['Under Review',stats['Under Review'],'text-blue-700'],['Approved/Disbursed',stats.Approved+stats.Disbursed,'text-emerald-700'],['অনুমোদিত অর্থ',`৳${dbgQardMoney(totalApproved)}`,'text-indigo-700']].map(x=>`<div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm"><div class="text-[11px] text-slate-500 font-bold">${x[0]}</div><div class="text-xl font-black ${x[2]} mt-1">${x[1]}</div></div>`).join(''); if(!apps.length){listEl.innerHTML='<div class="p-10 text-center text-slate-500">এখনো কোনো কর্জে হাসানা আবেদন জমা হয়নি।</div>';return;} listEl.innerHTML=apps.map(a=>`<article class="p-5 hover:bg-slate-50"><div class="flex flex-wrap justify-between gap-4"><div class="flex gap-3"><div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-800 font-black">☪</div><div><div class="font-black text-slate-900">${escapeHtml(a.memberName)} <span class="text-xs text-slate-500">(${escapeHtml(a.memberCode)})</span></div><div class="text-xs text-slate-500 mt-1">${escapeHtml(a.applicationNo||a.id)} • ${a.createdAt?new Date(a.createdAt).toLocaleString('en-GB'):''}</div><div class="mt-2">${dbgQardStatusBadge(a.status)}</div></div></div><div class="text-right"><div class="text-xs text-slate-500">আবেদন</div><div class="text-xl font-black text-emerald-800">৳${dbgQardMoney(a.requestedAmount)}</div><div class="text-xs text-slate-500">ডিপোজিট ৳${dbgQardMoney(a.accumulatedDeposit)} • Max ৳${dbgQardMoney(a.maxEligibleAmount)}</div></div></div><div class="grid md:grid-cols-4 gap-3 mt-4 text-xs"><div><span class="text-slate-400">ব্যাংক</span><div class="font-bold">${escapeHtml(a.bank?.name||'-')} / ${escapeHtml(a.bank?.branch||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট</span><div class="font-bold">${escapeHtml(a.bank?.accountNo||'-')}</div></div><div><span class="text-slate-400">নমিনী</span><div class="font-bold">${escapeHtml(a.nominee?.name||'-')} (${escapeHtml(a.nominee?.relation||'-')})</div></div><div><span class="text-slate-400">উদ্দেশ্য</span><div class="font-bold">${escapeHtml(a.purpose||'-')}</div></div></div><div class="mt-4 flex flex-wrap gap-2"><button onclick="dbgOpenQardApplication('${escapeHtml(a.id)}')" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black">Review / Decision</button></div></article>`).join(''); try{lucide.createIcons();}catch(_){} }catch(e){ console.error('DBG Qard Admin load error:',e); listEl.innerHTML=`<div class="p-6 text-rose-700">Qard Hasan data load ব্যর্থ: ${escapeHtml(e?.message||e)}</div>`; } }
+function dbgQardDocLink(data,label){ if(!data) return `<div class="text-xs text-slate-400">${label}: নেই</div>`; return `<a href="${escapeHtml(data)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">📄 ${label} দেখুন</a>`; }
+async function dbgOpenQardApplication(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদন পাওয়া যায়নি।');return;} const a=s.val(); document.getElementById('dbgQardDetailOverlay')?.remove(); const wrap=document.createElement('div'); wrap.id='dbgQardDetailOverlay'; wrap.className='fixed inset-0 z-[100000] bg-slate-950/60 backdrop-blur-sm p-3 md:p-6 overflow-y-auto'; wrap.innerHTML=`<div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="p-5 bg-gradient-to-r from-emerald-950 via-teal-800 to-cyan-800 text-white flex flex-wrap justify-between gap-3"><div><div class="text-xs text-emerald-200 font-black tracking-widest">QARD HASAN APPLICATION</div><h3 class="text-2xl font-black">${escapeHtml(a.memberName)} <span class="text-sm text-emerald-200">(${escapeHtml(a.memberCode)})</span></h3><div class="text-xs mt-1">${escapeHtml(a.applicationNo||a.id)} • ${a.createdAt?new Date(a.createdAt).toLocaleString('en-GB'):''}</div></div><div class="flex items-start gap-2">${dbgQardStatusBadge(a.status)}<button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 font-black">×</button></div></div><div class="p-5 space-y-5"><div class="grid md:grid-cols-4 gap-3"><div class="rounded-2xl bg-emerald-50 p-4"><div class="text-xs text-slate-500">জমাকৃত ডিপোজিট</div><div class="text-xl font-black text-emerald-800">৳${dbgQardMoney(a.accumulatedDeposit)}</div></div><div class="rounded-2xl bg-blue-50 p-4"><div class="text-xs text-slate-500">আবেদন</div><div class="text-xl font-black text-blue-800">৳${dbgQardMoney(a.requestedAmount)}</div></div><div class="rounded-2xl bg-indigo-50 p-4"><div class="text-xs text-slate-500">সর্বোচ্চ যোগ্যতা</div><div class="text-xl font-black text-indigo-800">৳${dbgQardMoney(a.maxEligibleAmount)}</div></div><div class="rounded-2xl bg-amber-50 p-4"><div class="text-xs text-slate-500">অনুমোদিত</div><div class="text-xl font-black text-amber-800">৳${dbgQardMoney(a.approvedAmount||0)}</div></div></div><div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">সদস্যের তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">নাম</span><div class="font-bold">${escapeHtml(a.memberName||'-')}</div></div><div><span class="text-slate-400">পিতা</span><div class="font-bold">${escapeHtml(a.fatherName||'-')}</div></div><div><span class="text-slate-400">জন্ম</span><div class="font-bold">${escapeHtml(a.dob||'-')}</div></div><div><span class="text-slate-400">মোবাইল</span><div class="font-bold">${escapeHtml(a.phone||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">স্থায়ী ঠিকানা</span><div class="font-bold">${escapeHtml(a.permanentAddress||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">বর্তমান ঠিকানা</span><div class="font-bold">${escapeHtml(a.presentAddress||'-')}</div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">ব্যাংক তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">ব্যাংক</span><div class="font-bold">${escapeHtml(a.bank?.name||'-')}</div></div><div><span class="text-slate-400">শাখা</span><div class="font-bold">${escapeHtml(a.bank?.branch||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নাম</span><div class="font-bold">${escapeHtml(a.bank?.accountName||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নং</span><div class="font-bold">${escapeHtml(a.bank?.accountNo||'-')}</div></div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">নমিনী ও জামিনদার</h4><div class="grid md:grid-cols-3 gap-3 text-xs"><div><div class="text-slate-400">নমিনী</div><div class="font-bold">${escapeHtml(a.nominee?.name||'-')} • ${escapeHtml(a.nominee?.relation||'-')} • ${escapeHtml(a.nominee?.phone||'-')}</div></div>${(a.guarantors||[]).map((g,i)=>`<div><div class="text-slate-400">জামিনদার–${i+1}</div><div class="font-bold">${escapeHtml(g?.name||'-')} • ${escapeHtml(g?.memberId||'-')} • ${escapeHtml(g?.phone||'-')}</div></div>`).join('')}</div></div><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="font-black text-amber-900 mb-2">ডকুমেন্ট যাচাই</div><div class="flex flex-wrap gap-2">${dbgQardDocLink(a.memberNidDoc,'সদস্য NID')}${dbgQardDocLink(a.nominee?.nidDoc,'নমিনী NID')}${dbgQardDocLink(a.guarantors?.[0]?.nidDoc,'জামিনদার–১ NID')}${dbgQardDocLink(a.guarantors?.[1]?.nidDoc,'জামিনদার–২ NID')}${a.memberPhoto?dbgQardDocLink(a.memberPhoto,'সদস্য ছবি'):''}</div></div><div class="rounded-2xl border p-4"><div class="text-xs text-slate-400">আবেদনের উদ্দেশ্য</div><div class="font-bold mt-1">${escapeHtml(a.purpose||'-')}</div><div class="text-xs text-slate-400 mt-3">Admin Remark</div><div class="font-bold mt-1">${escapeHtml(a.adminRemark||'-')}</div></div><div class="flex flex-wrap justify-end gap-2"><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove(); dbgReviewQard('${escapeHtml(a.id)}')" class="px-5 py-3 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-black">Status / Approval Decision</button><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold">বন্ধ করুন</button></div></div></div>`; document.body.appendChild(wrap); }
+async function dbgReviewQard(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদন পাওয়া যায়নি।');return;} const a=s.val(); const action=prompt(`Qard Hasan ${a.applicationNo||id}\nবর্তমান: ${a.status}\n\nনতুন Status লিখুন: Pending / Under Review / Approved / Rejected / Disbursed / Completed`,a.status||'Pending'); if(action===null)return; const status=action.trim(); if(!['Pending','Under Review','Approved','Rejected','Disbursed','Completed'].includes(status)){alert('সঠিক Status দিন।');return;} let approvedAmount=Number(a.approvedAmount||a.requestedAmount||0); if(status==='Approved'||status==='Disbursed'){ const v=prompt(`অনুমোদিত পরিমাণ লিখুন (সর্বোচ্চ ৳${dbgQardMoney(a.maxEligibleAmount)}):`,String(approvedAmount)); if(v===null)return; approvedAmount=Number(v); if(!approvedAmount||approvedAmount>a.maxEligibleAmount){alert('অনুমোদিত পরিমাণ সীমার মধ্যে দিন।');return;} } const remark=prompt('Admin Remark / যাচাই মন্তব্য:',a.adminRemark||'') ?? a.adminRemark||''; const patch={status,approvedAmount:status==='Rejected'?0:approvedAmount,adminRemark:remark,reviewedAt:Date.now(),reviewedBy:firebaseAuth.currentUser?.email||'Admin',updatedAt:Date.now()}; if(status==='Disbursed'){patch.disbursementDate=new Date().toISOString().slice(0,10); patch.disbursementMethod='Bank Transfer'; patch.disbursementReference=prompt('Bank Transaction / Reference No. (ঐচ্ছিক):',a.disbursementReference||'')||'';} await update(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`),patch); const member=db.members.find(m=>String(m.code).toUpperCase()===String(a.memberCode).toUpperCase())||{code:a.memberCode,name:a.memberName,phone:a.phone}; if(status==='Approved') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, your Qard Hasan application ${id} has been APPROVED for Tk. ${approvedAmount.toLocaleString('en-US')}. Disbursement will be made through your verified bank account. Dreams Business Group.`); if(status==='Rejected') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, your Qard Hasan application ${id} has been reviewed and is currently not approved. Please contact DBG for details. Dreams Business Group.`); if(status==='Disbursed') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, Tk. ${approvedAmount.toLocaleString('en-US')} Qard Hasan has been marked as disbursed to your bank account. Ref: ${patch.disbursementReference||'N/A'}. Dreams Business Group.`); await dbgLoadQardAdmin(true); }
 </script>
 
 </body>
