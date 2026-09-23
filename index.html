@@ -5297,7 +5297,6 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends, members)
         db.members = memberList.slice();
         localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
         localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
-        localStorage.setItem(LOCAL_KEYS.members, JSON.stringify(db.members));
     } catch (err) {
         console.error('DBG Portfolio Firebase save failed:', err?.code || '', err?.message || err);
         if (err?.code === 'PERMISSION_DENIED' || err?.code === 'permission_denied') {
