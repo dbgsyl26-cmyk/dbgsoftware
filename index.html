@@ -5414,7 +5414,10 @@ function firebaseErrorMessage(error) {
         'auth/network-request-failed': 'ইন্টারনেট সংযোগ বা Firebase নেটওয়ার্কে সমস্যা হয়েছে।',
         'auth/operation-not-allowed': 'Firebase Console-এ Email/Password Sign-in Method চালু করা হয়নি।',
         'auth/unauthorized-domain': 'এই GitHub Pages domain Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।',
-        'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।'
+        'auth/internal-error': 'Firebase Authentication-এ অভ্যন্তরীণ সমস্যা হয়েছে।',
+        'auth/invalid-api-key': 'Firebase API Key সঠিক নয় বা বর্তমান Firebase Project-এর সঙ্গে মিলছে না।',
+        'auth/app-not-authorized': 'এই ডোমেইন/অ্যাপটি Firebase Authentication-এর জন্য অনুমোদিত নয়।',
+        'auth/web-storage-unsupported': 'এই ব্রাউজারে Firebase Login-এর প্রয়োজনীয় Storage সমর্থিত নয়।'
     };
     return messages[code] || `লগইন ব্যর্থ হয়েছে (${code || 'unknown-error'})। Firebase Console-এর Authentication সেটিংস পরীক্ষা করুন।`;
 }
@@ -7940,9 +7943,12 @@ loginForm?.addEventListener('submit', async (event) => {
     try {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
-        const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
-        const role = await loadFirebaseUserRole(credential.user);
-        setLoggedInUI(credential.user, role);
+
+        // Login is completed by Firebase Auth first. The single
+        // onAuthStateChanged listener below is responsible for loading the
+        // role and opening the correct Admin/Accountant panel. This prevents
+        // the submit handler and auth observer from racing each other.
+        await signInWithEmailAndPassword(firebaseAuth, email, password);
     } catch (error) {
         console.error('DBG Firebase Login Error:', error);
         setAuthError(firebaseErrorMessage(error));
@@ -8167,7 +8173,13 @@ document.getElementById('dbgMemberBiometricButton')?.addEventListener('click',as
 document.getElementById('dbgMemberLoginForm')?.addEventListener('submit',async e=>{
     e.preventDefault(); setMemberMsg('dbgMemberLoginError',''); setMemberStatus('dbgMemberLoginStatus','লগইন হচ্ছে...');
     const id=document.getElementById('dbgMemberLoginId').value.trim().toUpperCase(); const pw=document.getElementById('dbgMemberLoginPassword').value; const btn=document.getElementById('dbgMemberLoginButton'); btn.disabled=true;
-    try{ const cred=await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw); const map=await get(ref(firebaseDB,`dbg_users/${cred.user.uid}`)); if(!map.exists()||!['member','সদস্য'].includes(String(map.val()?.role||'').toLowerCase())||String(map.val()?.memberId||'').toUpperCase()!==id) throw new Error('Member account mapping সঠিক নয়।'); setMemberStatus('dbgMemberLoginStatus','সফল হয়েছে...'); }
+    try{
+        // Firebase Auth is the login authority. Do not perform a second
+        // dbg_users read here; onAuthStateChanged handles role verification
+        // and opens the Member Portal exactly once.
+        await signInWithEmailAndPassword(firebaseAuth,memberAuthEmail(id),pw);
+        setMemberStatus('dbgMemberLoginStatus','সফল হয়েছে...');
+    }
     catch(error){ console.error('DBG Member Login Error:',error); setMemberMsg('dbgMemberLoginError',memberErrorText(error)); setMemberStatus('dbgMemberLoginStatus',''); }
     finally{btn.disabled=false;}
 });
