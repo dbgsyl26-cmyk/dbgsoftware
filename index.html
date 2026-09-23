@@ -8215,7 +8215,16 @@ function dbgQardDepositTotal(deposits){ return (Array.isArray(deposits)?deposits
 function dbgQardMaxAmount(total){ return Math.floor((Number(total||0)*DBG_QARD_MAX_RATIO)*100)/100; }
 function dbgQardStatusBadge(status){ const map={Pending:['bg-amber-100','text-amber-800'],['Under Review']:['bg-blue-100','text-blue-800'],Approved:['bg-emerald-100','text-emerald-800'],Rejected:['bg-rose-100','text-rose-800'],Disbursed:['bg-indigo-100','text-indigo-800'],Completed:['bg-slate-100','text-slate-700']}; const c=map[status]||map.Pending; return `<span class="px-2.5 py-1 rounded-full text-[11px] font-black ${c[0]} ${c[1]}">${escapeHtml(status||'Pending')}</span>`; }
 function dbgQardReadList(v){ return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]); }
-async function dbgQardGetMemberApplications(memberCode){ const q=query(ref(firebaseDB,DBG_QARD_NODE),orderByChild('memberCode'),equalTo(String(memberCode||'').toUpperCase())); const s=await get(q); return dbgQardReadList(s.exists()?s.val():{}); }
+async function dbgQardGetMemberApplications(memberCode){
+ try{
+  const q=query(ref(firebaseDB,DBG_QARD_NODE),orderByChild('memberCode'),equalTo(String(memberCode||'').toUpperCase()));
+  const s=await get(q);
+  return dbgQardReadList(s.exists()?s.val():{});
+ }catch(e){
+  console.warn('DBG Qard Member application read skipped:',e?.code||e?.message||e);
+  return [];
+ }
+}
 function dbgQardCompressImage(file,maxW=1200,quality=.72){ return new Promise((resolve,reject)=>{ if(!file){resolve('');return;} if(file.size>6*1024*1024){reject(new Error('ফাইল ৬MB-এর বেশি হতে পারবে না।'));return;} const r=new FileReader(); r.onload=e=>{ const img=new Image(); img.onload=()=>{ const scale=Math.min(1,maxW/img.width); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); resolve(c.toDataURL('image/jpeg',quality)); }; img.onerror=()=>reject(new Error('ছবিটি পড়া যায়নি।')); img.src=e.target.result; }; r.onerror=()=>reject(new Error('ফাইল পড়া যায়নি।')); r.readAsDataURL(file); }); }
 async function dbgQardSendSMS(member,message){ try { if(!member?.phone) return false; return await sendDepositSMS({memberCode:member.code,__smsMessage:message,__silent:true,month:''}); } catch(e){ console.warn('DBG Qard SMS failed:',e); return false; } }
 function dbgQardApplicationBase(member,deposits){ const total=dbgQardDepositTotal(deposits), max=dbgQardMaxAmount(total); return {memberCode:String(member.code||'').toUpperCase(),memberName:member.name||member.nameEn||'',fatherName:member.fatherName||'',dob:member.dob||'',permanentAddress:member.permanentAddress||'',presentAddress:member.presentAddress||'',phone:member.phone||'',memberNid:member.nid||'',memberPhoto:member.photo||'',accumulatedDeposit:Math.round(total*100)/100,maxEligibleAmount:max}; }
