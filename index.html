@@ -5248,17 +5248,13 @@ window.dbgFirebaseDB = firebaseDB;
 // temporarily blocks the portfolio realtime listeners from overwriting the
 // just-saved project/dividend data while the write is in progress.
 window.dbgSavePortfolioToFirebase = async function(projects, dividends){
-    if (!dbgFirebaseSyncReady && dbgFirebaseInitPromise) {
-        try { await dbgFirebaseInitPromise; } catch (_) {}
-    }
-    if (!dbgFirebaseSyncReady) {
-        const detail = dbgFirebaseInitError?.code || dbgFirebaseInitError?.message || '';
-        throw new Error(detail ? `Firebase Realtime সংযোগ প্রস্তুত হয়নি: ${detail}` : 'Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি। লগইন করার পর কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
-    }
+    // Portfolio save is isolated from the large ERP initialization process.
+    // Firebase Database is already initialized above; an authenticated Admin
+    // can therefore save this module even if another sync task is still loading.
+    const currentUser = firebaseAuth.currentUser || window.dbgFirebaseUser;
+    if (!currentUser) throw new Error('Firebase লগইন পাওয়া যায়নি। Admin হিসেবে আবার লগইন করুন।');
+    if (!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
 
-    // Portfolio is stored in its own RTDB branches.  Use ONE atomic update so
-    // Save/Delete can never leave the two branches in a half-written state.
-    // Empty arrays are written as null so Firebase really removes the branch.
     const projectList = Array.isArray(projects) ? projects : [];
     const dividendList = Array.isArray(dividends) ? dividends : [];
     const updates = {
@@ -5269,14 +5265,16 @@ window.dbgSavePortfolioToFirebase = async function(projects, dividends){
     dbgFirebaseWriteInProgress = true;
     try {
         await update(ref(firebaseDB), updates);
-
-        // Keep this browser immediately consistent after a successful cloud
-        // commit.  The realtime listeners may have ignored their in-flight
-        // callback while dbgFirebaseWriteInProgress was true.
         db.investmentProjects = projectList.slice();
         db.projectDividends = dividendList.slice();
         localStorage.setItem(LOCAL_KEYS.investmentProjects, JSON.stringify(db.investmentProjects));
         localStorage.setItem(LOCAL_KEYS.projectDividends, JSON.stringify(db.projectDividends));
+    } catch (err) {
+        console.error('DBG Portfolio Firebase save failed:', err?.code || '', err?.message || err);
+        if (err?.code === 'PERMISSION_DENIED' || err?.code === 'permission_denied') {
+            throw new Error('Firebase Permission Denied: Admin-এর জন্য Investment Portfolio লিখার অনুমতি নেই।');
+        }
+        throw new Error(err?.message || 'Firebase-এ প্রজেক্ট সেভ করা যায়নি।');
     } finally {
         dbgFirebaseWriteInProgress = false;
     }
