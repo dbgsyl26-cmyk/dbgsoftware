@@ -2222,7 +2222,7 @@
         <!-- ================= 6. INVESTMENTS VIEW ================= -->
         <section id="view-investments" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
+                <div class="hidden bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
                     <h3 class="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
                         <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i> নতুন হালাল বিনিয়োগ প্রজেক্ট
                     </h3>
@@ -2260,8 +2260,8 @@
                     </form>
                 </div>
 
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="lg:col-span-3 space-y-6">
+                    <div class="hidden bg-white p-5 rounded-xl shadow-sm border border-gray-100">
                         <div class="flex justify-between items-center border-b pb-3 mb-4">
                             <h3 class="font-bold text-gray-800 flex items-center gap-2">
                                 <i data-lucide="briefcase" class="w-5 h-5 text-indigo-600"></i> ইনভেস্টমেন্ট প্রজেক্ট পোর্টফোলিও
@@ -2285,7 +2285,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-xl shadow-md border border-indigo-800">
+                    <div class="hidden bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 rounded-xl shadow-md border border-indigo-800">
                         <h4 class="font-bold text-amber-400 flex items-center gap-2 mb-2">
                             <i data-lucide="calculator" class="w-5 h-5"></i> আনুপাতিক লভ্যাংশ বণ্টন ক্যালকুলেটর (Profit Share)
                         </h4>
@@ -2314,15 +2314,15 @@
                     </div>
 
                     <!-- ================= DBG PROJECT DIVIDEND MODULE ================= -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-emerald-100 no-print">
-                        <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3 mb-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 no-print">
+                        <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-4 mb-5">
                             <h3 class="font-bold text-gray-800 flex items-center gap-2">
                                 <i data-lucide="chart-no-axes-combined" class="w-5 h-5 text-emerald-600"></i> প্রজেক্ট ও মাসিক লভ্যাংশ ব্যবস্থাপনা
                             </h3>
                             <span class="text-xs text-slate-500">প্রতিটি প্রজেক্ট ও মাসের হিসাব আলাদাভাবে সংরক্ষিত থাকবে</span>
                         </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                            <div class="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <div class="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5">
                                 <h4 class="font-bold text-emerald-900 mb-3">নতুন বিনিয়োগ প্রজেক্ট</h4>
                                 <form id="dbgProjectForm" class="space-y-3">
                                     <input type="hidden" id="dbgProjectEditId">
@@ -2340,7 +2340,7 @@
                                     <div id="dbgProjectStatusMsg" class="text-xs min-h-[18px]"></div>
                                 </form>
                             </div>
-                            <div class="rounded-xl border border-amber-100 bg-amber-50/40 p-4">
+                            <div class="rounded-2xl border border-amber-100 bg-amber-50/40 p-5">
                                 <h4 class="font-bold text-amber-900 mb-3">মাসিক লভ্যাংশ এন্ট্রি</h4>
                                 <form id="dbgDividendForm" class="space-y-3">
                                     <select id="dbgDividendProject" required class="w-full border rounded-lg p-2.5 text-sm bg-white"><option value="">প্রজেক্ট নির্বাচন করুন</option></select>
@@ -2359,17 +2359,17 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
-                            <h3 class="font-bold text-gray-800">প্রজেক্ট ইতিহাস</h3>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-4 mb-4">
+                            <h3 class="font-bold text-gray-800 text-lg">প্রজেক্ট ইতিহাস</h3>
                             <button type="button" onclick="printDBGProjectHistory()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs no-print">প্রিন্ট</button>
                         </div>
                         <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2 text-left">প্রজেক্ট</th><th class="p-2">ক্যাটাগরি</th><th class="p-2 text-right">মূলধন</th><th class="p-2">শুরু</th><th class="p-2">স্ট্যাটাস</th><th class="p-2 no-print">অ্যাকশন</th></tr></thead><tbody id="dbgProjectHistoryBody"></tbody></table></div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 mb-4">
-                            <h3 class="font-bold text-gray-800">মাসিক লভ্যাংশ বণ্টন ইতিহাস</h3>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-4 mb-4">
+                            <h3 class="font-bold text-gray-800 text-lg">মাসিক লভ্যাংশ বণ্টন ইতিহাস</h3>
                             <button type="button" onclick="printDBGDividendHistory()" class="bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs no-print">ইতিহাস প্রিন্ট</button>
                         </div>
                         <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-2 text-left">প্রজেক্ট</th><th class="p-2">মাস</th><th class="p-2 text-right">মোট লভ্যাংশ</th><th class="p-2 text-right">শেয়ার</th><th class="p-2 text-right">প্রতি শেয়ার</th><th class="p-2 text-center">সদস্য</th><th class="p-2 no-print">ডিলিট</th></tr></thead><tbody id="dbgDividendHistoryBody"></tbody></table></div>
