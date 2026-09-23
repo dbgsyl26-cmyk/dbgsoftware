@@ -3176,7 +3176,12 @@
             const totalDreamProsperityFund = db.deposits.reduce((sum, d) => sum + parseFloat(d.dreamProsperityAmount || 0), 0);
             const totalDreamDevelopmentFund = db.deposits.reduce((sum, d) => sum + parseFloat(d.dreamDevelopmentAmount || 0), 0);
             const totalFundWithSpecialDeposits = totalFund + totalDreamProsperityFund + totalDreamDevelopmentFund;
-            const totalInvested = db.investments.reduce((sum, i) => sum + parseFloat(i.amount), 0);
+            const legacyInvestedCapital = db.investments.reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+            // New Project Portfolio capital is real invested capital too.
+            // Keep the legacy Investment module intact and add project capital
+            // only to the Dashboard financial totals.
+            const projectInvestedCapital = dbgProjectList().reduce((sum, p) => sum + parseFloat(p.capital || 0), 0);
+            const totalInvested = legacyInvestedCapital + projectInvestedCapital;
             const totalProfit = db.investments.reduce((sum, i) => sum + parseFloat(i.profit || 0), 0);
             const totalOtherIncome = db.accounts.filter(a => a.type === 'INCOME').reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
@@ -7307,6 +7312,7 @@ async function downloadMemberIdCardJPEG(member){
 }
 
 let dbgMemberPortalClockTimer = null;
+let dbgMemberPortalDividendUnsub = null;
 /* dbgIndividualProfileClockTimer is declared in the main classic script. */
 
 function updateMemberPortalDateTime() {
@@ -7487,7 +7493,7 @@ if (outstanding > 0) {
                 <div class="dbg-member-stat-card stat-indigo"><div class="dbg-member-stat-icon">▣</div><div><span>ডিপোজিট রেকর্ড</span><strong>${memberDeposits.length}টি</strong></div></div>
                 <div class="dbg-member-stat-card stat-amber"><div class="dbg-member-stat-icon">◷</div><div><span>এই মাসে জমা</span><strong>৳${currentMonthPaid.toLocaleString()}</strong></div></div>
                 <div class="dbg-member-stat-card ${outstanding > 0 ? 'stat-red' : 'stat-teal'}"><div class="dbg-member-stat-icon">${outstanding > 0 ? '!' : '✓'}</div><div><span>${outstanding > 0 ? 'মোট বকেয়া' : 'এই মাসের অবস্থা'}</span><strong>${outstanding > 0 ? '৳'+outstanding.toLocaleString() : 'সম্পূর্ণ'}</strong></div></div>
-                <div class="dbg-member-stat-card stat-green"><div class="dbg-member-stat-icon">৳</div><div><span>মোট লভ্যাংশ</span><strong>৳${Number(memberTotalDividend||0).toLocaleString()}</strong></div></div>
+                <div class="dbg-member-stat-card stat-green"><div class="dbg-member-stat-icon">৳</div><div><span>মোট লভ্যাংশ</span><strong id="dbgMemberPortalTotalDividendDashboard">৳${Number(memberTotalDividend||0).toLocaleString()}</strong></div></div>
             </div>
 
             <div class="dbg-member-progress-card">
@@ -7535,7 +7541,7 @@ if (outstanding > 0) {
                     </div>
                     <div class="bg-emerald-50 p-3 rounded-lg text-center border border-emerald-100 min-w-[120px]">
                         <span class="text-xs text-gray-500 block">মোট লভ্যাংশ</span>
-                        <span class="text-xl font-bold text-emerald-700">৳${Number(memberTotalDividend||0).toLocaleString()}</span>
+                        <span id="dbgMemberPortalTotalDividendProfile" class="text-xl font-bold text-emerald-700">৳${Number(memberTotalDividend||0).toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -7718,6 +7724,31 @@ async function loadMemberPortalData(user) {
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits,memberTotalDividend);
         startMemberPortalClock();
+
+        // Keep both Member Portal "মোট লভ্যাংশ" cards synchronized in real time
+        // with the same projectDividends source used by the Admin member profile.
+        if (typeof dbgMemberPortalDividendUnsub === 'function') {
+            try { dbgMemberPortalDividendUnsub(); } catch (_) {}
+        }
+        dbgMemberPortalDividendUnsub = onValue(ref(firebaseDB,'dbg_erp/projectDividends'), snapshot => {
+            try {
+                const raw = snapshot.exists() ? snapshot.val() : [];
+                const entries = Array.isArray(raw)
+                    ? raw.filter(Boolean)
+                    : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
+                const code = String(memberId || '').trim().toUpperCase();
+                const liveTotal = Math.round((entries.reduce((sum,e) => {
+                    const d = (e.distributions || []).find(x => String(x.memberCode || '').trim().toUpperCase() === code);
+                    return sum + Number(d?.amount || 0);
+                },0) + Number.EPSILON) * 100) / 100;
+                const dashboardEl = document.getElementById('dbgMemberPortalTotalDividendDashboard');
+                const profileEl = document.getElementById('dbgMemberPortalTotalDividendProfile');
+                if (dashboardEl) dashboardEl.textContent = '৳' + liveTotal.toLocaleString();
+                if (profileEl) profileEl.textContent = '৳' + liveTotal.toLocaleString();
+            } catch (liveErr) {
+                console.warn('DBG Member Portal dividend refresh failed:', liveErr);
+            }
+        });
         document.getElementById('dbgMemberPrint')?.addEventListener('click',printMemberPortalProfile);
         document.getElementById('dbgMemberDepositPrint')?.addEventListener('click',()=>printMemberPortalDepositSummary());
         document.getElementById('dbgMemberIdDownload')?.addEventListener('click',()=>downloadMemberIdCardJPEG(member));
