@@ -6995,6 +6995,7 @@ function installMemberPortalStylesAndRoot() {
     return root;
 }
 function escapeHtml(v){ return String(v ?? '').replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+window.escapeHtml = escapeHtml;
 async function loadDbgPdfLibraries(){
     if(window.html2canvas && window.jspdf?.jsPDF) return;
     const loadScript = src => new Promise((resolve,reject)=>{
