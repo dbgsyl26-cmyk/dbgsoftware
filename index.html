@@ -5579,6 +5579,7 @@ window.isAdminRole = isAdminRole;
 window.isAccountantRole = isAccountantRole;
 
 function clearRealtimeListeners() {
+    if (dbgQardAdminUnsubscribe) { try { dbgQardAdminUnsubscribe(); } catch (_) {} dbgQardAdminUnsubscribe = null; }
     if (dbgFirebaseAdminDepositUnsub) { try { dbgFirebaseAdminDepositUnsub(); } catch (_) {} dbgFirebaseAdminDepositUnsub = null; }
     if (dbgFirebaseUnsubscribe) {
         try { dbgFirebaseUnsubscribe(); } catch (_) {}
@@ -6164,6 +6165,8 @@ async function initializeFirebaseERPData(role) {
 
         dbgFirebaseSyncReady = true;
         window.dbgFirebaseSyncReady = true;
+        // Qard Hasan is isolated from the legacy ERP payload. Load it directly after Admin Firebase init.
+        setTimeout(() => { try { dbgLoadQardAdmin(true); } catch (e) { console.error('DBG Qard Admin initial load failed:', e); } }, 0);
         setAuthStatus('✅ Firebase Realtime সংযোগ সক্রিয় — Cloud data loaded');
 
         if (dbgFirebasePendingSync) {
@@ -8283,7 +8286,8 @@ async function dbgDownloadQardApplicationPDF(id){
   if(!s.exists()){alert('আবেদনটি পাওয়া যায়নি।');return;}
   const a=s.val();
   await loadDbgPdfLibraries();
-  const root=document.createElement('div');
+  if(!window.html2canvas || !window.jspdf?.jsPDF) throw new Error('PDF লাইব্রেরি প্রস্তুত হয়নি।');
+  root=document.createElement('div');
   root.style.cssText='position:fixed;left:-100000px;top:0;width:900px;background:#fff;color:#0f172a;padding:36px;box-sizing:border-box;font-family:Arial,"Noto Sans Bengali",sans-serif;z-index:-1;';
   const photo=a.memberPhoto?`<img src="${escapeHtml(a.memberPhoto)}" style="width:110px;height:130px;object-fit:cover;border-radius:10px;border:1px solid #cbd5e1">`:'';
   const g=a.guarantors||[];
@@ -8304,17 +8308,40 @@ async function dbgDownloadQardApplicationPDF(id){
   document.body.appendChild(root);
   const images=Array.from(root.querySelectorAll('img')); await Promise.all(images.map(img=>new Promise(r=>{if(img.complete)return r();img.onload=img.onerror=()=>r();})));
   const canvas=await window.html2canvas(root,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,windowWidth:900,imageTimeout:15000});
-  const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4'); const margin=8,pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),usableW=pageW-margin*2,pxPerMm=canvas.width/usableW,pageCanvasH=Math.floor((pageH-margin*2)*pxPerMm); let y=0,page=0;
-  while(y<canvas.height){const h=Math.min(pageCanvasH,canvas.height-y),slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;const ctx=slice.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);if(page++)pdf.addPage();pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,usableW,h/pxPerMm);y+=h;}
-  pdf.save(`${a.applicationNo||a.id||'Qard_Hasan_Application'}.pdf`);
- }catch(e){console.error('DBG Qard PDF Download Error:',e);alert('আবেদনের PDF ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।');}
- finally{ if(root?.parentNode) root.parentNode.removeChild(root); }
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const margin=8,pageW=pdf.internal.pageSize.getWidth(),pageH=pdf.internal.pageSize.getHeight(),usableW=pageW-margin*2,pxPerMm=canvas.width/usableW,pageCanvasH=Math.floor((pageH-margin*2)*pxPerMm);
+  let y=0,page=0;
+  while(y<canvas.height){
+   const h=Math.min(pageCanvasH,canvas.height-y),slice=document.createElement('canvas');
+   slice.width=canvas.width;slice.height=h;
+   const ctx=slice.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,slice.width,slice.height);
+   ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+   if(page++)pdf.addPage();
+   pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,usableW,h/pxPerMm);
+   y+=h;
+  }
+  const blob=pdf.output('blob');
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=`${a.applicationNo||a.id||'Qard_Hasan_Application'}.pdf`;
+  link.style.display='none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(()=>{try{link.remove();URL.revokeObjectURL(url);}catch(_){}},2000);
+ }catch(e){
+  console.error('DBG Qard PDF Download Error:',e);
+  alert('আবেদনের PDF ডাউনলোড করা যায়নি।\nকারণ: '+(e?.message||e));
+ }finally{ if(root?.parentNode) root.parentNode.removeChild(root); }
 }
 async function dbgLoadQardAdmin(force=true){
  const listEl=document.getElementById('dbgQardAdminList'); if(!listEl) return;
  try{
+  const user=firebaseAuth?.currentUser;
+  if(!user){ listEl.innerHTML='<div class="p-6 text-amber-700">Admin Firebase login পাওয়া যায়নি।</div>'; return; }
   const role=String(window.dbgFirebaseRole||'').trim().toLowerCase();
-  if(!['admin','super_admin','super admin'].includes(role)){
+  if(!isAdminRole(role)){
    listEl.innerHTML='<div class="p-6 text-amber-700">শুধুমাত্র Admin/Super Admin এই আবেদন তালিকা দেখতে পারবেন।</div>';
    return;
   }
@@ -8322,9 +8349,18 @@ async function dbgLoadQardAdmin(force=true){
   const s=await get(qardRef);
   dbgRenderQardAdminApplications(s.exists()?s.val():{});
   if(force && !dbgQardAdminUnsubscribe){
-   dbgQardAdminUnsubscribe=onValue(qardRef,snap=>{ try{ dbgRenderQardAdminApplications(snap.exists()?snap.val():{}); }catch(e){ console.error('DBG Qard Admin realtime render error:',e); } },err=>{ console.error('DBG Qard Admin realtime read error:',err); if(listEl && !listEl.dataset.qardRendered) listEl.innerHTML=`<div class="p-6 text-rose-700">Qard Hasan data load ব্যর্থ: ${escapeHtml(err?.message||err)}</div>`; });
+   dbgQardAdminUnsubscribe=onValue(qardRef,snap=>{
+    try{ dbgRenderQardAdminApplications(snap.exists()?snap.val():{}); }
+    catch(e){ console.error('DBG Qard Admin realtime render error:',e); }
+   },err=>{
+    console.error('DBG Qard Admin realtime read error:',err);
+    if(listEl) listEl.innerHTML=`<div class="p-6 text-rose-700">Qard Hasan data load ব্যর্থ: ${escapeHtml(err?.code||err?.message||err)}</div>`;
+   });
   }
- }catch(e){ console.error('DBG Qard Admin load error:',e); listEl.innerHTML=`<div class="p-6 text-rose-700">Qard Hasan data load ব্যর্থ: ${escapeHtml(e?.message||e)}</div>`; }
+ }catch(e){
+  console.error('DBG Qard Admin load error:',e);
+  listEl.innerHTML=`<div class="p-6 text-rose-700">Qard Hasan data load ব্যর্থ: ${escapeHtml(e?.code||e?.message||e)}</div>`;
+ }
 }
 function dbgQardDocLink(data,label){ if(!data) return `<div class="text-xs text-slate-400">${label}: নেই</div>`; return `<a href="${escapeHtml(data)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">📄 ${label} দেখুন</a>`; }
 async function dbgOpenQardApplication(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদন পাওয়া যায়নি।');return;} const a=s.val(); document.getElementById('dbgQardDetailOverlay')?.remove(); const wrap=document.createElement('div'); wrap.id='dbgQardDetailOverlay'; wrap.className='fixed inset-0 z-[100000] bg-slate-950/60 backdrop-blur-sm p-3 md:p-6 overflow-y-auto'; wrap.innerHTML=`<div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="p-5 bg-gradient-to-r from-emerald-950 via-teal-800 to-cyan-800 text-white flex flex-wrap justify-between gap-3"><div><div class="text-xs text-emerald-200 font-black tracking-widest">QARD HASAN APPLICATION</div><h3 class="text-2xl font-black">${escapeHtml(a.memberName)} <span class="text-sm text-emerald-200">(${escapeHtml(a.memberCode)})</span></h3><div class="text-xs mt-1">${escapeHtml(a.applicationNo||a.id)} • ${a.createdAt?new Date(a.createdAt).toLocaleString('en-GB'):''}</div></div><div class="flex items-start gap-2">${dbgQardStatusBadge(a.status)}<button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 font-black">×</button></div></div><div class="p-5 space-y-5"><div class="grid md:grid-cols-4 gap-3"><div class="rounded-2xl bg-emerald-50 p-4"><div class="text-xs text-slate-500">জমাকৃত ডিপোজিট</div><div class="text-xl font-black text-emerald-800">৳${dbgQardMoney(a.accumulatedDeposit)}</div></div><div class="rounded-2xl bg-blue-50 p-4"><div class="text-xs text-slate-500">আবেদন</div><div class="text-xl font-black text-blue-800">৳${dbgQardMoney(a.requestedAmount)}</div></div><div class="rounded-2xl bg-indigo-50 p-4"><div class="text-xs text-slate-500">সর্বোচ্চ যোগ্যতা</div><div class="text-xl font-black text-indigo-800">৳${dbgQardMoney(a.maxEligibleAmount)}</div></div><div class="rounded-2xl bg-amber-50 p-4"><div class="text-xs text-slate-500">অনুমোদিত</div><div class="text-xl font-black text-amber-800">৳${dbgQardMoney(a.approvedAmount||0)}</div></div></div><div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">সদস্যের তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">নাম</span><div class="font-bold">${escapeHtml(a.memberName||'-')}</div></div><div><span class="text-slate-400">পিতা</span><div class="font-bold">${escapeHtml(a.fatherName||'-')}</div></div><div><span class="text-slate-400">জন্ম</span><div class="font-bold">${escapeHtml(a.dob||'-')}</div></div><div><span class="text-slate-400">মোবাইল</span><div class="font-bold">${escapeHtml(a.phone||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">স্থায়ী ঠিকানা</span><div class="font-bold">${escapeHtml(a.permanentAddress||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">বর্তমান ঠিকানা</span><div class="font-bold">${escapeHtml(a.presentAddress||'-')}</div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">ব্যাংক তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">ব্যাংক</span><div class="font-bold">${escapeHtml(a.bank?.name||'-')}</div></div><div><span class="text-slate-400">শাখা</span><div class="font-bold">${escapeHtml(a.bank?.branch||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নাম</span><div class="font-bold">${escapeHtml(a.bank?.accountName||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নং</span><div class="font-bold">${escapeHtml(a.bank?.accountNo||'-')}</div></div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">নমিনী ও জামিনদার</h4><div class="grid md:grid-cols-3 gap-3 text-xs"><div><div class="text-slate-400">নমিনী</div><div class="font-bold">${escapeHtml(a.nominee?.name||'-')} • ${escapeHtml(a.nominee?.relation||'-')} • ${escapeHtml(a.nominee?.phone||'-')}</div></div>${(a.guarantors||[]).map((g,i)=>`<div><div class="text-slate-400">জামিনদার–${i+1}</div><div class="font-bold">${escapeHtml(g?.name||'-')} • ${escapeHtml(g?.memberId||'-')} • ${escapeHtml(g?.phone||'-')}</div></div>`).join('')}</div></div><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="font-black text-amber-900 mb-2">ডকুমেন্ট যাচাই</div><div class="flex flex-wrap gap-2">${dbgQardDocLink(a.memberNidDoc,'সদস্য NID')}${dbgQardDocLink(a.nominee?.nidDoc,'নমিনী NID')}${dbgQardDocLink(a.guarantors?.[0]?.nidDoc,'জামিনদার–১ NID')}${dbgQardDocLink(a.guarantors?.[1]?.nidDoc,'জামিনদার–২ NID')}${a.memberPhoto?dbgQardDocLink(a.memberPhoto,'সদস্য ছবি'):''}</div></div><div class="rounded-2xl border p-4"><div class="text-xs text-slate-400">আবেদনের উদ্দেশ্য</div><div class="font-bold mt-1">${escapeHtml(a.purpose||'-')}</div><div class="text-xs text-slate-400 mt-3">Admin Remark</div><div class="font-bold mt-1">${escapeHtml(a.adminRemark||'-')}</div></div><div class="flex flex-wrap justify-end gap-2"><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove(); dbgReviewQard('${escapeHtml(a.id)}')" class="px-5 py-3 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-black">Status / Approval Decision</button><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold">বন্ধ করুন</button></div></div></div>`; document.body.appendChild(wrap); }
