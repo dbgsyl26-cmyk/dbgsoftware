@@ -8223,6 +8223,10 @@ onAuthStateChanged(firebaseAuth, async (user) => {
 const DBG_QARD_MIN_DEPOSIT = 30000;
 const DBG_QARD_MAX_RATIO = 0.70;
 const DBG_QARD_NODE = 'dbg_erp/qardApplications';
+// Member panel already loads only this member's applications. Cache that result
+// so PDF generation does not perform a second full application read, which can
+// be rejected by Firebase security rules.
+let dbgQardMemberApplicationsCache = [];
 function dbgQardMoney(v){ return Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2}); }
 function dbgQardDepositTotal(deposits){ return (Array.isArray(deposits)?deposits:[]).reduce((s,d)=>s+Number(d?.amount||0)+Number(d?.dreamProsperityAmount||0)+Number(d?.dreamDevelopmentAmount||0),0); }
 function dbgQardMaxAmount(total){ return Math.floor((Number(total||0)*DBG_QARD_MAX_RATIO)*100)/100; }
@@ -8232,7 +8236,9 @@ async function dbgQardGetMemberApplications(memberCode){
  try{
   const q=query(ref(firebaseDB,DBG_QARD_NODE),orderByChild('memberCode'),equalTo(String(memberCode||'').toUpperCase()));
   const s=await get(q);
-  return dbgQardReadList(s.exists()?s.val():{});
+  const apps=dbgQardReadList(s.exists()?s.val():{});
+  dbgQardMemberApplicationsCache=apps;
+  return apps;
  }catch(e){
   console.warn('DBG Qard Member application read skipped:',e?.code||e?.message||e);
   return [];
@@ -8282,9 +8288,11 @@ async function dbgDownloadQardApplicationPDF(id){
  try{
   const cleanId=String(id||'').trim();
   if(!cleanId){alert('আবেদন নম্বর পাওয়া যায়নি।');return;}
-  const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${cleanId}`));
-  if(!s.exists()){alert('আবেদনটি পাওয়া যায়নি।');return;}
-  const a=s.val();
+  // Use the member-scoped application data already loaded in the panel.
+  // Do not read /qardApplications/<id> again: member Firebase rules may deny
+  // that direct read even though the member-scoped query is permitted.
+  const a=dbgQardMemberApplicationsCache.find(x=>String(x?.id||'')===cleanId || String(x?.applicationNo||'')===cleanId);
+  if(!a){alert('আবেদনটি পাওয়া যায়নি।');return;}
   await loadDbgPdfLibraries();
   if(!window.html2canvas || !window.jspdf?.jsPDF) throw new Error('PDF লাইব্রেরি প্রস্তুত হয়নি।');
   root=document.createElement('div');
