@@ -4683,8 +4683,8 @@ function changeDepPage(direction) {
         async function dbgPersistPortfolio(){
             localStorage.setItem(LOCAL_KEYS.investmentProjects,JSON.stringify(dbgProjectList())); localStorage.setItem(LOCAL_KEYS.projectDividends,JSON.stringify(dbgDividendList()));
             if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
-            await set(ref(window.dbgFirebaseDB,'dbg_erp/investmentProjects'),dbgProjectList());
-            await set(ref(window.dbgFirebaseDB,'dbg_erp/projectDividends'),dbgDividendList());
+            if(typeof window.dbgSavePortfolioToFirebase !== 'function') throw new Error('Firebase Portfolio Sync এখনো প্রস্তুত হয়নি। কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
+            await window.dbgSavePortfolioToFirebase(dbgProjectList(),dbgDividendList());
         }
         window.dbgEditProject=function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; document.getElementById('dbgProjectEditId').value=p.id;document.getElementById('dbgProjectName').value=p.name||'';document.getElementById('dbgProjectCategory').value=p.category||'';document.getElementById('dbgProjectCapital').value=p.capital||0;document.getElementById('dbgProjectStartDate').value=p.startDate||'';document.getElementById('dbgProjectStatus').value=p.status||'চলমান';document.getElementById('dbgProjectNotes').value=p.notes||'';document.getElementById('dbgProjectCancelEdit').classList.remove('hidden');document.getElementById('dbgProjectName').focus(); };
         window.dbgDeleteProject=async function(id){ const p=dbgProjectList().find(x=>String(x.id)===String(id)); if(!p)return; if(dbgDividendList().some(x=>String(x.projectId)===String(id))){alert('এই প্রজেক্টের মাসিক লভ্যাংশ ইতিহাস আছে। আগে সেই ইতিহাস ডিলিট করুন।');return;} if(!confirm(`“${p.name}” প্রজেক্টটি ডিলিট করতে চান?`))return; const old=db.investmentProjects; db.investmentProjects=old.filter(x=>String(x.id)!==String(id)); try{await dbgPersistPortfolio();renderAll();dbgSetMsg('dbgProjectStatusMsg','প্রজেক্ট ডিলিট হয়েছে।');}catch(e){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',e.message||'ডিলিট ব্যর্থ',true);} };
@@ -5241,6 +5241,25 @@ const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
 // Expose only the Firebase Database instance needed by the isolated portfolio module.
 window.dbgFirebaseDB = firebaseDB;
+// Isolated Portfolio save bridge: waits for Firebase ERP initialization and
+// temporarily blocks the portfolio realtime listeners from overwriting the
+// just-saved project/dividend data while the write is in progress.
+window.dbgSavePortfolioToFirebase = async function(projects, dividends){
+    if (!dbgFirebaseSyncReady && dbgFirebaseInitPromise) {
+        try { await dbgFirebaseInitPromise; } catch (_) {}
+    }
+    if (!dbgFirebaseSyncReady) {
+        const detail = dbgFirebaseInitError?.code || dbgFirebaseInitError?.message || '';
+        throw new Error(detail ? `Firebase Realtime সংযোগ প্রস্তুত হয়নি: ${detail}` : 'Firebase Realtime সংযোগ এখনো প্রস্তুত হয়নি। লগইন করার পর কয়েক সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।');
+    }
+    dbgFirebaseWriteInProgress = true;
+    try {
+        await set(ref(firebaseDB,'dbg_erp/investmentProjects'), Array.isArray(projects) ? projects : []);
+        await set(ref(firebaseDB,'dbg_erp/projectDividends'), Array.isArray(dividends) ? dividends : []);
+    } finally {
+        dbgFirebaseWriteInProgress = false;
+    }
+};
 const firebaseFunctions = getFunctions(firebaseApp);
 const memberResetPasswordFunction = httpsCallable(firebaseFunctions, 'memberResetPassword');
 let dbgMemberRecoveryConfirmation = null;
