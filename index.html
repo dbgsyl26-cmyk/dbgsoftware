@@ -5496,6 +5496,10 @@ function isAdminRole(role) {
     return ['admin','super_admin','superadmin','administrator','সুপার অ্যাডমিন','অ্যাডমিন'].includes(r);
 }
 
+// Make role helpers available to the isolated portfolio script.
+window.isAdminRole = isAdminRole;
+window.isAccountantRole = isAccountantRole;
+
 function clearRealtimeListeners() {
     if (dbgFirebaseAdminDepositUnsub) { try { dbgFirebaseAdminDepositUnsub(); } catch (_) {} dbgFirebaseAdminDepositUnsub = null; }
     if (dbgFirebaseUnsubscribe) {
