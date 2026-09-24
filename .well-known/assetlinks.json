@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.dbgsyl26_cmyk.twa",
-        "sha256_cert_fingerprints": ["A0:D7:59:94:E5:A9:CF:68:2F:9E:4A:9F:69:1A:EA:D3:FB:DE:8D:C3:93:12:3D:93:62:CF:83:EB:4C:A1:A0:9F"]
+        "sha256_cert_fingerprints": ["C3:18:01:CF:68:59:54:5A:4C:7B:18:3D:9F:77:4B:75:8B:41:87:D2:81:2D:D1:A2:32:6F:2D:C1:76:43:66:2A"]
       }
     }]
