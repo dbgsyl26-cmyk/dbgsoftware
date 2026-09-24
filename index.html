@@ -5352,6 +5352,10 @@ const firebaseAuth = getAuth(firebaseApp);
 const firebaseDB = getDatabase(firebaseApp);
 // Expose only the Firebase Database instance needed by the isolated portfolio module.
 window.dbgFirebaseDB = firebaseDB;
+window.dbgFirebaseAuth = firebaseAuth;
+// Bridge the Firebase Database helpers to the isolated Mudaraba classic script.
+// The main Firebase block is an ES module, so its imported helpers are not global.
+window.dbgFirebaseDBApi = { ref, get, query, orderByChild, equalTo, set, update, push, onValue, remove };
 // Isolated Portfolio save bridge: waits for Firebase ERP initialization and
 // temporarily blocks the portfolio realtime listeners from overwriting the
 // just-saved project/dividend data while the write is in progress.
@@ -8552,6 +8556,11 @@ Object.assign(window, {
 <script>
 (function(){
 'use strict';
+const _dbgMudApi=window.dbgFirebaseDBApi||{};
+const {ref,get,query,orderByChild,equalTo,set,update,remove}=_dbgMudApi;
+const firebaseDB=window.dbgFirebaseDB;
+const firebaseAuth=window.dbgFirebaseAuth;
+if(!firebaseDB||!ref||!get||!set||!update||!remove) throw new Error('Firebase Database bridge is not ready');
 const DBG_MUD_NODE='dbg_erp/mudarabaApplications';
 const dbgMudList=v=>Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
 const dbgMudMoney=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
