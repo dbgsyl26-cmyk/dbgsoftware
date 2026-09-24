@@ -8655,7 +8655,8 @@ async function dbgDownloadMudarabaApplicationPDF(id){
   const a=s.val(), g=a.guarantors||[];
 
   // PDF-only renderer. No external libraries/CDNs; exactly one A4 page.
-  const W=1240,H=1754,M=46,CW=W-M*2;
+  // Only the PDF layout is changed here; all application/data logic remains untouched.
+  const W=1240,H=1754,M=48,CW=W-M*2;
   const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.textBaseline='top';
@@ -8663,56 +8664,77 @@ async function dbgDownloadMudarabaApplicationPDF(id){
   const txt=v=>String(v??'').trim()||'-';
   const money=v=>dbgMudMoney(v);
   const wrap=(v,f,max)=>{ctx.font=f;const words=txt(v).split(/\s+/),out=[];let line='';for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width<=max)line=t;else{if(line)out.push(line);line=w;}}if(line)out.push(line);return out.length?out:['-'];};
-  const rr=(x,y,w,h,r=12,fill='#f8fafc',stroke='#d7e5df')=>{ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else{ctx.rect(x,y,w,h)}ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();};
-  const section=(title,x,y,w)=>{ctx.fillStyle='#047857';ctx.font=font(20,true);ctx.fillText(title,x,y);ctx.strokeStyle='#b7d9ce';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y+29);ctx.lineTo(x+w,y+29);ctx.stroke();return y+38;};
-  const field=(label,value,x,y,w,labelW=116,size=17)=>{const vx=x+labelW,lines=wrap(value,font(size),Math.max(80,w-labelW));ctx.fillStyle='#475569';ctx.font=font(size,true);ctx.fillText(label,x,y);ctx.fillStyle='#0f172a';ctx.font=font(size);lines.slice(0,2).forEach((ln,i)=>ctx.fillText(ln,vx,y+i*(size+3)));return y+Math.max(1,Math.min(2,lines.length))*(size+3)+3;};
-  const pair=(l1,v1,l2,v2,x,y,w)=>Math.max(field(l1,v1,x,y,w/2-8,102,16),field(l2,v2,x+w/2+8,y,w/2-8,102,16));
-  const box=(title,x,y,w,h,draw)=>{rr(x,y,w,h,13,'#fbfefd','#d5e6df');const yy=section(title,x+16,y+13,w-32);draw(x+16,yy,w-32);};
+  const rr=(x,y,w,h,r=14,fill='#f8fbfa',stroke='#cfe2db')=>{ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();};
+  const section=(title,x,y,w)=>{ctx.fillStyle='#047857';ctx.font=font(21,true);ctx.fillText(title,x,y);ctx.strokeStyle='#a9d2c4';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y+31);ctx.lineTo(x+w,y+31);ctx.stroke();return y+45;};
+  const field=(label,value,x,y,w,labelW=118,size=17)=>{const vx=x+labelW,lines=wrap(value,font(size),Math.max(90,w-labelW));ctx.fillStyle='#475569';ctx.font=font(size,true);ctx.fillText(label,x,y);ctx.fillStyle='#0f172a';ctx.font=font(size);lines.slice(0,2).forEach((ln,i)=>ctx.fillText(ln,vx,y+i*(size+5)));return y+Math.max(1,Math.min(2,lines.length))*(size+5)+5;};
+  const pair=(l1,v1,l2,v2,x,y,w)=>Math.max(field(l1,v1,x,y,w/2-10,104,17),field(l2,v2,x+w/2+10,y,w/2-10,104,17));
+  const box=(title,x,y,w,h,draw)=>{rr(x,y,w,h,14,'#fbfefd','#cfe2db');const yy=section(title,x+18,y+15,w-36);draw(x+18,yy,w-36);};
 
   // Profile photo saved with the application is used automatically.
   const photoSrc=txt(a.memberPhoto||a.photo);
   const loadImage=src=>new Promise(resolve=>{if(!src||src==='-'){resolve(null);return}const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=src;});
   const photo=await loadImage(photoSrc);
 
-  // Header: centered, with photo on the right.
-  ctx.fillStyle='#047857';ctx.fillRect(M,28,CW,6);
-  ctx.textAlign='center';ctx.fillStyle='#064e3b';ctx.font=font(29,true);ctx.fillText('ড্রিমস বিজনেস গ্রুপ (DBG)',W/2,48);
-  ctx.font=font(24,true);ctx.fillText('মুদারাবা ব্যবসায়িক বিনিয়োগ আবেদনপত্র',W/2,84);
-  ctx.fillStyle='#64748b';ctx.font=font(14);ctx.fillText('আবেদন যাচাই ও সিদ্ধান্ত সাধারণত ৩–৫ কার্যদিবসের মধ্যে',W/2,116);
+  // Header: centered, with the member photo on the right.
+  ctx.fillStyle='#047857';ctx.fillRect(M,26,CW,7);
+  ctx.textAlign='center';ctx.fillStyle='#064e3b';ctx.font=font(30,true);ctx.fillText('ড্রিমস বিজনেস গ্রুপ (DBG)',W/2,48);
+  ctx.font=font(25,true);ctx.fillText('মুদারাবা ব্যবসায়িক বিনিয়োগ আবেদনপত্র',W/2,88);
+  ctx.fillStyle='#64748b';ctx.font=font(15);ctx.fillText('আবেদন যাচাই ও সিদ্ধান্ত সাধারণত ৩–৫ কার্যদিবসের মধ্যে',W/2,122);
   ctx.textAlign='left';
-  const px=W-M-96,py=42,pw=82,ph=94;
-  ctx.strokeStyle='#0f766e';ctx.lineWidth=3;ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.stroke();
-  if(photo){ctx.save();ctx.beginPath();ctx.rect(px+2,py+2,pw-4,ph-4);ctx.clip();const sc=Math.max(pw/photo.width,ph/photo.height),dw=photo.width*sc,dh=photo.height*sc;ctx.drawImage(photo,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh);ctx.restore();}
-  else{ctx.fillStyle='#f1f5f9';ctx.fillRect(px+2,py+2,pw-4,ph-4);ctx.fillStyle='#64748b';ctx.font=font(12);ctx.textAlign='center';ctx.fillText('ছবি',px+pw/2,py+39);ctx.textAlign='left';}
+  const px=W-M-100,py=43,pw=88,ph=104;
+  ctx.strokeStyle='#0f766e';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(px,py,pw,ph,6);ctx.stroke();
+  if(photo){ctx.save();ctx.beginPath();ctx.roundRect(px+2,py+2,pw-4,ph-4,4);ctx.clip();const sc=Math.max(pw/photo.width,ph/photo.height),dw=photo.width*sc,dh=photo.height*sc;ctx.drawImage(photo,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh);ctx.restore();}
+  else{ctx.fillStyle='#f1f5f9';ctx.fillRect(px+2,py+2,pw-4,ph-4);ctx.fillStyle='#64748b';ctx.font=font(12);ctx.textAlign='center';ctx.fillText('ছবি',px+pw/2,py+43);ctx.textAlign='left';}
 
-  let y=142;
-  box('আবেদনকারীর ও আবেদনের তথ্য',M,y,CW,170,(x,yy,w)=>{
+  let y=158;
+  box('আবেদনকারীর ও আবেদনের তথ্য',M,y,CW,250,(x,yy,w)=>{
     pair('আবেদন নং',a.applicationNo||a.id,'তারিখ',a.createdAt?new Date(a.createdAt).toLocaleDateString('en-GB'):'-',x,yy,w);
-    pair('সদস্যের নাম',a.memberName,'Member ID',a.memberCode,x,yy+30,w);
-    pair('পিতার নাম',a.fatherName,'জন্ম তারিখ',a.dob,x,yy+60,w);
-    pair('মোবাইল',a.phone,'স্ট্যাটাস',a.status||'Pending',x,yy+90,w);
-    pair('স্থায়ী ঠিকানা',a.permanentAddress,'বর্তমান ঠিকানা',a.presentAddress,x,yy+120,w);
-  }); y+=181;
+    pair('সদস্যের নাম',a.memberName,'Member ID',a.memberCode,x,yy+40,w);
+    pair('পিতার নাম',a.fatherName,'জন্ম তারিখ',a.dob,x,yy+80,w);
+    pair('মোবাইল',a.phone,'স্ট্যাটাস',a.status||'Pending',x,yy+120,w);
+    pair('স্থায়ী ঠিকানা',a.permanentAddress,'বর্তমান ঠিকানা',a.presentAddress,x,yy+160,w);
+  }); y+=268;
 
-  box('মুদারাবা বিনিয়োগের তথ্য',M,y,CW,82,(x,yy,w)=>{
+  box('মুদারাবা বিনিয়োগের তথ্য',M,y,CW,145,(x,yy,w)=>{
     pair('অনুরোধকৃত মূলধন','৳'+money(a.requestedAmount),'প্রস্তাবিত লাভের অংশ',money(a.profitSharePercent)+'%',x,yy,w);
-    pair('চূড়ান্ত লাভের অংশ',money(a.finalProfitSharePercent||a.profitSharePercent)+'%','Admin মন্তব্য',a.adminRemark||'-',x,yy+29,w);
-  }); y+=93;
+    pair('চূড়ান্ত লাভের অংশ',money(a.finalProfitSharePercent||a.profitSharePercent)+'%','Admin মন্তব্য',a.adminRemark||'-',x,yy+42,w);
+  }); y+=163;
 
-  const gap=12,cardW=(CW-gap*2)/3,cardH=122;
-  box('নমিনী',M,y,cardW,cardH,(x,yy,w)=>{field('নাম',a.nominee?.name,x,yy,w,58,15);field('সম্পর্ক',a.nominee?.relation,x,yy+28,w,58,15);field('মোবাইল',a.nominee?.phone,x,yy+56,w,58,15);});
-  box('জামিনদার–১',M+cardW+gap,y,cardW,cardH,(x,yy,w)=>{field('নাম',g[0]?.name,x,yy,w,58,15);field('Member ID',g[0]?.memberId,x,yy+28,w,58,15);field('মোবাইল',g[0]?.phone,x,yy+56,w,58,15);});
-  box('জামিনদার–২',M+(cardW+gap)*2,y,cardW,cardH,(x,yy,w)=>{field('নাম',g[1]?.name,x,yy,w,58,15);field('Member ID',g[1]?.memberId,x,yy+28,w,58,15);field('মোবাইল',g[1]?.phone,x,yy+56,w,58,15);}); y+=133;
+  const gap=14,cardW=(CW-gap*2)/3,cardH=200;
+  box('নমিনী',M,y,cardW,cardH,(x,yy,w)=>{
+    field('নাম',a.nominee?.name,x,yy,w,62,17);
+    field('সম্পর্ক',a.nominee?.relation,x,yy+43,w,62,17);
+    field('মোবাইল',a.nominee?.phone,x,yy+86,w,62,17);
+  });
+  box('জামিনদার–১',M+cardW+gap,y,cardW,cardH,(x,yy,w)=>{
+    field('নাম',g[0]?.name,x,yy,w,62,17);
+    field('Member ID',g[0]?.memberId,x,yy+43,w,62,17);
+    field('মোবাইল',g[0]?.phone,x,yy+86,w,62,17);
+  });
+  box('জামিনদার–২',M+(cardW+gap)*2,y,cardW,cardH,(x,yy,w)=>{
+    field('নাম',g[1]?.name,x,yy,w,62,17);
+    field('Member ID',g[1]?.memberId,x,yy+43,w,62,17);
+    field('মোবাইল',g[1]?.phone,x,yy+86,w,62,17);
+  }); y+=218;
 
-  box('ব্যবসা প্রতিষ্ঠানের তথ্য',M,y,CW,92,(x,yy,w)=>{pair('প্রতিষ্ঠানের নাম',a.business?.name,'ব্যবসার ধরন',a.business?.type,x,yy,w);field('ঠিকানা',a.business?.address,x,yy+29,w,70,16);}); y+=103;
+  box('ব্যবসা প্রতিষ্ঠানের তথ্য',M,y,CW,155,(x,yy,w)=>{
+    pair('প্রতিষ্ঠানের নাম',a.business?.name,'ব্যবসার ধরন',a.business?.type,x,yy,w);
+    field('ঠিকানা',a.business?.address,x,yy+43,w,82,17);
+  }); y+=173;
 
-  box('ব্যাংক অ্যাকাউন্টের তথ্য',M,y,CW,82,(x,yy,w)=>{pair('ব্যাংকের নাম',a.bank?.name,'শাখা',a.bank?.branch,x,yy,w);pair('অ্যাকাউন্টের নাম',a.bank?.accountName,'অ্যাকাউন্ট নম্বর',a.bank?.accountNo,x,yy+29,w);}); y+=93;
+  box('ব্যাংক অ্যাকাউন্টের তথ্য',M,y,CW,145,(x,yy,w)=>{
+    pair('ব্যাংকের নাম',a.bank?.name,'শাখা',a.bank?.branch,x,yy,w);
+    pair('অ্যাকাউন্টের নাম',a.bank?.accountName,'অ্যাকাউন্ট নম্বর',a.bank?.accountNo,x,yy+42,w);
+  }); y+=163;
 
-  box('সংযুক্ত ডকুমেন্ট ও গুরুত্বপূর্ণ শর্ত',M,y,CW,205,(x,yy,w)=>{
-    ctx.fillStyle='#334155';ctx.font=font(15,true);ctx.fillText('ডকুমেন্ট: সদস্যের NID • নমিনীর NID • জামিনদার–১ NID • জামিনদার–২ NID • Trade License',x,yy);
-    ctx.fillStyle='#475569';ctx.font=font(13);const terms='মুদারাবা মূলধন সংগঠন প্রদান করবে এবং সদস্য মুদারিব হিসেবে ব্যবসা পরিচালনা করবেন। প্রকৃত নিট ব্যবসায়িক লাভ পূর্বনির্ধারিত অনুপাতে বণ্টিত হবে; মূলধনের ওপর নির্দিষ্ট বা গ্যারান্টিযুক্ত মাসিক লাভ নির্ধারিত হবে না। স্বাভাবিক ব্যবসায়িক লোকসান মুদারাবা নীতিতে বিবেচিত হবে; অবহেলা, প্রতারণা বা চুক্তিভঙ্গের দায় পৃথকভাবে বিবেচিত হবে।';wrap(terms,font(13),w).slice(0,5).forEach((ln,i)=>ctx.fillText(ln,x,yy+25+i*21));
-    ctx.fillStyle='#064e3b';ctx.font=font(14,true);ctx.fillText('আবেদনটি যাচাই শেষে কর্তৃপক্ষ অনুমোদিত চুক্তির মাধ্যমে চূড়ান্ত সিদ্ধান্ত প্রদান করবে।',x,yy+142);
-    ctx.fillStyle='#64748b';ctx.font=font(12);ctx.fillText('আবেদনের তথ্য ও ডকুমেন্ট সত্য/বৈধ হওয়া আবশ্যক।',x,yy+169);
+  box('সংযুক্ত ডকুমেন্ট ও গুরুত্বপূর্ণ শর্ত',M,y,CW,420,(x,yy,w)=>{
+    ctx.fillStyle='#334155';ctx.font=font(16,true);ctx.fillText('ডকুমেন্ট:',x,yy);
+    ctx.fillStyle='#475569';ctx.font=font(15);wrap('সদস্যের NID • নমিনীর NID • জামিনদার–১ NID • জামিনদার–২ NID • Trade License',font(15),w-115).slice(0,2).forEach((ln,i)=>ctx.fillText(ln,x+105,yy+i*24));
+    ctx.fillStyle='#047857';ctx.font=font(16,true);ctx.fillText('মুদারাবার গুরুত্বপূর্ণ শর্ত',x,yy+62);
+    ctx.fillStyle='#475569';ctx.font=font(14);const terms='মুদারাবা মূলধন সংগঠন প্রদান করবে এবং সদস্য মুদারিব হিসেবে ব্যবসা পরিচালনা করবেন। প্রকৃত নিট ব্যবসায়িক লাভ পূর্বনির্ধারিত অনুপাতে বণ্টিত হবে; মূলধনের ওপর নির্দিষ্ট বা গ্যারান্টিযুক্ত মাসিক লাভ নির্ধারিত হবে না। স্বাভাবিক ব্যবসায়িক লোকসান মুদারাবা নীতিতে বিবেচিত হবে; অবহেলা, প্রতারণা বা চুক্তিভঙ্গের দায় পৃথকভাবে বিবেচিত হবে।';wrap(terms,font(14),w).slice(0,5).forEach((ln,i)=>ctx.fillText(ln,x,yy+92+i*26));
+    ctx.fillStyle='#064e3b';ctx.font=font(15,true);ctx.fillText('চূড়ান্ত সিদ্ধান্ত',x,yy+238);
+    ctx.fillStyle='#475569';ctx.font=font(14);wrap('আবেদনটি যাচাই শেষে কর্তৃপক্ষ অনুমোদিত চুক্তির মাধ্যমে চূড়ান্ত সিদ্ধান্ত প্রদান করবে।',font(14),w).slice(0,2).forEach((ln,i)=>ctx.fillText(ln,x,yy+266+i*24));
+    ctx.fillStyle='#64748b';ctx.font=font(13);ctx.fillText('আবেদনের তথ্য ও ডকুমেন্ট সত্য/বৈধ হওয়া আবশ্যক।',x,yy+317);
   });
 
   // One-page A4 PDF containing the rendered page as JPEG.
@@ -8721,7 +8743,7 @@ async function dbgDownloadMudarabaApplicationPDF(id){
   const enc=new TextEncoder(),parts=[],offsets=[];
   const push=b=>{parts.push(b instanceof Uint8Array?b:enc.encode(b));};
   const header=new Uint8Array([37,80,68,70,45,49,46,52,10,37,255,255,255,255,10]);push(header);
-  const obj=n=>{offsets[n]=parts.reduce((a,b)=>a+b.length,0)+header.length;};
+  const obj=n=>{offsets[n]=parts.reduce((a,b)=>a+b.length,0);};
   obj(1);push('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
   obj(2);push('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
   obj(3);push('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n');
