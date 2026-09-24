@@ -4,7 +4,7 @@
   "start_url": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
   "scope": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
   "id": "https://dbgsyl26-cmyk.github.io/dbgsoftware/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#304534",
   "theme_color": "#304534",
   "lang": "bn",
