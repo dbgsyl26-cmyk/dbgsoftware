@@ -8689,43 +8689,43 @@ async function dbgDownloadMudarabaApplicationPDF(id){
   let y=158;
   box('আবেদনকারীর ও আবেদনের তথ্য',M,y,CW,250,(x,yy,w)=>{
     pair('আবেদন নং',a.applicationNo||a.id,'তারিখ',a.createdAt?new Date(a.createdAt).toLocaleDateString('en-GB'):'-',x,yy,w);
-    pair('সদস্যের নাম',a.memberName,'Member ID',a.memberCode,x,yy+40,w);
-    pair('পিতার নাম',a.fatherName,'জন্ম তারিখ',a.dob,x,yy+80,w);
-    pair('মোবাইল',a.phone,'স্ট্যাটাস',a.status||'Pending',x,yy+120,w);
-    pair('স্থায়ী ঠিকানা',a.permanentAddress,'বর্তমান ঠিকানা',a.presentAddress,x,yy+160,w);
-  }); y+=268;
+    pair('সদস্যের নাম',a.memberName,'Member ID',a.memberCode,x,yy+50,w);
+    pair('পিতার নাম',a.fatherName,'জন্ম তারিখ',a.dob,x,yy+100,w);
+    pair('মোবাইল',a.phone,'স্ট্যাটাস',a.status||'Pending',x,yy+150,w);
+    pair('স্থায়ী ঠিকানা',a.permanentAddress,'বর্তমান ঠিকানা',a.presentAddress,x,yy+200,w);
+  }); y+=290;
 
   box('মুদারাবা বিনিয়োগের তথ্য',M,y,CW,145,(x,yy,w)=>{
     pair('অনুরোধকৃত মূলধন','৳'+money(a.requestedAmount),'প্রস্তাবিত লাভের অংশ',money(a.profitSharePercent)+'%',x,yy,w);
-    pair('চূড়ান্ত লাভের অংশ',money(a.finalProfitSharePercent||a.profitSharePercent)+'%','Admin মন্তব্য',a.adminRemark||'-',x,yy+42,w);
-  }); y+=163;
+    pair('চূড়ান্ত লাভের অংশ',money(a.finalProfitSharePercent||a.profitSharePercent)+'%','Admin মন্তব্য',a.adminRemark||'-',x,yy+52,w);
+  }); y+=175;
 
-  const gap=14,cardW=(CW-gap*2)/3,cardH=200;
+  const gap=14,cardW=(CW-gap*2)/3,cardH=225;
   box('নমিনী',M,y,cardW,cardH,(x,yy,w)=>{
     field('নাম',a.nominee?.name,x,yy,w,62,17);
-    field('সম্পর্ক',a.nominee?.relation,x,yy+43,w,62,17);
-    field('মোবাইল',a.nominee?.phone,x,yy+86,w,62,17);
+    field('সম্পর্ক',a.nominee?.relation,x,yy+58,w,62,17);
+    field('মোবাইল',a.nominee?.phone,x,yy+116,w,62,17);
   });
   box('জামিনদার–১',M+cardW+gap,y,cardW,cardH,(x,yy,w)=>{
     field('নাম',g[0]?.name,x,yy,w,62,17);
-    field('Member ID',g[0]?.memberId,x,yy+43,w,62,17);
-    field('মোবাইল',g[0]?.phone,x,yy+86,w,62,17);
+    field('Member ID',g[0]?.memberId,x,yy+58,w,62,17);
+    field('মোবাইল',g[0]?.phone,x,yy+116,w,62,17);
   });
   box('জামিনদার–২',M+(cardW+gap)*2,y,cardW,cardH,(x,yy,w)=>{
     field('নাম',g[1]?.name,x,yy,w,62,17);
-    field('Member ID',g[1]?.memberId,x,yy+43,w,62,17);
-    field('মোবাইল',g[1]?.phone,x,yy+86,w,62,17);
-  }); y+=218;
+    field('Member ID',g[1]?.memberId,x,yy+58,w,62,17);
+    field('মোবাইল',g[1]?.phone,x,yy+116,w,62,17);
+  }); y+=243;
 
   box('ব্যবসা প্রতিষ্ঠানের তথ্য',M,y,CW,155,(x,yy,w)=>{
     pair('প্রতিষ্ঠানের নাম',a.business?.name,'ব্যবসার ধরন',a.business?.type,x,yy,w);
-    field('ঠিকানা',a.business?.address,x,yy+43,w,82,17);
-  }); y+=173;
+    field('ঠিকানা',a.business?.address,x,yy+55,w,82,17);
+  }); y+=185;
 
   box('ব্যাংক অ্যাকাউন্টের তথ্য',M,y,CW,145,(x,yy,w)=>{
     pair('ব্যাংকের নাম',a.bank?.name,'শাখা',a.bank?.branch,x,yy,w);
-    pair('অ্যাকাউন্টের নাম',a.bank?.accountName,'অ্যাকাউন্ট নম্বর',a.bank?.accountNo,x,yy+42,w);
-  }); y+=163;
+    pair('অ্যাকাউন্টের নাম',a.bank?.accountName,'অ্যাকাউন্ট নম্বর',a.bank?.accountNo,x,yy+52,w);
+  }); y+=175;
 
   box('সংযুক্ত ডকুমেন্ট ও গুরুত্বপূর্ণ শর্ত',M,y,CW,420,(x,yy,w)=>{
     ctx.fillStyle='#334155';ctx.font=font(16,true);ctx.fillText('ডকুমেন্ট:',x,yy);
