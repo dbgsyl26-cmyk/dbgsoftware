@@ -8327,6 +8327,23 @@ onAuthStateChanged(firebaseAuth, async (user) => {
     }
 });
 
+/* ================= ADMIN SPECIAL-PANEL LOAD GUARD ================= */
+async function dbgWaitForAdminFirebaseReady(){
+ try{
+  if(typeof dbgFirebaseInitPromise !== 'undefined' && dbgFirebaseInitPromise){
+   try{ await dbgFirebaseInitPromise; }catch(_){}
+  }
+  const started=Date.now();
+  while(Date.now()-started<10000){
+   const user=firebaseAuth?.currentUser;
+   const role=String(window.dbgFirebaseRole||'').trim().toLowerCase();
+   if(user && isAdminRole(role) && dbgFirebaseSyncReady && firebaseDB) return true;
+   await new Promise(r=>setTimeout(r,100));
+  }
+ }catch(_){}
+ return !!(firebaseAuth?.currentUser && isAdminRole(String(window.dbgFirebaseRole||'').trim().toLowerCase()) && firebaseDB);
+}
+
 /* ================= QARD HASAN MODULE — ISOLATED ADD-ON ================= */
 const DBG_QARD_MIN_DEPOSIT = 30000;
 const DBG_QARD_MAX_RATIO = 0.70;
@@ -8488,8 +8505,9 @@ async function dbgDownloadQardApplicationPDF(id){
 async function dbgLoadQardAdmin(force=true){
  const listEl=document.getElementById('dbgQardAdminList'); if(!listEl) return;
  try{
+  const ready=await dbgWaitForAdminFirebaseReady();
   const user=firebaseAuth?.currentUser;
-  if(!user){ listEl.innerHTML='<div class="p-6 text-amber-700">Admin Firebase login পাওয়া যায়নি।</div>'; return; }
+  if(!ready || !user){ listEl.innerHTML='<div class="p-6 text-amber-700">Admin Firebase login পাওয়া যায়নি।</div>'; return; }
   const role=String(window.dbgFirebaseRole||'').trim().toLowerCase();
   if(!isAdminRole(role)){
    listEl.innerHTML='<div class="p-6 text-amber-700">শুধুমাত্র Admin/Super Admin এই আবেদন তালিকা দেখতে পারবেন।</div>';
@@ -8619,7 +8637,13 @@ async function dbgSubmitMudarabaApplication(e,m){
  }catch(e){console.error('DBG Mudaraba submit:',e);st.textContent=e?.message||'আবেদন জমা দেওয়া যায়নি।';st.className='text-sm font-bold text-rose-700 min-h-[22px]'}
 }
 async function dbgLoadMudarabaAdmin(alertOnError=false){
- try{const s=await get(ref(dbgMudDB(),DBG_MUD_NODE)),a=dbgMudList(s.exists()?s.val():{});dbgRenderMudarabaAdmin(a)}
+ try{
+  const ready=await dbgWaitForAdminFirebaseReady();
+  if(!ready) throw new Error('Firebase Admin connection is not ready yet.');
+  const dbi=dbgMudDB();
+  if(!dbi) throw new Error('Firebase Database bridge is not ready yet.');
+  const s=await get(ref(dbi,DBG_MUD_NODE)),a=dbgMudList(s.exists()?s.val():{});dbgRenderMudarabaAdmin(a)
+ }
  catch(e){console.error('DBG Mudaraba admin:',e);const el=document.getElementById('dbgMudarabaAdminList');if(el)el.innerHTML='<div class="p-8 text-center text-rose-600 font-bold">মুদারাবা আবেদন লোড করা যায়নি। Firebase permission/config যাচাই করুন।</div>';if(alertOnError)alert('মুদারাবা আবেদন লোড করা যায়নি।')}
 }
 function dbgRenderMudarabaAdmin(a){
