@@ -2352,7 +2352,17 @@
                                 <form id="dbgDividendForm" class="space-y-3">
                                     <select id="dbgDividendProject" required class="w-full border rounded-lg p-2.5 text-sm bg-white"><option value="">প্রজেক্ট নির্বাচন করুন</option></select>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <input id="dbgDividendMonth" type="month" required class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                                        <div class="relative w-full">
+                                            <input id="dbgDividendMonth" type="text" readonly required placeholder="মাস ও বছর নির্বাচন করুন" class="w-full border rounded-lg p-2.5 text-sm bg-white cursor-pointer" aria-label="মাস ও বছর নির্বাচন করুন">
+                                            <div id="dbgDividendMonthPicker" class="hidden absolute z-50 left-0 right-0 top-full mt-1 rounded-xl border bg-white shadow-xl p-3">
+                                                <div class="flex items-center justify-between gap-2 mb-3">
+                                                    <button type="button" id="dbgDividendMonthPrev" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">‹</button>
+                                                    <select id="dbgDividendMonthYear" class="border rounded-lg px-2 py-1 text-sm font-semibold bg-white"></select>
+                                                    <button type="button" id="dbgDividendMonthNext" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">›</button>
+                                                </div>
+                                                <div id="dbgDividendMonthGrid" class="grid grid-cols-3 gap-2"></div>
+                                            </div>
+                                        </div>
                                         <input id="dbgDividendProfit" type="number" min="0" step="0.01" required placeholder="মোট লভ্যাংশ (৳)" class="w-full border rounded-lg p-2.5 text-sm bg-white">
                                     </div>
                                     <div class="rounded-lg bg-white border p-3 text-xs text-slate-600">
@@ -4753,6 +4763,23 @@ function changeDepPage(direction) {
             if(window.dbgPortfolioInitialized)return;window.dbgPortfolioInitialized=true;
             const pf=document.getElementById('dbgProjectForm');pf?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgProjectStatusMsg','শুধুমাত্র Admin প্রজেক্ট পরিবর্তন করতে পারবেন।',true);return;}const id=document.getElementById('dbgProjectEditId').value.trim(),now=Date.now();const old=dbgProjectList();const rec={id:id||`PRJ-${now}-${Math.random().toString(36).slice(2,7)}`,name:document.getElementById('dbgProjectName').value.trim(),category:document.getElementById('dbgProjectCategory').value.trim(),capital:Number(document.getElementById('dbgProjectCapital').value||0),startDate:document.getElementById('dbgProjectStartDate').value||'',status:document.getElementById('dbgProjectStatus').value,notes:document.getElementById('dbgProjectNotes').value.trim(),createdAt:id?(old.find(x=>String(x.id)===id)?.createdAt||now):now,updatedAt:now};if(!rec.name){dbgSetMsg('dbgProjectStatusMsg','প্রজেক্টের নাম দিন।',true);return;}db.investmentProjects=id?old.map(x=>String(x.id)===id?rec:x):[...old,rec];try{await dbgPersistPortfolio(false,'projects');dbgResetProjectForm();renderAll();dbgSetMsg('dbgProjectStatusMsg',id?'প্রজেক্ট আপডেট হয়েছে।':'নতুন প্রজেক্ট যোগ হয়েছে।');}catch(err){db.investmentProjects=old;renderAll();dbgSetMsg('dbgProjectStatusMsg',err.message||'সেভ ব্যর্থ হয়েছে।',true);}});
             document.getElementById('dbgProjectCancelEdit')?.addEventListener('click',dbgResetProjectForm);
+            (function(){
+                const input=document.getElementById('dbgDividendMonth'),picker=document.getElementById('dbgDividendMonthPicker'),yearSel=document.getElementById('dbgDividendMonthYear'),grid=document.getElementById('dbgDividendMonthGrid');
+                if(!input||!picker||!yearSel||!grid)return;
+                const months=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+                const now=new Date(); let viewYear=now.getFullYear();
+                for(let y=now.getFullYear()-10;y<=now.getFullYear()+10;y++){const o=document.createElement('option');o.value=String(y);o.textContent=String(y);yearSel.appendChild(o);}
+                function renderPicker(){yearSel.value=String(viewYear);grid.innerHTML=months.map((m,i)=>`<button type="button" data-month="${String(i+1).padStart(2,'0')}" class="rounded-lg border px-2 py-2 text-sm font-semibold hover:bg-amber-50 hover:border-amber-400">${m}</button>`).join('');}
+                function openPicker(){const v=input.value;viewYear=v?Number(v.slice(0,4)):now.getFullYear();if(!yearSel.querySelector(`option[value="${viewYear}"]`)){viewYear=now.getFullYear();}renderPicker();picker.classList.remove('hidden');}
+                function closePicker(){picker.classList.add('hidden');}
+                input.addEventListener('click',openPicker);
+                yearSel.addEventListener('change',()=>{viewYear=Number(yearSel.value);renderPicker();});
+                document.getElementById('dbgDividendMonthPrev')?.addEventListener('click',()=>{viewYear--;if(viewYear<now.getFullYear()-10)viewYear=now.getFullYear()-10;renderPicker();});
+                document.getElementById('dbgDividendMonthNext')?.addEventListener('click',()=>{viewYear++;if(viewYear>now.getFullYear()+10)viewYear=now.getFullYear()+10;renderPicker();});
+                grid.addEventListener('click',e=>{const b=e.target.closest('button[data-month]');if(!b)return;input.value=`${viewYear}-${b.dataset.month}`;closePicker();});
+                document.addEventListener('click',e=>{if(!picker.contains(e.target)&&e.target!==input)closePicker();});
+                renderPicker();
+            })();
             document.getElementById('dbgDividendProfit')?.addEventListener('input',dbgUpdateDividendPreview);
             document.getElementById('dbgDividendForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!isAdminRole(window.dbgFirebaseRole)){dbgSetMsg('dbgDividendStatusMsg','শুধুমাত্র Admin লভ্যাংশ পরিবর্তন করতে পারবেন।',true);return;}const projectId=document.getElementById('dbgDividendProject').value,month=document.getElementById('dbgDividendMonth').value,profit=Number(document.getElementById('dbgDividendProfit').value||0);if(!projectId||!month||profit<0){dbgSetMsg('dbgDividendStatusMsg','প্রজেক্ট, মাস ও মোট লভ্যাংশ সঠিকভাবে দিন।',true);return;}const shares=dbgTotalShares();if(shares<=0){dbgSetMsg('dbgDividendStatusMsg','কোনো বৈধ ডিপোজিট শেয়ার পাওয়া যায়নি।',true);return;}const old=db.projectDividends;const oldMembers=db.members.map(m=>({...m}));const id=`${projectId}__${month}`;const prev=old.find(x=>String(x.id)===id);const distributions=db.members.map(m=>{const units=Math.max(0,parseInt(m.units,10)||0);return {memberCode:m.code,memberName:m.name||'',units,amount:Math.round((profit*units/shares+Number.EPSILON)*100)/100};}).filter(x=>x.units>0);const rec={id,projectId,month,totalProfit:profit,totalShares:shares,perShare:profit/shares,distributions,createdAt:prev?.createdAt||Date.now(),updatedAt:Date.now()};db.projectDividends=prev?old.map(x=>String(x.id)===id?rec:x):[...old,rec];const changedIndex=prev?old.findIndex(x=>String(x.id)===id):old.length;try{await dbgPersistPortfolio(true,'dividends',changedIndex,rec);renderAll();document.getElementById('dbgDividendForm').reset();dbgUpdateDividendPreview();dbgSetMsg('dbgDividendStatusMsg',prev?'মাসিক লভ্যাংশ আপডেট হয়েছে।':'মাসিক লভ্যাংশ সফলভাবে বণ্টন হয়েছে।');}catch(err){db.projectDividends=old;db.members=oldMembers;renderAll();dbgSetMsg('dbgDividendStatusMsg',err.message||'লভ্যাংশ সেভ ব্যর্থ হয়েছে।',true);}});
         }
@@ -7044,6 +7071,15 @@ function installMemberPortalStylesAndRoot() {
         .dbg-member-qard-drawer.open{transform:translateX(0)}
         .dbg-member-qard-drawer-overlay.open{opacity:1;pointer-events:auto}
         @media(max-width:767px){.dbg-member-qard-menu-toggle{top:12px;right:12px;width:44px;height:44px}.dbg-member-qard-menu-toggle span{width:20px;height:2.5px}}
+
+        /* QARD HASAN MEMBER SIDE MENU — VISUAL ONLY */
+        #dbgMemberQardDrawer{background:linear-gradient(160deg,#064e3b 0%,#047857 48%,#10b981 100%) !important;color:#fff !important;}
+        #dbgMemberQardDrawer > div:first-child{border-color:rgba(255,255,255,.22) !important;}
+        #dbgMemberQardDrawer .text-xs.font-black.text-emerald-700{color:#d1fae5 !important;text-shadow:0 1px 2px rgba(0,0,0,.28);}
+        #dbgMemberQardDrawer .text-lg.font-black.text-slate-900{color:#fff !important;text-shadow:0 2px 5px rgba(0,0,0,.30);}
+        #dbgMemberQardDrawer #dbgMemberQardDrawerClose{background:rgba(255,255,255,.16) !important;color:#fff !important;border:1px solid rgba(255,255,255,.28);box-shadow:0 4px 12px rgba(0,0,0,.12);}
+        #dbgMemberQardDrawer [data-member-menu="qard"]{background:rgba(255,255,255,.14) !important;border-color:rgba(255,255,255,.30) !important;color:#fff !important;box-shadow:0 8px 20px rgba(0,0,0,.12);text-shadow:0 1px 2px rgba(0,0,0,.28);}
+        #dbgMemberQardDrawer [data-member-menu="qard"] i{color:#fff !important;}
 
         /* ================= UNIQUE MEMBER LOGIN DATE/TIME HEADER ================= */
         .dbg-member-login-topbar { position:relative; display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:12px; width:100%; margin:0 0 12px 0; padding:9px 14px; box-sizing:border-box; border:1px solid #dbeafe; border-radius:14px; background:linear-gradient(90deg,#ffffff,#f8fafc,#ffffff); box-shadow:0 3px 14px rgba(15,23,42,.06); }
