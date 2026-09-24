@@ -8666,7 +8666,19 @@ async function dbgDownloadMudarabaApplicationPDF(id){
   const wrap=(v,f,max)=>{ctx.font=f;const words=txt(v).split(/\s+/),out=[];let line='';for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width<=max)line=t;else{if(line)out.push(line);line=w;}}if(line)out.push(line);return out.length?out:['-'];};
   const rr=(x,y,w,h,r=14,fill='#f8fbfa',stroke='#cfe2db')=>{ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();};
   const section=(title,x,y,w)=>{ctx.fillStyle='#047857';ctx.font=font(21,true);ctx.fillText(title,x,y);ctx.strokeStyle='#a9d2c4';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y+31);ctx.lineTo(x+w,y+31);ctx.stroke();return y+45;};
-  const field=(label,value,x,y,w,labelW=118,size=17)=>{const vx=x+labelW,lines=wrap(value,font(size),Math.max(90,w-labelW));ctx.fillStyle='#475569';ctx.font=font(size,true);ctx.fillText(label,x,y);ctx.fillStyle='#0f172a';ctx.font=font(size);lines.slice(0,2).forEach((ln,i)=>ctx.fillText(ln,vx,y+i*(size+5)));return y+Math.max(1,Math.min(2,lines.length))*(size+5)+5;};
+  const field=(label,value,x,y,w,labelW=118,size=17)=>{
+    const labelText=txt(label);
+    ctx.font=font(size,true);
+    const measuredLabel=ctx.measureText(labelText).width;
+    const actualLabelW=Math.max(labelW,Math.min(Math.max(70,w-80),measuredLabel+14));
+    const vx=x+actualLabelW;
+    const valueW=Math.max(70,w-actualLabelW);
+    const lines=wrap(value,font(size),valueW);
+    ctx.fillStyle='#475569';ctx.font=font(size,true);ctx.fillText(labelText,x,y);
+    ctx.fillStyle='#0f172a';ctx.font=font(size);
+    lines.slice(0,2).forEach((ln,i)=>ctx.fillText(ln,vx,y+i*(size+6)));
+    return y+Math.max(1,Math.min(2,lines.length))*(size+6)+6;
+  };
   const pair=(l1,v1,l2,v2,x,y,w)=>Math.max(field(l1,v1,x,y,w/2-10,104,17),field(l2,v2,x+w/2+10,y,w/2-10,104,17));
   const box=(title,x,y,w,h,draw)=>{rr(x,y,w,h,14,'#fbfefd','#cfe2db');const yy=section(title,x+18,y+15,w-36);draw(x+18,yy,w-36);};
 
