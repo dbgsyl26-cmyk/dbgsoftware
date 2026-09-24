@@ -8650,10 +8650,64 @@ async function dbgSaveMudarabaDecision(id){
 async function dbgDeleteMudarabaApplication(id){if(!confirm('এই মুদারাবা আবেদনটি স্থায়ীভাবে ডিলিট করবেন?'))return;try{await remove(ref(dbgMudDB(),`${DBG_MUD_NODE}/${id}`));await dbgLoadMudarabaAdmin(true)}catch(e){alert('ডিলিট করা যায়নি: '+(e?.message||e))}}
 async function dbgDownloadMudarabaApplicationPDF(id){
  try{
-  const s=await get(ref(dbgMudDB(),`${DBG_MUD_NODE}/${id}`));if(!s.exists())throw Error('আবেদন পাওয়া যায়নি');const a=s.val(),g=a.guarantors||[];if(typeof loadDbgPdfLibraries==='function')await loadDbgPdfLibraries();if(!window.html2canvas||!window.jspdf?.jsPDF)throw Error('PDF লাইব্রেরি প্রস্তুত হয়নি');
-  const r=document.createElement('div');r.style.cssText='position:fixed;left:-100000px;top:0;width:900px;background:#fff;color:#0f172a;padding:36px;font-family:Arial,"Noto Sans Bengali",sans-serif;z-index:-1';r.innerHTML=`<div style="text-align:center;border-bottom:2px solid #047857;padding-bottom:14px;margin-bottom:18px"><div style="font-size:28px;font-weight:800;color:#064e3b">ড্রিমস বিজনেস গ্রুপ (DBG)</div><div style="font-size:20px;font-weight:800">মুদারাবা ব্যবসায়িক বিনিয়োগ আবেদনপত্র</div><div style="font-size:12px;color:#64748b">আবেদন যাচাই ও সিদ্ধান্ত সাধারণত ৩–৫ কার্যদিবসের মধ্যে</div></div><div style="font-size:13px;line-height:1.8"><b>আবেদন নং:</b> ${escapeHtml(a.applicationNo||a.id)}<br><b>সদস্য:</b> ${escapeHtml(a.memberName)} | <b>Member ID:</b> ${escapeHtml(a.memberCode)} | <b>পিতা:</b> ${escapeHtml(a.fatherName)}<br><b>জন্ম:</b> ${escapeHtml(a.dob)} | <b>মোবাইল:</b> ${escapeHtml(a.phone)}<br><b>স্থায়ী:</b> ${escapeHtml(a.permanentAddress)}<br><b>বর্তমান:</b> ${escapeHtml(a.presentAddress)}</div><h3>মুদারাবা আবেদন</h3><div style="font-size:13px;line-height:1.8"><b>মূলধন:</b> ৳${dbgMudMoney(a.requestedAmount)}<br><b>লাভে সংগঠনের অংশ:</b> ${dbgMudMoney(a.finalProfitSharePercent||a.profitSharePercent)}%</div><h3>নমিনী ও জামিনদার</h3><div style="font-size:13px;line-height:1.8"><b>নমিনী:</b> ${escapeHtml(a.nominee?.name)} | ${escapeHtml(a.nominee?.relation)} | ${escapeHtml(a.nominee?.phone)}<br><b>জামিনদার–১:</b> ${escapeHtml(g[0]?.name)} | ${escapeHtml(g[0]?.memberId)} | ${escapeHtml(g[0]?.phone)}<br><b>জামিনদার–২:</b> ${escapeHtml(g[1]?.name)} | ${escapeHtml(g[1]?.memberId)} | ${escapeHtml(g[1]?.phone)}</div><h3>ব্যবসা ও ব্যাংক</h3><div style="font-size:13px;line-height:1.8"><b>প্রতিষ্ঠান:</b> ${escapeHtml(a.business?.name)} | <b>ধরন:</b> ${escapeHtml(a.business?.type)}<br><b>ঠিকানা:</b> ${escapeHtml(a.business?.address)}<br><b>ব্যাংক:</b> ${escapeHtml(a.bank?.name)} | <b>শাখা:</b> ${escapeHtml(a.bank?.branch)}<br><b>অ্যাকাউন্ট:</b> ${escapeHtml(a.bank?.accountName)} | ${escapeHtml(a.bank?.accountNo)}</div><h3>সংযুক্ত ডকুমেন্ট</h3><div style="font-size:13px;line-height:1.8">সদস্যের NID, নমিনীর NID, ২ জন জামিনদারের NID এবং বৈধ Trade License সংযুক্ত রয়েছে।</div><h3>শরিয়াহভিত্তিক মূল শর্ত</h3><div style="font-size:12px;line-height:1.7">প্রকৃত নিট ব্যবসায়িক লাভের চুক্তিকৃত অংশ বণ্টিত হবে; মূলধনের ওপর নির্দিষ্ট বা গ্যারান্টিযুক্ত মাসিক রিটার্ন নয়।</div>`;document.body.appendChild(r);
-  const c=await html2canvas(r,{scale:1.5,useCORS:true,backgroundColor:'#fff'}),img=c.toDataURL('image/jpeg',.94),J=window.jspdf.jsPDF,pdf=new J('p','mm','a4'),w=pdf.internal.pageSize.getWidth(),h=pdf.internal.pageSize.getHeight(),iw=w-20,ih=c.height*iw/c.width;let off=0;while(off<ih){if(off>0)pdf.addPage();pdf.addImage(img,'JPEG',10,10-off,iw,ih);off+=h-20}pdf.save(`Mudaraba_Application_${a.applicationNo||a.id}.pdf`);r.remove();
- }catch(e){alert('PDF ডাউনলোড করা যায়নি: '+(e?.message||e))}
+  const s=await get(ref(dbgMudDB(),`${DBG_MUD_NODE}/${id}`));
+  if(!s.exists()) throw Error('আবেদন পাওয়া যায়নি');
+  const a=s.val(), g=a.guarantors||[];
+
+  // Native Canvas PDF generation: no external html2canvas/jsPDF CDN is needed.
+  const W=1240, M=70, pageHpx=1754;
+  const rows=[];
+  const add=(text='',bold=false,size=22)=>rows.push({text:String(text),bold,size});
+  const section=t=>rows.push({text:t,bold:true,size:25,section:true});
+  const pair=(label,value)=>add(`${label}: ${value||'-'}`,false,21);
+
+  add('ড্রিমস বিজনেস গ্রুপ (DBG)',true,34);
+  add('মুদারাবা ব্যবসায়িক বিনিয়োগ আবেদনপত্র',true,29);
+  add('আবেদন যাচাই ও সিদ্ধান্ত সাধারণত ৩–৫ কার্যদিবসের মধ্যে',false,18);
+  rows.push({text:'',size:12});
+  section('আবেদনের তথ্য');
+  pair('আবেদন নং',a.applicationNo||a.id); pair('সদস্য',a.memberName); pair('Member ID',a.memberCode);
+  pair('পিতার নাম',a.fatherName); pair('জন্ম তারিখ',a.dob); pair('মোবাইল',a.phone);
+  pair('স্থায়ী ঠিকানা',a.permanentAddress); pair('বর্তমান ঠিকানা',a.presentAddress);
+  section('মুদারাবা বিনিয়োগ');
+  pair('অনুরোধকৃত মূলধন','৳'+dbgMudMoney(a.requestedAmount));
+  pair('প্রস্তাবিত লাভের অংশ',dbgMudMoney(a.profitSharePercent)+'%');
+  pair('চূড়ান্ত লাভের অংশ',dbgMudMoney(a.finalProfitSharePercent||a.profitSharePercent)+'%');
+  pair('স্ট্যাটাস',a.status||'Pending'); if(a.adminRemark) pair('Admin মন্তব্য',a.adminRemark);
+  section('নমিনী'); pair('নাম',a.nominee?.name); pair('সম্পর্ক',a.nominee?.relation); pair('মোবাইল',a.nominee?.phone);
+  section('জামিনদার–১'); pair('নাম',g[0]?.name); pair('Member ID',g[0]?.memberId); pair('মোবাইল',g[0]?.phone);
+  section('জামিনদার–২'); pair('নাম',g[1]?.name); pair('Member ID',g[1]?.memberId); pair('মোবাইল',g[1]?.phone);
+  section('ব্যবসা ও ব্যাংক'); pair('ব্যবসার নাম',a.business?.name); pair('ব্যবসার ধরন',a.business?.type); pair('ব্যবসার ঠিকানা',a.business?.address);
+  pair('ব্যাংক',a.bank?.name); pair('শাখা',a.bank?.branch); pair('অ্যাকাউন্টের নাম',a.bank?.accountName); pair('অ্যাকাউন্ট নম্বর',a.bank?.accountNo);
+  section('সংযুক্ত ডকুমেন্ট'); add('সদস্যের NID, নমিনীর NID, ২ জন জামিনদারের NID এবং বৈধ Trade License সংযুক্ত রয়েছে।',false,19);
+  section('শরিয়াহভিত্তিক মূল শর্ত'); add('প্রকৃত নিট ব্যবসায়িক লাভের চুক্তিকৃত অংশ বণ্টিত হবে; মূলধনের ওপর নির্দিষ্ট বা গ্যারান্টিযুক্ত মাসিক রিটার্ন নয়।',false,19);
+
+  const wrap=(ctx,text,maxWidth)=>{const words=String(text).split(/\s+/),out=[];let cur='';for(const word of words){const test=cur?cur+' '+word:word;if(ctx.measureText(test).width<=maxWidth)cur=test;else{if(cur)out.push(cur);cur=word;}}if(cur)out.push(cur);return out.length?out:[''];};
+  const pages=[]; let current=[], approx=70, pageNo=1;
+  const makePage=(items,num)=>{const c=document.createElement('canvas');c.width=W;c.height=pageHpx;const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,pageHpx);let y=70;ctx.fillStyle='#064e3b';ctx.fillRect(M,55,W-M*2,6);for(const item of items){if(item.section){y+=14;ctx.fillStyle='#047857';ctx.font=`700 ${item.size}px "Noto Sans Bengali", Arial, sans-serif`;ctx.fillText(item.text,M,y);y+=item.size+12;ctx.fillStyle='#d1d5db';ctx.fillRect(M,y,W-M*2,2);y+=12;}else{ctx.fillStyle='#0f172a';ctx.font=`${item.bold?'700':'400'} ${item.size}px "Noto Sans Bengali", Arial, sans-serif`;for(const ln of wrap(ctx,item.text,W-M*2-10)){ctx.fillText(ln,M,y);y+=item.size+9;}y+=5;}}ctx.fillStyle='#64748b';ctx.font='400 16px Arial,sans-serif';ctx.fillText(`DBG • Mudaraba Application • Page ${num}`,M,pageHpx-45);return c;};
+  const flush=()=>{if(current.length){pages.push(makePage(current,pageNo++));current=[];approx=70;}};
+  for(const item of rows){const est=item.section?item.size+45:item.size+22;if(approx+est>1630)flush();current.push(item);approx+=est;}flush();
+
+  // Build a valid binary PDF containing each canvas page as a JPEG image.
+  const enc=new TextEncoder(); const ascii=t=>enc.encode(t); const chunks=[]; let total=0; const push=b=>{chunks.push(b);total+=b.length;};
+  push(ascii('%PDF-1.3\n%\xE2\xE3\xCF\xD3\n'));
+  const objects=[]; let nextNo=1;
+  const catalog=nextNo++, pagesObj=nextNo++; const pageObjs=[];
+  for(const cv of pages){
+    const b64=cv.toDataURL('image/jpeg',0.94).split(',')[1], bin=atob(b64), img=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)img[i]=bin.charCodeAt(i);
+    const imgNo=nextNo++, contNo=nextNo++, pageNoObj=nextNo++; pageObjs.push(pageNoObj);
+    objects.push({n:imgNo,chunks:[ascii(`<< /Type /XObject /Subtype /Image /Width ${W} /Height ${pageHpx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`),img,ascii('\nendstream')]});
+    const content=`q\n595 0 0 842 0 0 cm\n/Im${imgNo} Do\nQ\n`;
+    objects.push({n:contNo,chunks:[ascii(`<< /Length ${enc.encode(content).length} >>\nstream\n${content}endstream`)]});
+    objects.push({n:pageNoObj,chunks:[ascii(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im${imgNo} ${imgNo} 0 R >> >> /Contents ${contNo} 0 R >>`)]});
+  }
+  objects.unshift({n:pagesObj,chunks:[ascii(`<< /Type /Pages /Kids [${pageObjs.map(n=>n+' 0 R').join(' ')}] /Count ${pageObjs.length} >>`)]});
+  objects.unshift({n:catalog,chunks:[ascii(`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`)]});
+  objects.sort((a,b)=>a.n-b.n); const offsets=new Array(nextNo).fill(0);
+  for(const o of objects){offsets[o.n]=total;push(ascii(`${o.n} 0 obj\n`));for(const ch of o.chunks)push(ch);push(ascii('\nendobj\n'));}
+  const xref=total;push(ascii(`xref\n0 ${nextNo}\n0000000000 65535 f \n`));for(let i=1;i<nextNo;i++)push(ascii(String(offsets[i]).padStart(10,'0')+' 00000 n \n'));push(ascii(`trailer\n<< /Size ${nextNo} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`));
+  const blob=new Blob(chunks,{type:'application/pdf'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`Mudaraba_Application_${a.applicationNo||a.id}.pdf`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }catch(e){console.error('DBG Mudaraba PDF Download Error:',e);alert('PDF ডাউনলোড করা যায়নি: '+(e?.message||e));}
 }
 Object.assign(window,{dbgInitMudarabaMemberPanel,dbgSubmitMudarabaApplication,dbgLoadMudarabaAdmin,dbgOpenMudarabaApplication,dbgOpenMudarabaDocument,dbgSaveMudarabaDecision,dbgDeleteMudarabaApplication,dbgDownloadMudarabaApplicationPDF});
 })();
