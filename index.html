@@ -1314,6 +1314,29 @@
 #dbgMemberPortalRoot .dbg-member-portal-menu{grid-template-columns:repeat(5,minmax(0,1fr));}
 @media(max-width:700px){#dbgMemberPortalRoot .dbg-member-portal-menu{grid-template-columns:repeat(3,minmax(0,1fr));}}
 </style>
+
+<style id="dbg-member-exit-addon-style">
+/* ================= MEMBER EXIT — ISOLATED ADD-ON ================= */
+#dbgMemberPortalRoot .dbg-exit-card{border:1px solid #d7eee0;border-radius:22px;background:#fff;box-shadow:0 10px 30px rgba(4,120,87,.08);overflow:hidden}
+#dbgMemberPortalRoot .dbg-exit-head{background:linear-gradient(135deg,#064e3b,#047857 55%,#059669);color:#fff;padding:20px}
+#dbgMemberPortalRoot .dbg-exit-sec{border:1px solid #d7eee0;border-radius:18px;padding:16px;background:linear-gradient(180deg,#fff,#f7fcf8)}
+#dbgMemberPortalRoot .dbg-exit-label{display:block;font-size:12px;font-weight:800;color:#475569;margin-bottom:5px}
+#dbgMemberPortalRoot .dbg-exit-input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:11px;padding:10px 12px;background:#fff;font-size:13px;outline:none}
+#dbgMemberPortalRoot .dbg-exit-input:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.1)}
+#dbgMemberPortalRoot .dbg-exit-readonly{background:#f8fafc;color:#334155}
+#dbgMemberPortalRoot .dbg-exit-rule{background:#fffbeb;border:1px solid #fde68a;color:#78350f;border-radius:16px;padding:14px;font-size:12px;line-height:1.75}
+#dbgMemberPortalRoot .dbg-exit-pdf{background:#0f766e;color:#fff;border:0;border-radius:11px;padding:9px 13px;font-size:12px;font-weight:900;display:inline-flex;align-items:center;gap:6px}
+#dbgMemberPortalRoot .dbg-exit-pdf:hover{background:#115e59}
+.dbg-exit-admin-stat{border-radius:18px;border:1px solid #e2e8f0;background:#fff;padding:15px;box-shadow:0 4px 14px rgba(15,23,42,.05)}
+.dbg-exit-admin-card{border:1px solid #e2e8f0;border-radius:20px;background:#fff;overflow:hidden}
+.dbg-exit-admin-status{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:900}
+#dbgMemberExitReviewOverlay{z-index:100100}
+@media(max-width:700px){
+  #dbgMemberPortalRoot .dbg-exit-sec{padding:12px}
+  #dbgMemberPortalRoot .dbg-exit-head{padding:16px}
+}
+</style>
+
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex dbg-logged-out">
 
@@ -1533,6 +1556,9 @@
                 </button>
                 <button onclick="switchTab('mudaraba-investment'); dbgLoadMudarabaAdmin(true)" id="tab-mudaraba-investment" class="nav-tab dbg-admin-only w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
                     <i data-lucide="briefcase-business" class="w-5 h-5"></i> মুদারাবা বিনিয়োগ
+                </button>
+                <button onclick="switchTab('member-exit'); dbgLoadMemberExitAdmin(true)" id="tab-member-exit" class="nav-tab dbg-admin-only w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
+                    <i data-lucide="user-round-x" class="w-5 h-5"></i> সদস্য বহির্গমন
                 </button>
                 <button onclick="switchTab('accounts')" id="tab-accounts" class="nav-tab w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-indigo-200 hover:bg-indigo-800/60 hover:text-white transition">
                     <i data-lucide="receipt-text" class="w-5 h-5"></i> আয়-ব্যয় হিসাব
@@ -2445,6 +2471,36 @@
             </div>
         </section>
         
+
+        <!-- ================= MEMBER EXIT ADMIN VIEW — ISOLATED ADD-ON ================= -->
+        <section id="view-member-exit" class="tab-content hidden space-y-6">
+            <div class="rounded-3xl p-6 text-white shadow-xl bg-gradient-to-br from-slate-950 via-emerald-900 to-teal-700">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs uppercase tracking-[.22em] text-emerald-200 font-black">DBG Member Exit Management</div>
+                        <h2 class="text-3xl font-black mt-1">👤 সদস্য বহির্গমন</h2>
+                        <p class="text-sm text-emerald-50 mt-2">স্বেচ্ছায় সদস্যপদ প্রত্যাহার ও মৃত্যুজনিত বহির্গমন যাচাই, অনুমোদন ও চূড়ান্ত হিসাব নিষ্পত্তি</p>
+                    </div>
+                    <button type="button" onclick="dbgOpenMemberExitCreate('deceased')" class="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-black flex items-center gap-2">
+                        <i data-lucide="file-plus-2" class="w-4 h-4"></i> মৃত্যুজনিত বহির্গমন
+                    </button>
+                </div>
+            </div>
+            <div id="dbgMemberExitAdminStats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-5 border-b flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h3 class="font-black text-slate-800">সদস্য বহির্গমন আবেদনসমূহ</h3>
+                        <p class="text-xs text-slate-500 mt-1">স্বেচ্ছা আবেদন ও মৃত্যুজনিত কেস একই জায়গা থেকে যাচাই ও নিষ্পত্তি করুন।</p>
+                    </div>
+                    <button type="button" onclick="dbgLoadMemberExitAdmin(true)" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+                <div id="dbgMemberExitAdminList" class="divide-y divide-slate-100"></div>
+            </div>
+        </section>
+
         <section id="view-accounts" class="tab-content hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 no-print">
@@ -3143,6 +3199,7 @@
             renderSelectedInvestorProfile();
             renderDBGPortfolio();
             if (document.getElementById('view-qard-hasan') && !document.getElementById('view-qard-hasan').classList.contains('hidden')) { try { dbgLoadQardAdmin(true); } catch (_) {} }
+            if (document.getElementById('view-member-exit') && !document.getElementById('view-member-exit').classList.contains('hidden')) { try { dbgLoadMemberExitAdmin(true); } catch (_) {} }
             renderAccounts();
             populateMemberDropdowns();
             renderIndividualProfile();
@@ -5562,6 +5619,8 @@ function setLoggedOutUI() {
     dbgFirebaseInitPromise = null;
     dbgFirebasePendingSync = false;
     if (dbgFirebaseUnsubscribe) { try { dbgFirebaseUnsubscribe(); } catch (_) {} dbgFirebaseUnsubscribe = null; }
+    if (dbgMemberExitAdminUnsubscribe) { try { dbgMemberExitAdminUnsubscribe(); } catch (_) {} dbgMemberExitAdminUnsubscribe = null; }
+    dbgMemberExitMemberApplicationsCache = [];
     document.body.classList.remove('dbg-member-mode');
     document.getElementById('dbgMemberPortalRoot')?.remove();
     document.body.classList.add('dbg-logged-out');
@@ -7168,7 +7227,7 @@ function installMemberPortalStylesAndRoot() {
     <div id="dbgMemberQardDrawerOverlay" class="dbg-member-qard-drawer-overlay no-print"></div>
     <aside id="dbgMemberQardDrawer" class="dbg-member-qard-drawer no-print flex flex-col" aria-hidden="true">
       <div class="flex items-center justify-between gap-3 p-5 border-b"><div><div class="text-sm font-black tracking-widest text-emerald-100 uppercase" style="text-shadow:0 2px 5px rgba(0,0,0,.28);">DBG MEMBER MENU</div></div><button id="dbgMemberQardDrawerClose" type="button" class="w-9 h-9 rounded-xl bg-slate-100 font-black">×</button></div>
-      <div class="p-5 space-y-3 flex-1"><button type="button" data-member-menu="qard" class="w-full flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-left font-black text-emerald-900"><i data-lucide="hand-coins" class="w-5 h-5"></i><span>কর্জে হাসানা আবেদন ও পরিশোধ</span></button><button type="button" data-member-menu="mudaraba" class="w-full flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-left font-black text-emerald-900"><i data-lucide="briefcase-business" class="w-5 h-5"></i><span>মুদারাবা আবেদন</span></button></div>
+       <div class="p-5 space-y-3 flex-1"><button type="button" data-member-menu="qard" class="w-full flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-left font-black text-emerald-900"><i data-lucide="hand-coins" class="w-5 h-5"></i><span>কর্জে হাসানা আবেদন ও পরিশোধ</span></button><button type="button" data-member-menu="mudaraba" class="w-full flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-left font-black text-emerald-900"><i data-lucide="briefcase-business" class="w-5 h-5"></i><span>মুদারাবা আবেদন</span></button><button type="button" data-member-menu="member-exit" class="w-full flex items-center gap-3 rounded-2xl bg-amber-50/15 border border-amber-200/30 p-4 text-left font-black text-white shadow-sm"><i data-lucide="user-round-x" class="w-5 h-5"></i><span>সদস্যপদ প্রত্যাহার</span></button></div>
       <div class="p-5 pt-3 mt-auto border-t border-white/20">
         <button type="button" id="dbgMemberLogout" class="w-full flex items-center justify-center gap-2 rounded-2xl bg-white/16 border border-white/30 px-4 py-3 text-white font-black shadow-sm hover:bg-white/24 transition" title="লগআউট" aria-label="লগআউট"><i data-lucide="log-out" class="w-5 h-5"></i><span>লগআউট</span></button>
       </div>
@@ -7816,6 +7875,10 @@ if (outstanding > 0) {
                 <div class="dbg-profile-section-title"><span class="dbg-profile-section-icon"><i data-lucide="briefcase-business" class="w-4 h-4"></i></span><span>🤝 মুদারাবা ব্যবসায়িক বিনিয়োগের আবেদন</span></div>
                 <div id="dbgMemberMudarabaContent"><div class="p-6 text-center text-slate-500">মুদারাবা আবেদন তথ্য প্রস্তুত হচ্ছে...</div></div>
             </div>
+            <div id="dbgMemberPortalExitPanel" class="dbg-member-portal-panel" data-member-panel="member-exit">
+                <div class="dbg-profile-section-title"><span class="dbg-profile-section-icon"><i data-lucide="user-round-x" class="w-4 h-4"></i></span><span>সদস্যপদ প্রত্যাহার ও চূড়ান্ত হিসাব</span></div>
+                <div id="dbgMemberExitContent"><div class="p-6 text-center text-slate-500">সদস্য বহির্গমন তথ্য প্রস্তুত হচ্ছে...</div></div>
+            </div>
             </div>
         </div>`;
 }
@@ -7928,7 +7991,7 @@ async function loadMemberPortalData(user) {
 
         content.innerHTML=buildMemberNoticeBoardHtml(notices) + buildMemberPortalProfileHtml(member,deposits,memberTotalDividend);
         startMemberPortalClock();
-        try { await dbgInitQardMemberPanel(member, deposits); } catch (qardInitErr) { console.warn('DBG Qard Member Panel init failed:', qardInitErr); }        try { await dbgInitMudarabaMemberPanel(member); } catch (mudarabaInitErr) { console.warn('DBG Mudaraba Member Panel init failed:', mudarabaInitErr); }
+        try { await dbgInitQardMemberPanel(member, deposits); } catch (qardInitErr) { console.warn('DBG Qard Member Panel init failed:', qardInitErr); }        try { await dbgInitMudarabaMemberPanel(member); } catch (mudarabaInitErr) { console.warn('DBG Mudaraba Member Panel init failed:', mudarabaInitErr); }        try { await dbgInitMemberExitPanel(member, deposits); } catch (exitInitErr) { console.warn('DBG Member Exit Panel init failed:', exitInitErr); }
 
         // Keep both Member Portal "মোট লভ্যাংশ" cards synchronized in real time
         // from the member's own /dbg_erp/members record. This is Firebase
@@ -8533,6 +8596,417 @@ function dbgQardDocLink(data,label){ if(!data) return `<div class="text-xs text-
 async function dbgOpenQardApplication(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদন পাওয়া যায়নি।');return;} const a=s.val(); document.getElementById('dbgQardDetailOverlay')?.remove(); const wrap=document.createElement('div'); wrap.id='dbgQardDetailOverlay'; wrap.className='fixed inset-0 z-[100000] bg-slate-950/60 backdrop-blur-sm p-3 md:p-6 overflow-y-auto'; wrap.innerHTML=`<div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="p-5 bg-gradient-to-r from-emerald-950 via-teal-800 to-cyan-800 text-white flex flex-wrap justify-between gap-3"><div><div class="text-xs text-emerald-200 font-black tracking-widest">QARD HASAN APPLICATION</div><h3 class="text-2xl font-black">${escapeHtml(a.memberName)} <span class="text-sm text-emerald-200">(${escapeHtml(a.memberCode)})</span></h3><div class="text-xs mt-1">${escapeHtml(a.applicationNo||a.id)} • ${a.createdAt?new Date(a.createdAt).toLocaleString('en-GB'):''}</div></div><div class="flex items-start gap-2">${dbgQardStatusBadge(a.status)}<button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 font-black">×</button></div></div><div class="p-5 space-y-5"><div class="grid md:grid-cols-4 gap-3"><div class="rounded-2xl bg-emerald-50 p-4"><div class="text-xs text-slate-500">জমাকৃত ডিপোজিট</div><div class="text-xl font-black text-emerald-800">৳${dbgQardMoney(a.accumulatedDeposit)}</div></div><div class="rounded-2xl bg-blue-50 p-4"><div class="text-xs text-slate-500">আবেদন</div><div class="text-xl font-black text-blue-800">৳${dbgQardMoney(a.requestedAmount)}</div></div><div class="rounded-2xl bg-indigo-50 p-4"><div class="text-xs text-slate-500">সর্বোচ্চ যোগ্যতা</div><div class="text-xl font-black text-indigo-800">৳${dbgQardMoney(a.maxEligibleAmount)}</div></div><div class="rounded-2xl bg-amber-50 p-4"><div class="text-xs text-slate-500">অনুমোদিত</div><div class="text-xl font-black text-amber-800">৳${dbgQardMoney(a.approvedAmount||0)}</div></div></div><div class="grid md:grid-cols-2 gap-4"><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">সদস্যের তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">নাম</span><div class="font-bold">${escapeHtml(a.memberName||'-')}</div></div><div><span class="text-slate-400">পিতা</span><div class="font-bold">${escapeHtml(a.fatherName||'-')}</div></div><div><span class="text-slate-400">জন্ম</span><div class="font-bold">${escapeHtml(a.dob||'-')}</div></div><div><span class="text-slate-400">মোবাইল</span><div class="font-bold">${escapeHtml(a.phone||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">স্থায়ী ঠিকানা</span><div class="font-bold">${escapeHtml(a.permanentAddress||'-')}</div></div><div class="col-span-2"><span class="text-slate-400">বর্তমান ঠিকানা</span><div class="font-bold">${escapeHtml(a.presentAddress||'-')}</div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">ব্যাংক তথ্য</h4><div class="grid grid-cols-2 gap-2 text-xs"><div><span class="text-slate-400">ব্যাংক</span><div class="font-bold">${escapeHtml(a.bank?.name||'-')}</div></div><div><span class="text-slate-400">শাখা</span><div class="font-bold">${escapeHtml(a.bank?.branch||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নাম</span><div class="font-bold">${escapeHtml(a.bank?.accountName||'-')}</div></div><div><span class="text-slate-400">অ্যাকাউন্ট নং</span><div class="font-bold">${escapeHtml(a.bank?.accountNo||'-')}</div></div></div></div></div><div class="rounded-2xl border p-4"><h4 class="font-black mb-3">নমিনী ও জামিনদার</h4><div class="grid md:grid-cols-3 gap-3 text-xs"><div><div class="text-slate-400">নমিনী</div><div class="font-bold">${escapeHtml(a.nominee?.name||'-')} • ${escapeHtml(a.nominee?.relation||'-')} • ${escapeHtml(a.nominee?.phone||'-')}</div></div>${(a.guarantors||[]).map((g,i)=>`<div><div class="text-slate-400">জামিনদার–${i+1}</div><div class="font-bold">${escapeHtml(g?.name||'-')} • ${escapeHtml(g?.memberId||'-')} • ${escapeHtml(g?.phone||'-')}</div></div>`).join('')}</div></div><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="font-black text-amber-900 mb-2">ডকুমেন্ট যাচাই</div><div class="flex flex-wrap gap-2">${dbgQardDocLink(a.memberNidDoc,'সদস্য NID')}${dbgQardDocLink(a.nominee?.nidDoc,'নমিনী NID')}${dbgQardDocLink(a.guarantors?.[0]?.nidDoc,'জামিনদার–১ NID')}${dbgQardDocLink(a.guarantors?.[1]?.nidDoc,'জামিনদার–২ NID')}${a.memberPhoto?dbgQardDocLink(a.memberPhoto,'সদস্য ছবি'):''}</div></div><div class="rounded-2xl border p-4"><div class="text-xs text-slate-400">আবেদনের উদ্দেশ্য</div><div class="font-bold mt-1">${escapeHtml(a.purpose||'-')}</div><div class="text-xs text-slate-400 mt-3">Admin Remark</div><div class="font-bold mt-1">${escapeHtml(a.adminRemark||'-')}</div></div>${['Approved','Disbursed','Completed'].includes(a.status)?`<div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div class="font-black text-emerald-900 mb-2">💰 টাকা রিসিভ হিসাব</div><div class="grid md:grid-cols-3 gap-3 text-xs"><div>অনুমোদিত<strong class="block text-base">৳${dbgQardMoney(a.approvedAmount||a.requestedAmount||0)}</strong></div><div>রিসিভ হয়েছে<strong class="block text-base text-emerald-700">৳${dbgQardMoney(dbgQardRepaymentTotal(a))}</strong></div><div>বাকি<strong class="block text-base text-rose-700">৳${dbgQardMoney(Math.max(0,Number(a.approvedAmount||a.requestedAmount||0)-dbgQardRepaymentTotal(a)))}</strong></div></div>${(Array.isArray(a.repayments)&&a.repayments.length)?`<div class="mt-3 overflow-x-auto"><table class="w-full text-xs"><thead><tr class="border-b text-left"><th class="py-2">মাস</th><th class="py-2">টাকা</th><th class="py-2">তারিখ</th></tr></thead><tbody>${a.repayments.map(r=>`<tr class="border-b last:border-0"><td class="py-2">${escapeHtml(r.month||'-')}</td><td class="py-2 font-bold">৳${dbgQardMoney(r.amount)}</td><td class="py-2">${r.receivedAt?new Date(r.receivedAt).toLocaleDateString('bn-BD'):'-'}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`:''}<div class="flex flex-wrap justify-end gap-2"><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove(); dbgReviewQard('${escapeHtml(a.id)}')" class="px-5 py-3 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-black">Status / Approval Decision</button><button onclick="document.getElementById('dbgQardDetailOverlay')?.remove()" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold">বন্ধ করুন</button></div></div></div>`; document.body.appendChild(wrap); }
 async function dbgDeleteQardApplication(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদনটি পাওয়া যায়নি।');return;} const a=s.val(); if(!confirm(`আবেদন ${a.applicationNo||id} বাতিল/ডিলিট করতে চান?\n\nএই আবেদনটি Firebase থেকে স্থায়ীভাবে মুছে যাবে এবং সদস্যের সক্রিয় আবেদন আর থাকবে না।`))return; try{ await set(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`),null); const member=db.members.find(m=>String(m.code).toUpperCase()===String(a.memberCode).toUpperCase())||{code:a.memberCode,name:a.memberName,phone:a.phone}; if(member?.phone){ try{ await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, your Qard Hasan application ${id} has been cancelled by Dreams Business Group. Please contact DBG for details.`); }catch(_){ } } await dbgLoadQardAdmin(true); alert('কর্জে হাসানা আবেদনটি বাতিল/ডিলিট করা হয়েছে।'); }catch(e){ console.error('DBG Qard delete error:',e); alert('আবেদন ডিলিট করা যায়নি।\nকারণ: '+(e?.message||e)); } }
 async function dbgReviewQard(id){ const s=await get(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`)); if(!s.exists()){alert('আবেদন পাওয়া যায়নি।');return;} const a=s.val(); const action=prompt(`Qard Hasan ${a.applicationNo||id}\nবর্তমান: ${a.status}\n\nনতুন Status লিখুন: Pending / Under Review / Approved / Rejected / Disbursed / Completed`,a.status||'Pending'); if(action===null)return; const status=action.trim(); if(!['Pending','Under Review','Approved','Rejected','Disbursed','Completed'].includes(status)){alert('সঠিক Status দিন।');return;} let approvedAmount=Number(a.approvedAmount||a.requestedAmount||0); if(status==='Approved'||status==='Disbursed'){ const v=prompt(`অনুমোদিত পরিমাণ লিখুন (সর্বোচ্চ ৳${dbgQardMoney(a.maxEligibleAmount)}):`,String(approvedAmount)); if(v===null)return; approvedAmount=Number(v); if(!approvedAmount||approvedAmount>a.maxEligibleAmount){alert('অনুমোদিত পরিমাণ সীমার মধ্যে দিন।');return;} } const remark=prompt('Admin Remark / যাচাই মন্তব্য:',a.adminRemark||'') ?? (a.adminRemark||''); const patch={status,approvedAmount:status==='Rejected'?0:approvedAmount,adminRemark:remark,reviewedAt:Date.now(),reviewedBy:firebaseAuth.currentUser?.email||'Admin',updatedAt:Date.now()}; if(status==='Disbursed'){patch.disbursementDate=new Date().toISOString().slice(0,10); patch.disbursementMethod='Bank Transfer'; patch.disbursementReference=prompt('Bank Transaction / Reference No. (ঐচ্ছিক):',a.disbursementReference||'')||'';} await update(ref(firebaseDB,`${DBG_QARD_NODE}/${id}`),patch); const member=db.members.find(m=>String(m.code).toUpperCase()===String(a.memberCode).toUpperCase())||{code:a.memberCode,name:a.memberName,phone:a.phone}; if(status==='Approved') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, your Qard Hasan application ${id} has been APPROVED for Tk. ${approvedAmount.toLocaleString('en-US')}. Disbursement will be made through your verified bank account. Dreams Business Group.`); if(status==='Rejected') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, your Qard Hasan application ${id} has been reviewed and is currently not approved. Please contact DBG for details. Dreams Business Group.`); if(status==='Disbursed') await dbgQardSendSMS(member,`Dear ${member.nameEn||a.memberName||'Member'}, Tk. ${approvedAmount.toLocaleString('en-US')} Qard Hasan has been marked as disbursed to your bank account. Ref: ${patch.disbursementReference||'N/A'}. Dreams Business Group.`); await dbgLoadQardAdmin(true); }
+
+/* ================= MEMBER EXIT MODULE — ISOLATED ADD-ON ================= */
+const DBG_MEMBER_EXIT_NODE = 'dbg_erp/memberExitApplications';
+const DBG_MEMBER_EXIT_ACTIVE = ['Pending','Under Review','Approved'];
+
+let dbgMemberExitMemberApplicationsCache = [];
+let dbgMemberExitAdminUnsubscribe = null;
+
+function dbgExitMoney(v){
+    return Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
+}
+function dbgExitDate(v){
+    if(!v) return '-';
+    try { return new Date(v).toLocaleDateString('en-GB'); } catch(_) { return String(v); }
+}
+function dbgExitStatusBadge(status){
+    const map={
+        Pending:['bg-amber-100','text-amber-800'],
+        'Under Review':['bg-blue-100','text-blue-800'],
+        Approved:['bg-emerald-100','text-emerald-800'],
+        Rejected:['bg-rose-100','text-rose-800'],
+        Settled:['bg-indigo-100','text-indigo-800']
+    };
+    const c=map[status]||map.Pending;
+    return `<span class="dbg-exit-admin-status ${c[0]} ${c[1]}">${escapeHtml(status||'Pending')}</span>`;
+}
+function dbgExitTypeLabel(type){
+    return type==='deceased'?'মৃত্যুজনিত বহির্গমন':'স্বেচ্ছায় সদস্যপদ প্রত্যাহার';
+}
+function dbgExitList(v){
+    return Array.isArray(v)?v.filter(Boolean):(v&&typeof v==='object'?Object.values(v).filter(Boolean):[]);
+}
+function dbgExitDepositTotal(deposits){
+    return (Array.isArray(deposits)?deposits:[]).reduce((s,d)=>s+Number(d?.amount||0)+Number(d?.dreamProsperityAmount||0)+Number(d?.dreamDevelopmentAmount||0),0);
+}
+function dbgExitMemberBase(member,deposits){
+    const units=Math.max(0,parseInt(member?.units,10)||0);
+    const depositTotal=dbgExitDepositTotal(deposits);
+    const dividend=Number(member?.totalDividend||0);
+    const shareValue=units*500;
+    return {
+        memberCode:String(member?.code||'').trim().toUpperCase(),
+        memberName:member?.name||member?.nameEn||'',
+        nameEn:member?.nameEn||'',
+        fatherName:member?.fatherName||'',
+        dob:member?.dob||'',
+        nid:member?.nid||'',
+        phone:member?.phone||'',
+        permanentAddress:member?.permanentAddress||'',
+        presentAddress:member?.presentAddress||'',
+        memberPhoto:member?.photo||'',
+        units,
+        shareValue,
+        accumulatedDeposit:Math.round(depositTotal*100)/100,
+        totalDividend:Math.round(dividend*100)/100
+    };
+}
+async function dbgExitGetMemberApplications(memberCode){
+    try{
+        const q=query(ref(firebaseDB,DBG_MEMBER_EXIT_NODE),orderByChild('memberCode'),equalTo(String(memberCode||'').toUpperCase()));
+        const s=await get(q);
+        const apps=dbgExitList(s.exists()?s.val():{}).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+        dbgMemberExitMemberApplicationsCache=apps;
+        return apps;
+    }catch(e){
+        dbgMemberExitMemberApplicationsCache=[];
+        console.warn('DBG Member Exit member read skipped:',e?.code||e?.message||e);
+        return [];
+    }
+}
+function dbgExitStatusText(a){
+    if(!a) return 'এখনো কোনো আবেদন নেই';
+    if(a.status==='Approved') return 'আবেদন অনুমোদিত হয়েছে; চূড়ান্ত নিষ্পত্তি/পেমেন্ট তথ্য আপডেট হতে পারে।';
+    if(a.status==='Settled') return 'চূড়ান্ত হিসাব নিষ্পত্তি সম্পন্ন হয়েছে।';
+    if(a.status==='Rejected') return 'পূর্বের আবেদনটি বাতিল হয়েছে; প্রয়োজন হলে নতুন আবেদন করা যাবে।';
+    if(a.status==='Under Review') return 'Admin যাচাই-বাছাই করছেন।';
+    return 'আবেদন গ্রহণ করা হয়েছে; Admin যাচাই করবেন।';
+}
+async function dbgInitMemberExitPanel(member,deposits){
+    const box=document.getElementById('dbgMemberExitContent');
+    if(!box) return;
+    const base=dbgExitMemberBase(member,deposits);
+    const apps=await dbgExitGetMemberApplications(base.memberCode);
+    const active=apps.find(a=>DBG_MEMBER_EXIT_ACTIVE.includes(a.status))||null;
+    if(active){
+        box.innerHTML=`
+        <div class="dbg-exit-card">
+          <div class="dbg-exit-head">
+            <div class="text-[11px] tracking-[.2em] font-black text-emerald-200">DBG MEMBER EXIT</div>
+            <div class="text-2xl font-black mt-1">সদস্যপদ প্রত্যাহার আবেদন</div>
+            <div class="text-sm text-emerald-50 mt-1">${dbgExitStatusText(active)}</div>
+          </div>
+          <div class="p-4 md:p-5 space-y-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="rounded-2xl bg-emerald-50 p-4 border border-emerald-100"><div class="text-[11px] text-slate-500">আবেদন নং</div><div class="font-black text-emerald-900 mt-1">${escapeHtml(active.applicationNo||active.id||'-')}</div></div>
+              <div class="rounded-2xl bg-slate-50 p-4 border"><div class="text-[11px] text-slate-500">আবেদনের তারিখ</div><div class="font-black mt-1">${dbgExitDate(active.createdAt)}</div></div>
+              <div class="rounded-2xl bg-blue-50 p-4 border border-blue-100"><div class="text-[11px] text-slate-500">মোট রেকর্ডকৃত ডিপোজিট</div><div class="font-black text-blue-900 mt-1">৳${dbgExitMoney(active.accumulatedDeposit)}</div></div>
+              <div class="rounded-2xl bg-indigo-50 p-4 border border-indigo-100"><div class="text-[11px] text-slate-500">মোট লভ্যাংশ</div><div class="font-black text-indigo-900 mt-1">৳${dbgExitMoney(active.totalDividend)}</div></div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 border p-4 text-sm">
+              <div class="flex flex-wrap items-center justify-between gap-3"><div class="font-black text-slate-800">${escapeHtml(dbgExitTypeLabel(active.exitType))}</div><div>${dbgExitStatusBadge(active.status)}</div></div>
+              <div class="mt-3 grid md:grid-cols-2 gap-3 text-xs text-slate-600">
+                <div><b>কারণ:</b> ${escapeHtml(active.withdrawalReason||'-')}</div>
+                <div><b>পেমেন্ট মাধ্যম:</b> ${escapeHtml(active.paymentMethod||'-')}</div>
+                <div><b>হিসাবধারীর নাম:</b> ${escapeHtml(active.paymentAccountName||'-')}</div>
+                <div><b>হিসাব/মোবাইল নম্বর:</b> ${escapeHtml(active.paymentAccountNumber||'-')}</div>
+              </div>
+            </div>
+            ${active.finalPayable!==undefined?`<div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4"><div class="text-xs text-slate-500">চূড়ান্ত প্রদেয়</div><div class="text-2xl font-black text-emerald-800 mt-1">৳${dbgExitMoney(active.finalPayable)}</div><div class="text-xs text-slate-500 mt-2">কর্তন/সমন্বয়: ৳${dbgExitMoney(active.finalDeduction||0)}</div></div>`:''}
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="dbg-exit-pdf" onclick="dbgDownloadMemberExitPDF('${escapeHtml(active.id||active.applicationNo||'')}')"><i data-lucide="download" class="w-4 h-4"></i> আবেদন/চূড়ান্ত PDF ডাউনলোড</button>
+            </div>
+          </div>
+        </div>`;
+        try{lucide.createIcons();}catch(_){}
+        return;
+    }
+    box.innerHTML=`
+    <div class="dbg-exit-card">
+      <div class="dbg-exit-head">
+        <div class="text-[11px] tracking-[.2em] font-black text-emerald-200">VOLUNTARY MEMBERSHIP EXIT</div>
+        <div class="text-2xl font-black mt-1">স্বেচ্ছায় সদস্যপদ প্রত্যাহার</div>
+        <div class="text-sm text-emerald-50 mt-1">প্রোফাইল ও হিসাবের তথ্য স্বয়ংক্রিয়ভাবে পূরণ হবে। আপনাকে শুধু প্রত্যাহারের কারণ ও পেমেন্ট তথ্য দিতে হবে।</div>
+      </div>
+      <div class="p-4 md:p-5 space-y-5">
+        <div class="dbg-exit-rule">⚠️ আবেদন জমা দেওয়ার পর বর্তমান সদস্যের মূল ডিপোজিট/লভ্যাংশের রেকর্ড মুছে যাবে না। Admin যাচাই ও অনুমোদনের পর চূড়ান্ত হিসাব নির্ধারণ করা হবে।</div>
+        <div class="dbg-exit-sec">
+          <h4 class="font-black mb-3 text-emerald-900">১. সদস্যের তথ্য — Profile থেকে অটো-ফিল</h4>
+          <div class="grid md:grid-cols-2 gap-3">
+            ${[['নাম','exName',base.memberName],['Member ID','exCode',base.memberCode],['পিতার নাম','exFather',base.fatherName],['জন্ম তারিখ','exDob',base.dob],['NID','exNid',base.nid],['মোবাইল','exPhone',base.phone],['স্থায়ী ঠিকানা','exPermanent',base.permanentAddress],['বর্তমান ঠিকানা','exPresent',base.presentAddress]].map(x=>`<div><label class="dbg-exit-label">${x[0]}</label><input id="${x[1]}" value="${escapeHtml(x[2])}" readonly class="dbg-exit-input dbg-exit-readonly"></div>`).join('')}
+          </div>
+        </div>
+        <div class="dbg-exit-sec">
+          <h4 class="font-black mb-3 text-emerald-900">২. বর্তমান হিসাব — অটো-ফিল</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="rounded-xl bg-slate-50 border p-3"><div class="text-[11px] text-slate-500">ডিপোজিট ইউনিট</div><div class="font-black mt-1">${base.units}টি</div></div>
+            <div class="rounded-xl bg-slate-50 border p-3"><div class="text-[11px] text-slate-500">শেয়ার মূল্য</div><div class="font-black mt-1">৳${dbgExitMoney(base.shareValue)}</div></div>
+            <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3"><div class="text-[11px] text-slate-500">মোট ডিপোজিট</div><div class="font-black text-emerald-800 mt-1">৳${dbgExitMoney(base.accumulatedDeposit)}</div></div>
+            <div class="rounded-xl bg-indigo-50 border border-indigo-100 p-3"><div class="text-[11px] text-slate-500">মোট লভ্যাংশ</div><div class="font-black text-indigo-800 mt-1">৳${dbgExitMoney(base.totalDividend)}</div></div>
+          </div>
+        </div>
+        <form id="dbgMemberExitForm" class="space-y-5">
+          <div class="dbg-exit-sec">
+            <h4 class="font-black mb-3 text-emerald-900">৩. সদস্যের পূরণীয় তথ্য</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="md:col-span-2"><label class="dbg-exit-label">সদস্যপদ প্রত্যাহারের কারণ *</label><textarea id="exReason" rows="3" required class="dbg-exit-input" placeholder="সদস্যপদ প্রত্যাহারের কারণ লিখুন"></textarea></div>
+              <div><label class="dbg-exit-label">পেমেন্ট মাধ্যম *</label><select id="exPaymentMethod" required class="dbg-exit-input"><option value="">নির্বাচন করুন</option><option>Bank Transfer</option><option>bKash</option><option>Nagad</option><option>Rocket</option><option>অন্যান্য</option></select></div>
+              <div><label class="dbg-exit-label">হিসাবধারীর নাম *</label><input id="exPaymentName" required class="dbg-exit-input" placeholder="ব্যাংক/MFS হিসাবের নাম"></div>
+              <div class="md:col-span-2"><label class="dbg-exit-label">ব্যাংক হিসাব / মোবাইল নম্বর *</label><input id="exPaymentNumber" required class="dbg-exit-input" placeholder="হিসাব নম্বর বা MFS নম্বর"></div>
+            </div>
+          </div>
+          <div id="dbgMemberExitStatus" class="text-sm font-bold min-h-[22px]"></div>
+          <button type="submit" class="w-full md:w-auto px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> সদস্যপদ প্রত্যাহারের আবেদন জমা দিন</button>
+        </form>
+      </div>
+    </div>`;
+    document.getElementById('dbgMemberExitForm')?.addEventListener('submit',e=>dbgSubmitMemberExit(e,base));
+    try{lucide.createIcons();}catch(_){}
+}
+async function dbgSubmitMemberExit(e,base){
+    e.preventDefault();
+    const st=document.getElementById('dbgMemberExitStatus');
+    try{
+        const existing=await dbgExitGetMemberApplications(base.memberCode);
+        if(existing.some(a=>DBG_MEMBER_EXIT_ACTIVE.includes(a.status))) throw new Error('আপনার একটি সক্রিয় সদস্য বহির্গমন আবেদন ইতোমধ্যে রয়েছে।');
+        const id=push(ref(firebaseDB,DBG_MEMBER_EXIT_NODE)).key;
+        const applicationNo=`EXIT-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(id||'').slice(-5).toUpperCase()}`;
+        const app={
+            id,applicationNo,exitType:'voluntary',status:'Pending',createdAt:Date.now(),updatedAt:Date.now(),
+            ...base,
+            withdrawalReason:document.getElementById('exReason')?.value.trim()||'',
+            paymentMethod:document.getElementById('exPaymentMethod')?.value||'',
+            paymentAccountName:document.getElementById('exPaymentName')?.value.trim()||'',
+            paymentAccountNumber:document.getElementById('exPaymentNumber')?.value.trim()||'',
+            adminRemark:''
+        };
+        if(!app.withdrawalReason||!app.paymentMethod||!app.paymentAccountName||!app.paymentAccountNumber) throw new Error('প্রয়োজনীয় তথ্য পূরণ করুন।');
+        await set(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`),app);
+        st.textContent='আবেদন সফলভাবে জমা হয়েছে। এখন আবেদনটির PDF কপি ডাউনলোড করতে পারবেন।';
+        st.className='text-sm font-bold text-emerald-700 min-h-[22px]';
+        await dbgInitMemberExitPanel(await dbgExitFindMemberForCurrentUser(), await dbgExitGetCurrentMemberDeposits(base.memberCode));
+    }catch(e2){
+        console.error('DBG Member Exit submit:',e2);
+        st.textContent=e2?.message||'আবেদন জমা দেওয়া যায়নি।';
+        st.className='text-sm font-bold text-rose-700 min-h-[22px]';
+    }
+}
+async function dbgExitFindMemberForCurrentUser(){
+    const u=firebaseAuth.currentUser;
+    const ps=await get(ref(firebaseDB,`dbg_users/${u.uid}`));
+    const p=ps.exists()?ps.val():{};
+    const q=query(ref(firebaseDB,'dbg_erp/members'),orderByChild('code'),equalTo(String(p.memberId||'').toUpperCase()));
+    const s=await get(q); return Object.values(s.exists()?s.val():{})[0]||{};
+}
+async function dbgExitGetCurrentMemberDeposits(code){
+    const q=query(ref(firebaseDB,'dbg_erp/deposits'),orderByChild('memberCode'),equalTo(String(code||'').toUpperCase()));
+    const s=await get(q); return Object.values(s.exists()?s.val():{});
+}
+function dbgExitMemberSnapshotFromMember(member,deposits){ return dbgExitMemberBase(member,deposits); }
+
+async function dbgOpenMemberExitCreate(type='deceased'){
+    if(!isAdminRole(window.dbgFirebaseRole)){alert('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');return;}
+    if(type!=='deceased') return;
+    const members=Array.isArray(db.members)?db.members:[];
+    const wrap=document.createElement('div');
+    wrap.id='dbgMemberExitCreateOverlay';
+    wrap.className='fixed inset-0 z-[100090] bg-slate-950/60 backdrop-blur-sm p-3 md:p-6 overflow-y-auto';
+    wrap.innerHTML=`<div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="p-5 bg-gradient-to-r from-slate-950 via-emerald-900 to-teal-700 text-white flex justify-between gap-3"><div><div class="text-xs text-emerald-200 font-black tracking-widest">DEATH EXIT</div><h3 class="text-2xl font-black">মৃত্যুজনিত বহির্গমন</h3><p class="text-xs text-emerald-100 mt-1">সদস্যের Profile থেকে তথ্য অটো-ফিল হবে; Admin যাচাই করে চূড়ান্ত হিসাব নির্ধারণ করবেন।</p></div><button type="button" onclick="document.getElementById('dbgMemberExitCreateOverlay')?.remove()" class="w-9 h-9 rounded-xl bg-white/10 font-black">×</button></div>
+    <form id="dbgDeathExitForm" class="p-5 space-y-5">
+      <div><label class="block text-xs font-black text-slate-600 mb-1">সদস্য নির্বাচন *</label><select id="deathMemberCode" required class="w-full border border-slate-200 rounded-xl px-3 py-3 font-bold"><option value="">সদস্য নির্বাচন করুন</option>${members.map(m=>`<option value="${escapeHtml(m.code)}">${escapeHtml(m.code)} — ${escapeHtml(m.name||m.nameEn||'')}</option>`).join('')}</select></div>
+      <div id="dbgDeathMemberPreview" class="rounded-2xl bg-slate-50 border p-4 text-sm text-slate-500">সদস্য নির্বাচন করলে Profile ও হিসাব দেখা যাবে।</div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div><label class="block text-xs font-black text-slate-600 mb-1">মৃত্যুর তারিখ *</label><input id="deathDate" type="date" required class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div><label class="block text-xs font-black text-slate-600 mb-1">নমিনির নাম *</label><input id="deathNomineeName" required class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div><label class="block text-xs font-black text-slate-600 mb-1">সম্পর্ক *</label><input id="deathNomineeRelation" required class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div><label class="block text-xs font-black text-slate-600 mb-1">নমিনির মোবাইল</label><input id="deathNomineePhone" class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div><label class="block text-xs font-black text-slate-600 mb-1">পেমেন্ট মাধ্যম *</label><select id="deathPaymentMethod" required class="w-full border border-slate-200 rounded-xl px-3 py-3"><option value="">নির্বাচন করুন</option><option>Bank Transfer</option><option>bKash</option><option>Nagad</option><option>Rocket</option><option>অন্যান্য</option></select></div>
+        <div><label class="block text-xs font-black text-slate-600 mb-1">হিসাবধারীর নাম *</label><input id="deathPaymentName" required class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div class="md:col-span-2"><label class="block text-xs font-black text-slate-600 mb-1">ব্যাংক হিসাব / মোবাইল নম্বর *</label><input id="deathPaymentNumber" required class="w-full border border-slate-200 rounded-xl px-3 py-3"></div>
+        <div class="md:col-span-2"><label class="block text-xs font-black text-slate-600 mb-1">Admin-এর যাচাই মন্তব্য</label><textarea id="deathRemark" rows="3" class="w-full border border-slate-200 rounded-xl px-3 py-3" placeholder="মৃত্যু সনদ/উত্তরাধিকার সংক্রান্ত যাচাই মন্তব্য"></textarea></div>
+      </div>
+      <div id="dbgDeathExitStatus" class="text-sm font-bold min-h-[22px]"></div>
+      <div class="flex flex-wrap justify-end gap-2"><button type="button" onclick="document.getElementById('dbgMemberExitCreateOverlay')?.remove()" class="px-5 py-3 rounded-xl bg-slate-100 font-bold">বন্ধ করুন</button><button type="submit" class="px-5 py-3 rounded-xl bg-emerald-700 text-white font-black">মৃত্যুজনিত বহির্গমন আবেদন তৈরি করুন</button></div>
+    </form></div>`;
+    document.body.appendChild(wrap);
+    const sel=document.getElementById('deathMemberCode');
+    sel?.addEventListener('change',async()=>{ await dbgRenderDeathMemberPreview(sel.value); });
+    document.getElementById('dbgDeathExitForm')?.addEventListener('submit',dbgSubmitDeathExit);
+    try{lucide.createIcons();}catch(_){}
+}
+async function dbgRenderDeathMemberPreview(code){
+    const box=document.getElementById('dbgDeathMemberPreview'); if(!box||!code)return;
+    const m=(Array.isArray(db.members)?db.members:[]).find(x=>String(x.code||'').toUpperCase()===String(code).toUpperCase());
+    if(!m){box.textContent='সদস্য পাওয়া যায়নি।';return;}
+    const deps=await dbgExitGetCurrentMemberDeposits(code), b=dbgExitMemberBase(m,deps);
+    box.innerHTML=`<div class="font-black text-slate-800">${escapeHtml(b.memberName)} <span class="text-xs text-slate-500">(${escapeHtml(b.memberCode)})</span></div><div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs"><div>পিতা<br><b>${escapeHtml(b.fatherName||'-')}</b></div><div>ডিপোজিট<br><b>৳${dbgExitMoney(b.accumulatedDeposit)}</b></div><div>লভ্যাংশ<br><b>৳${dbgExitMoney(b.totalDividend)}</b></div><div>ইউনিট<br><b>${b.units}</b></div></div>`;
+}
+async function dbgSubmitDeathExit(e){
+    e.preventDefault();
+    const st=document.getElementById('dbgDeathExitStatus');
+    try{
+        if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
+        const code=document.getElementById('deathMemberCode')?.value||'';
+        const m=(Array.isArray(db.members)?db.members:[]).find(x=>String(x.code||'').toUpperCase()===String(code).toUpperCase());
+        if(!m) throw new Error('সদস্য নির্বাচন করুন।');
+        const deps=await dbgExitGetCurrentMemberDeposits(code), base=dbgExitMemberBase(m,deps);
+        const id=push(ref(firebaseDB,DBG_MEMBER_EXIT_NODE)).key;
+        const applicationNo=`DEX-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(id||'').slice(-5).toUpperCase()}`;
+        const app={id,applicationNo,exitType:'deceased',status:'Under Review',createdAt:Date.now(),updatedAt:Date.now(),...base,
+            deathDate:document.getElementById('deathDate')?.value||'',
+            nominee:{name:document.getElementById('deathNomineeName')?.value.trim()||'',relation:document.getElementById('deathNomineeRelation')?.value.trim()||'',phone:document.getElementById('deathNomineePhone')?.value.trim()||''},
+            paymentMethod:document.getElementById('deathPaymentMethod')?.value||'',
+            paymentAccountName:document.getElementById('deathPaymentName')?.value.trim()||'',
+            paymentAccountNumber:document.getElementById('deathPaymentNumber')?.value.trim()||'',
+            adminRemark:document.getElementById('deathRemark')?.value.trim()||'',
+            reviewedBy:firebaseAuth.currentUser?.email||'Admin'
+        };
+        await set(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`),app);
+        document.getElementById('dbgMemberExitCreateOverlay')?.remove();
+        await dbgLoadMemberExitAdmin(true);
+        alert('মৃত্যুজনিত বহির্গমন কেস তৈরি হয়েছে। এখন যাচাই করে অনুমোদন দিন।');
+    }catch(err){
+        st.textContent=err?.message||'কেস তৈরি করা যায়নি।';
+        st.className='text-sm font-bold text-rose-700 min-h-[22px]';
+    }
+}
+async function dbgLoadMemberExitAdmin(force=true){
+    const listEl=document.getElementById('dbgMemberExitAdminList'); if(!listEl)return;
+    if(!isAdminRole(window.dbgFirebaseRole)){ listEl.innerHTML='<div class="p-6 text-rose-600">শুধুমাত্র Admin এই তথ্য দেখতে পারবেন।</div>'; return; }
+    try{
+        const exitRef=ref(firebaseDB,DBG_MEMBER_EXIT_NODE);
+        const s=await get(exitRef);
+        dbgRenderMemberExitAdmin(dbgExitList(s.exists()?s.val():{}));
+        if(force&&!dbgMemberExitAdminUnsubscribe){
+            dbgMemberExitAdminUnsubscribe=onValue(exitRef,snap=>{ try{dbgRenderMemberExitAdmin(dbgExitList(snap.exists()?snap.val():{}));}catch(e){console.error('DBG Exit realtime render:',e);} },
+            err=>{console.error('DBG Exit realtime read:',err);});
+        }
+    }catch(e){
+        console.error('DBG Member Exit admin load:',e);
+        listEl.innerHTML=`<div class="p-6 text-rose-700">সদস্য বহির্গমন data load ব্যর্থ: ${escapeHtml(e?.code||e?.message||e)}</div>`;
+    }
+}
+function dbgRenderMemberExitAdmin(apps){
+    const listEl=document.getElementById('dbgMemberExitAdminList'); if(!listEl)return;
+    const rows=dbgExitList(apps).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+    const stats={Pending:0,'Under Review':0,Approved:0,Rejected:0,Settled:0};
+    rows.forEach(a=>{if(stats[a.status]!==undefined)stats[a.status]++;});
+    const st=document.getElementById('dbgMemberExitAdminStats');
+    if(st) st.innerHTML=[
+        ['মোট কেস',rows.length,'text-slate-800'],
+        ['Pending',stats.Pending,'text-amber-700'],
+        ['যাচাই চলছে',stats['Under Review'],'text-blue-700'],
+        ['Approved',stats.Approved,'text-emerald-700'],
+        ['Settled',stats.Settled,'text-indigo-700']
+    ].map(x=>`<div class="dbg-exit-admin-stat"><div class="text-[11px] text-slate-500 font-bold">${x[0]}</div><div class="text-xl font-black ${x[2]} mt-1">${x[1]}</div></div>`).join('');
+    if(!rows.length){listEl.innerHTML='<div class="p-10 text-center text-slate-500">এখনো কোনো সদস্য বহির্গমন আবেদন/কেস নেই।</div>';return;}
+    listEl.innerHTML=rows.map(a=>`<article class="dbg-exit-admin-card border-0 border-b rounded-none"><div class="p-5 flex flex-wrap justify-between gap-4"><div><div class="flex flex-wrap items-center gap-2"><div class="font-black text-slate-900">${escapeHtml(a.memberName||'-')}</div><span class="text-xs text-slate-500">(${escapeHtml(a.memberCode||'-')})</span>${dbgExitStatusBadge(a.status)}</div><div class="text-xs text-slate-500 mt-2">${escapeHtml(a.applicationNo||a.id||'-')} • ${escapeHtml(dbgExitTypeLabel(a.exitType))} • ${dbgExitDate(a.createdAt)}</div></div><div class="text-right"><div class="text-xs text-slate-500">সম্ভাব্য মোট পাওনা</div><div class="text-lg font-black text-emerald-800">৳${dbgExitMoney(Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0))}</div></div></div><div class="px-5 pb-5 flex flex-wrap gap-2"><button type="button" onclick="dbgOpenMemberExitReview('${escapeHtml(a.id)}')" class="px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-black"><i data-lucide="clipboard-check" class="w-4 h-4 inline"></i> যাচাই / অনুমোদন</button><button type="button" onclick="dbgDownloadMemberExitPDF('${escapeHtml(a.id)}',true)" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black"><i data-lucide="file-down" class="w-4 h-4 inline"></i> PDF</button></div></article>`).join('');
+    try{lucide.createIcons();}catch(_){}
+}
+async function dbgOpenMemberExitReview(id){
+    if(!isAdminRole(window.dbgFirebaseRole)){alert('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');return;}
+    const s=await get(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`)); if(!s.exists()){alert('কেসটি পাওয়া যায়নি।');return;}
+    const a=s.val(); document.getElementById('dbgMemberExitReviewOverlay')?.remove();
+    const wrap=document.createElement('div'); wrap.id='dbgMemberExitReviewOverlay'; wrap.className='fixed inset-0 bg-slate-950/60 backdrop-blur-sm p-3 md:p-6 overflow-y-auto';
+    const gross=Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0);
+    wrap.innerHTML=`<div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden"><div class="p-5 bg-gradient-to-r from-slate-950 via-emerald-900 to-teal-700 text-white flex justify-between gap-3"><div><div class="text-xs text-emerald-200 font-black tracking-widest">MEMBER EXIT REVIEW</div><h3 class="text-2xl font-black">${escapeHtml(a.memberName||'-')} <span class="text-sm text-emerald-200">(${escapeHtml(a.memberCode||'-')})</span></h3><div class="text-xs mt-1">${escapeHtml(a.applicationNo||a.id)} • ${escapeHtml(dbgExitTypeLabel(a.exitType))}</div></div><button type="button" onclick="document.getElementById('dbgMemberExitReviewOverlay')?.remove()" class="w-9 h-9 rounded-xl bg-white/10 font-black">×</button></div>
+      <div class="p-5 space-y-5">
+        <div class="grid md:grid-cols-4 gap-3"><div class="rounded-2xl bg-slate-50 border p-4"><div class="text-xs text-slate-500">ডিপোজিট</div><div class="text-xl font-black">৳${dbgExitMoney(a.accumulatedDeposit)}</div></div><div class="rounded-2xl bg-indigo-50 border border-indigo-100 p-4"><div class="text-xs text-slate-500">লভ্যাংশ</div><div class="text-xl font-black text-indigo-800">৳${dbgExitMoney(a.totalDividend)}</div></div><div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4"><div class="text-xs text-slate-500">মোট</div><div class="text-xl font-black text-emerald-800">৳${dbgExitMoney(gross)}</div></div><div class="rounded-2xl bg-amber-50 border border-amber-100 p-4"><div class="text-xs text-slate-500">বর্তমান Status</div><div class="mt-2">${dbgExitStatusBadge(a.status)}</div></div></div>
+        <div class="grid md:grid-cols-2 gap-4 text-sm"><div class="rounded-2xl bg-slate-50 border p-4"><b>সদস্য:</b> ${escapeHtml(a.memberName||'-')}<br><b>পিতা:</b> ${escapeHtml(a.fatherName||'-')}<br><b>মোবাইল:</b> ${escapeHtml(a.phone||'-')}<br><b>NID:</b> ${escapeHtml(a.nid||'-')}</div><div class="rounded-2xl bg-slate-50 border p-4"><b>কারণ:</b> ${escapeHtml(a.withdrawalReason||'-')}<br><b>পেমেন্ট:</b> ${escapeHtml(a.paymentMethod||'-')}<br><b>হিসাবধারী:</b> ${escapeHtml(a.paymentAccountName||'-')}<br><b>হিসাব/নম্বর:</b> ${escapeHtml(a.paymentAccountNumber||'-')}</div></div>
+        ${a.exitType==='deceased'?`<div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm"><b>মৃত্যুর তারিখ:</b> ${escapeHtml(a.deathDate||'-')}<br><b>নমিনি:</b> ${escapeHtml(a.nominee?.name||'-')} (${escapeHtml(a.nominee?.relation||'-')})<br><b>নমিনি মোবাইল:</b> ${escapeHtml(a.nominee?.phone||'-')}</div>`:''}
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="block text-xs font-black text-slate-600 mb-1">Decision</label><select id="dbgExitDecision" class="w-full border rounded-xl px-3 py-3 font-bold"><option>Under Review</option><option>Approved</option><option>Rejected</option><option>Settled</option></select></div>
+          <div><label class="block text-xs font-black text-slate-600 mb-1">কর্তন / সমন্বয়</label><input id="dbgExitDeduction" type="number" min="0" step="0.01" value="${Number(a.finalDeduction||0)}" class="w-full border rounded-xl px-3 py-3 font-bold"></div>
+          <div><label class="block text-xs font-black text-slate-600 mb-1">চূড়ান্ত প্রদেয়</label><input id="dbgExitFinalPayable" type="number" min="0" step="0.01" value="${Number(a.finalPayable!==undefined?a.finalPayable:Math.max(0,gross-Number(a.finalDeduction||0)))}" class="w-full border rounded-xl px-3 py-3 font-bold"></div>
+          <div><label class="block text-xs font-black text-slate-600 mb-1">Payment / Transaction Reference</label><input id="dbgExitPaymentRef" value="${escapeHtml(a.paymentReference||'')}" class="w-full border rounded-xl px-3 py-3"></div>
+          <div><label class="block text-xs font-black text-slate-600 mb-1">Payment Date</label><input id="dbgExitPaymentDate" type="date" value="${escapeHtml(a.paymentDate||'')}" class="w-full border rounded-xl px-3 py-3"></div>
+          <div><label class="block text-xs font-black text-slate-600 mb-1">Admin Remark</label><textarea id="dbgExitAdminRemark" rows="2" class="w-full border rounded-xl px-3 py-3">${escapeHtml(a.adminRemark||'')}</textarea></div>
+        </div>
+        <div id="dbgExitReviewStatus" class="text-sm font-bold min-h-[22px]"></div>
+        <div class="flex flex-wrap justify-end gap-2"><button type="button" onclick="document.getElementById('dbgMemberExitReviewOverlay')?.remove()" class="px-5 py-3 rounded-xl bg-slate-100 font-bold">বন্ধ করুন</button><button type="button" onclick="dbgSaveMemberExitReview('${escapeHtml(a.id)}')" class="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black">সিদ্ধান্ত সংরক্ষণ</button></div>
+      </div></div>`;
+    document.body.appendChild(wrap);
+    document.getElementById('dbgExitDecision').value=a.status||'Under Review';
+    try{lucide.createIcons();}catch(_){}
+}
+async function dbgSaveMemberExitReview(id){
+    try{
+        if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই তথ্য পরিবর্তন করতে পারবেন।');
+        const s=await get(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`)); if(!s.exists())throw new Error('কেসটি পাওয়া যায়নি।');
+        const a=s.val(), status=document.getElementById('dbgExitDecision').value;
+        const deduction=Math.max(0,Number(document.getElementById('dbgExitDeduction').value||0));
+        const gross=Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0);
+        let finalPayable=Math.max(0,Number(document.getElementById('dbgExitFinalPayable').value||Math.max(0,gross-deduction)));
+        if(status==='Rejected') finalPayable=0;
+        const patch={status,finalDeduction:deduction,finalPayable, paymentReference:document.getElementById('dbgExitPaymentRef').value.trim(),paymentDate:document.getElementById('dbgExitPaymentDate').value||'',adminRemark:document.getElementById('dbgExitAdminRemark').value.trim(),reviewedAt:Date.now(),reviewedBy:firebaseAuth.currentUser?.email||'Admin',updatedAt:Date.now()};
+        await update(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`),patch);
+        /* Account update is additive: no deposit/dividend history is deleted or rewritten. */
+        if(status==='Approved'||status==='Settled'){
+            const idx=(Array.isArray(db.members)?db.members:[]).findIndex(m=>String(m.code||'').toUpperCase()===String(a.memberCode||'').toUpperCase());
+            if(idx>=0){
+                const exitPatch={
+                    membershipExitStatus:status==='Settled'?'Settled':'Exited',
+                    membershipExitType:a.exitType||'voluntary',
+                    membershipExitApplicationId:id,
+                    membershipExitApplicationNo:a.applicationNo||id,
+                    membershipExitApprovedAt:Date.now(),
+                    membershipExitFinalPayable:finalPayable
+                };
+                await update(ref(firebaseDB,`dbg_erp/members/${idx}`),exitPatch);
+                db.members[idx]={...db.members[idx],...exitPatch};
+            }
+        }
+        document.getElementById('dbgMemberExitReviewOverlay')?.remove();
+        await dbgLoadMemberExitAdmin(true);
+    }catch(e){
+        const st=document.getElementById('dbgExitReviewStatus');
+        if(st){st.textContent=e?.message||'সিদ্ধান্ত সংরক্ষণ করা যায়নি।';st.className='text-sm font-bold text-rose-700 min-h-[22px]';}
+        else alert(e?.message||'সিদ্ধান্ত সংরক্ষণ করা যায়নি।');
+    }
+}
+async function dbgDownloadMemberExitPDF(id,adminView=false){
+    let root=null;
+    try{
+        const cleanId=String(id||'').trim();
+        let a=null;
+        if(adminView||isAdminRole(window.dbgFirebaseRole)){
+            const s=await get(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${cleanId}`)); if(s.exists())a=s.val();
+        }else{
+            a=dbgMemberExitMemberApplicationsCache.find(x=>String(x?.id||'')===cleanId||String(x?.applicationNo||'')===cleanId);
+        }
+        if(!a) throw new Error('আবেদনটি পাওয়া যায়নি।');
+        await loadDbgPdfLibraries();
+        if(!window.html2canvas||!window.jspdf?.jsPDF)throw new Error('PDF লাইব্রেরি প্রস্তুত হয়নি।');
+        root=document.createElement('div');
+        root.style.cssText='position:fixed;left:-100000px;top:0;width:794px;background:#fff;color:#0f172a;padding:28px;box-sizing:border-box;font-family:Arial,"Noto Sans Bengali",sans-serif;z-index:-1;';
+        const photo=a.memberPhoto?`<img src="${escapeHtml(a.memberPhoto)}" style="width:82px;height:98px;object-fit:cover;border:1px solid #cbd5e1;border-radius:7px">`:'';
+        const gross=Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0);
+        root.innerHTML=`<div style="border:1px solid #0f766e;padding:20px">
+          <div style="text-align:center;border-bottom:2px solid #0f766e;padding-bottom:9px;margin-bottom:12px"><div style="font-size:24px;font-weight:800;color:#064e3b">ড্রিমস বিজনেস গ্রুপ (DBG)</div><div style="font-size:17px;font-weight:800;margin-top:3px">সদস্য বহির্গমন ও চূড়ান্ত হিসাব নিষ্পত্তি</div><div style="font-size:10px;color:#64748b;margin-top:3px">${escapeHtml(dbgExitTypeLabel(a.exitType))}</div></div>
+          <div style="display:flex;justify-content:space-between;gap:15px;margin-bottom:10px"><div style="font-size:11px;line-height:1.65"><b>আবেদন নং:</b> ${escapeHtml(a.applicationNo||a.id||'-')}<br><b>আবেদনের তারিখ:</b> ${escapeHtml(dbgExitDate(a.createdAt))}<br><b>Status:</b> ${escapeHtml(a.status||'-')}</div>${photo}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px"><tr><td style="border:1px solid #94a3b8;padding:5px"><b>সদস্যের নাম</b><br>${escapeHtml(a.memberName||'-')}</td><td style="border:1px solid #94a3b8;padding:5px"><b>Member ID</b><br>${escapeHtml(a.memberCode||'-')}</td><td style="border:1px solid #94a3b8;padding:5px"><b>পিতার নাম</b><br>${escapeHtml(a.fatherName||'-')}</td></tr><tr><td style="border:1px solid #94a3b8;padding:5px"><b>জন্ম তারিখ</b><br>${escapeHtml(a.dob||'-')}</td><td style="border:1px solid #94a3b8;padding:5px"><b>NID</b><br>${escapeHtml(a.nid||'-')}</td><td style="border:1px solid #94a3b8;padding:5px"><b>মোবাইল</b><br>${escapeHtml(a.phone||'-')}</td></tr><tr><td colspan="3" style="border:1px solid #94a3b8;padding:5px"><b>ঠিকানা</b><br>${escapeHtml(a.permanentAddress||'-')}</td></tr></table>
+          <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px"><tr><th style="border:1px solid #94a3b8;padding:5px;text-align:left">হিসাব</th><th style="border:1px solid #94a3b8;padding:5px;text-align:right">টাকা</th><th style="border:1px solid #94a3b8;padding:5px;text-align:left">পেমেন্ট তথ্য</th></tr><tr><td style="border:1px solid #94a3b8;padding:5px">ডিপোজিট</td><td style="border:1px solid #94a3b8;padding:5px;text-align:right">৳${dbgExitMoney(a.accumulatedDeposit)}</td><td rowspan="3" style="border:1px solid #94a3b8;padding:5px">${escapeHtml(a.paymentMethod||'-')}<br>${escapeHtml(a.paymentAccountName||'-')}<br>${escapeHtml(a.paymentAccountNumber||'-')}</td></tr><tr><td style="border:1px solid #94a3b8;padding:5px">লভ্যাংশ</td><td style="border:1px solid #94a3b8;padding:5px;text-align:right">৳${dbgExitMoney(a.totalDividend)}</td></tr><tr><td style="border:1px solid #94a3b8;padding:5px"><b>মোট</b></td><td style="border:1px solid #94a3b8;padding:5px;text-align:right"><b>৳${dbgExitMoney(gross)}</b></td></tr><tr><td style="border:1px solid #94a3b8;padding:5px">কর্তন/সমন্বয়</td><td style="border:1px solid #94a3b8;padding:5px;text-align:right">৳${dbgExitMoney(a.finalDeduction||0)}</td><td style="border:1px solid #94a3b8;padding:5px">Payment Ref: ${escapeHtml(a.paymentReference||'-')}<br>Payment Date: ${escapeHtml(a.paymentDate||'-')}</td></tr><tr><td style="border:1px solid #94a3b8;padding:5px"><b>চূড়ান্ত প্রদেয়</b></td><td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-size:14px"><b>৳${dbgExitMoney(a.finalPayable!==undefined?a.finalPayable:gross)}</b></td><td style="border:1px solid #94a3b8;padding:5px"><b>Admin:</b> ${escapeHtml(a.reviewedBy||'-')}</td></tr></table>
+          ${a.exitType==='deceased'?`<div style="font-size:10.5px;border:1px solid #fecaca;background:#fff7f7;padding:7px;margin-bottom:9px"><b>মৃত্যুজনিত তথ্য:</b> মৃত্যুর তারিখ ${escapeHtml(a.deathDate||'-')} • নমিনি ${escapeHtml(a.nominee?.name||'-')} (${escapeHtml(a.nominee?.relation||'-')}) • মোবাইল ${escapeHtml(a.nominee?.phone||'-')}</div>`:''}
+          <div style="font-size:10.5px;line-height:1.5"><b>প্রত্যাহারের কারণ:</b> ${escapeHtml(a.withdrawalReason||'-')}<br><b>Admin মন্তব্য:</b> ${escapeHtml(a.adminRemark||'-')}</div>
+          <div style="display:flex;justify-content:space-between;margin-top:22px;font-size:10px"><span>সদস্য/প্রাপক স্বাক্ষর: __________________</span><span>Admin/বোর্ড: __________________</span></div>
+        </div>`;
+        document.body.appendChild(root);
+        const canvas=await html2canvas(root,{scale:2,backgroundColor:'#fff',useCORS:true});
+        const {jsPDF}=window.jspdf;
+        const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+        const pageW=210,pageH=297;
+        const imgW=pageW-14;
+        const imgH=canvas.height*imgW/canvas.width;
+        const y=imgH<=pageH-14?7:7;
+        if(imgH<=pageH-14){pdf.addImage(canvas.toDataURL('image/jpeg',.92),'JPEG',7,y,imgW,imgH);}
+        else{
+            const scale=(pageH-14)/imgH;
+            pdf.addImage(canvas.toDataURL('image/jpeg',.92),'JPEG',7,7,imgW*scale,imgH*scale);
+        }
+        pdf.save(`${a.applicationNo||a.id||'DBG_Member_Exit'}.pdf`);
+    }catch(e){console.error('DBG Member Exit PDF:',e);alert('PDF ডাউনলোড করা যায়নি।\nকারণ: '+(e?.message||e));}
+    finally{if(root)root.remove();}
+}
+Object.assign(window,{
+    dbgOpenMemberExitCreate,
+    dbgLoadMemberExitAdmin,
+    dbgOpenMemberExitReview,
+    dbgSaveMemberExitReview,
+    dbgDownloadMemberExitPDF
+});
+
 /* ================= QARD HASAN INLINE-ACTION BRIDGE =================
    Qard module runs as type="module"; dynamically generated onclick handlers
    need these specific functions exposed on window. No data/business logic changed.
