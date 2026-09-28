@@ -8043,7 +8043,7 @@ async function loadMemberPortalData(user) {
         document.querySelectorAll('#dbgMemberPortalRoot [data-member-menu]').forEach(btn=>{
             btn.addEventListener('click',()=>{
                 const target=btn.getAttribute('data-member-menu');
-                if(target==='qard') closeQardDrawer();
+                if(target==='qard' || target==='mudaraba' || target==='member-exit') closeQardDrawer();
                 document.querySelectorAll('#dbgMemberPortalRoot [data-member-menu]').forEach(b=>{
                     b.classList.toggle('active', b===btn);
                     b.setAttribute('aria-selected', b===btn ? 'true' : 'false');
@@ -8892,7 +8892,7 @@ function dbgRenderMemberExitAdmin(apps){
         ['Settled',stats.Settled,'text-indigo-700']
     ].map(x=>`<div class="dbg-exit-admin-stat"><div class="text-[11px] text-slate-500 font-bold">${x[0]}</div><div class="text-xl font-black ${x[2]} mt-1">${x[1]}</div></div>`).join('');
     if(!rows.length){listEl.innerHTML='<div class="p-10 text-center text-slate-500">এখনো কোনো সদস্য বহির্গমন আবেদন/কেস নেই।</div>';return;}
-    listEl.innerHTML=rows.map(a=>`<article class="dbg-exit-admin-card border-0 border-b rounded-none"><div class="p-5 flex flex-wrap justify-between gap-4"><div><div class="flex flex-wrap items-center gap-2"><div class="font-black text-slate-900">${escapeHtml(a.memberName||'-')}</div><span class="text-xs text-slate-500">(${escapeHtml(a.memberCode||'-')})</span>${dbgExitStatusBadge(a.status)}</div><div class="text-xs text-slate-500 mt-2">${escapeHtml(a.applicationNo||a.id||'-')} • ${escapeHtml(dbgExitTypeLabel(a.exitType))} • ${dbgExitDate(a.createdAt)}</div></div><div class="text-right"><div class="text-xs text-slate-500">সম্ভাব্য মোট পাওনা</div><div class="text-lg font-black text-emerald-800">৳${dbgExitMoney(Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0))}</div></div></div><div class="px-5 pb-5 flex flex-wrap gap-2"><button type="button" onclick="dbgOpenMemberExitReview('${escapeHtml(a.id)}')" class="px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-black"><i data-lucide="clipboard-check" class="w-4 h-4 inline"></i> যাচাই / অনুমোদন</button><button type="button" onclick="dbgDownloadMemberExitPDF('${escapeHtml(a.id)}',true)" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black"><i data-lucide="file-down" class="w-4 h-4 inline"></i> PDF</button></div></article>`).join('');
+    listEl.innerHTML=rows.map(a=>`<article class="dbg-exit-admin-card border-0 border-b rounded-none"><div class="p-5 flex flex-wrap justify-between gap-4"><div><div class="flex flex-wrap items-center gap-2"><div class="font-black text-slate-900">${escapeHtml(a.memberName||'-')}</div><span class="text-xs text-slate-500">(${escapeHtml(a.memberCode||'-')})</span>${dbgExitStatusBadge(a.status)}</div><div class="text-xs text-slate-500 mt-2">${escapeHtml(a.applicationNo||a.id||'-')} • ${escapeHtml(dbgExitTypeLabel(a.exitType))} • ${dbgExitDate(a.createdAt)}</div></div><div class="text-right"><div class="text-xs text-slate-500">সম্ভাব্য মোট পাওনা</div><div class="text-lg font-black text-emerald-800">৳${dbgExitMoney(Number(a.accumulatedDeposit||0)+Number(a.totalDividend||0))}</div></div></div><div class="px-5 pb-5 flex flex-wrap gap-2"><button type="button" onclick="dbgOpenMemberExitReview('${escapeHtml(a.id)}')" class="px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-black"><i data-lucide="clipboard-check" class="w-4 h-4 inline"></i> যাচাই / অনুমোদন</button>${!['Rejected','Settled'].includes(a.status)?`<button type="button" onclick="dbgCancelMemberExitApplication('${escapeHtml(a.id)}')" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black"><i data-lucide="ban" class="w-4 h-4 inline"></i> আবেদন বাতিল</button>`:''}<button type="button" onclick="dbgDownloadMemberExitPDF('${escapeHtml(a.id)}',true)" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black"><i data-lucide="file-down" class="w-4 h-4 inline"></i> PDF</button></div></article>`).join('');
     try{lucide.createIcons();}catch(_){}
 }
 async function dbgOpenMemberExitReview(id){
@@ -8920,6 +8920,30 @@ async function dbgOpenMemberExitReview(id){
     document.body.appendChild(wrap);
     document.getElementById('dbgExitDecision').value=a.status||'Under Review';
     try{lucide.createIcons();}catch(_){}
+}
+async function dbgCancelMemberExitApplication(id){
+    try{
+        if(!isAdminRole(window.dbgFirebaseRole)) throw new Error('শুধুমাত্র Admin এই আবেদন বাতিল করতে পারবেন।');
+        const s=await get(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`));
+        if(!s.exists()) throw new Error('আবেদনটি পাওয়া যায়নি।');
+        const a=s.val();
+        if(['Rejected','Settled'].includes(a.status)) { alert('এই আবেদনটি ইতোমধ্যে বাতিল/চূড়ান্ত করা হয়েছে।'); return; }
+        if(!confirm(`আবেদন ${a.applicationNo||id} বাতিল করতে চান?\n\nআবেদনটি মুছে যাবে না; Status “Rejected” হবে এবং সম্পূর্ণ ইতিহাস সংরক্ষিত থাকবে।`)) return;
+        await update(ref(firebaseDB,`${DBG_MEMBER_EXIT_NODE}/${id}`),{
+            status:'Rejected',
+            finalDeduction:Number(a.finalDeduction||0),
+            finalPayable:0,
+            adminRemark:'Admin কর্তৃক আবেদন বাতিল করা হয়েছে।',
+            reviewedAt:Date.now(),
+            reviewedBy:firebaseAuth.currentUser?.email||'Admin',
+            updatedAt:Date.now()
+        });
+        await dbgLoadMemberExitAdmin(true);
+        alert('সদস্য বহির্গমন আবেদনটি বাতিল করা হয়েছে।');
+    }catch(e){
+        console.error('DBG Member Exit cancel error:',e);
+        alert(e?.message||'আবেদন বাতিল করা যায়নি।');
+    }
 }
 async function dbgSaveMemberExitReview(id){
     try{
@@ -9003,6 +9027,7 @@ Object.assign(window,{
     dbgOpenMemberExitCreate,
     dbgLoadMemberExitAdmin,
     dbgOpenMemberExitReview,
+    dbgCancelMemberExitApplication,
     dbgSaveMemberExitReview,
     dbgDownloadMemberExitPDF
 });
